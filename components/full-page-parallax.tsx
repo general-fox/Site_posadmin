@@ -14,7 +14,7 @@ import {
 
 const TRANSITION_MS = 1200;
 const REVERSE_GRACE_MS = 280;
-const WHEEL_THRESHOLD = 30;
+const WHEEL_THRESHOLD = 48;
 const SWIPE_THRESHOLD = 45;
 const INTRO_SLIDES = 2;
 const INTRO_TOP_PX = 8;
@@ -59,6 +59,7 @@ export function FullPageParallax({
   const lockedUntil = useRef(0);
   const compactSurface = useRef(0);
   const touchStartY = useRef<number | null>(null);
+  const wheelIntent = useRef({ delta: 0, timestamp: 0 });
   const headerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
   const pendingScroll = useRef<{
@@ -67,7 +68,7 @@ export function FullPageParallax({
   } | null>(null);
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 767px), (max-height: 680px)");
+    const media = window.matchMedia("(max-width: 767px), (max-height: 520px)");
     const sync = () => setCompactFlow(media.matches);
     sync();
     media.addEventListener("change", sync);
@@ -193,22 +194,48 @@ export function FullPageParallax({
     if (compactFlow) return;
 
     const handleIntroWheel = (event: WheelEvent) => {
-      if (
-        activeSlide === 0 &&
-        window.scrollY <= 2 &&
-        event.deltaY >= WHEEL_THRESHOLD &&
-        Date.now() >= lockedUntil.current
-      ) {
-        event.preventDefault();
-        moveTo(1);
-      } else if (
+      const movingForward =
+        activeSlide === 0 && window.scrollY <= 2 && event.deltaY > 0;
+      const movingBackward =
         activeSlide === 1 &&
         window.scrollY <= INTRO_TOP_PX &&
-        event.deltaY <= -WHEEL_THRESHOLD
-      ) {
-        event.preventDefault();
-        moveTo(0);
+        event.deltaY < 0;
+
+      if (!movingForward && !movingBackward) {
+        wheelIntent.current.delta = 0;
+        return;
       }
+
+      event.preventDefault();
+
+      const now = Date.now();
+      const multiplier =
+        event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? window.innerHeight
+            : 1;
+      const normalizedDelta = event.deltaY * multiplier;
+      const previous = wheelIntent.current;
+
+      if (
+        now - previous.timestamp > 180 ||
+        Math.sign(previous.delta) !== Math.sign(normalizedDelta)
+      ) {
+        previous.delta = 0;
+      }
+
+      previous.delta += normalizedDelta;
+      previous.timestamp = now;
+
+      const thresholdReached = movingForward
+        ? previous.delta >= WHEEL_THRESHOLD
+        : previous.delta <= -WHEEL_THRESHOLD;
+
+      if (!thresholdReached || Date.now() < lockedUntil.current) return;
+
+      previous.delta = 0;
+      moveTo(movingForward ? 1 : 0);
     };
 
     window.addEventListener("wheel", handleIntroWheel, { passive: false });
@@ -460,16 +487,6 @@ export function FullPageParallax({
         <div
           className="full-page-parallax"
           data-active-slide={activeSlide}
-          onWheel={
-            activeSlide === 0
-              ? (event) => {
-                  if (event.deltaY >= WHEEL_THRESHOLD) {
-                    event.preventDefault();
-                    moveTo(1);
-                  }
-                }
-              : undefined
-          }
           onTouchStart={(event) => {
             if (window.scrollY <= INTRO_TOP_PX) {
               touchStartY.current = event.touches[0]?.clientY ?? null;
