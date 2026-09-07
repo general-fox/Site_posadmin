@@ -1,0 +1,20 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="22.514" height="28.696" viewBox="0 0 22.514 28.696" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Lightning">
+<g id="Union" filter="url(#filter0_d_702_245)">
+<path d="M13.0724 12.7691C12.9619 12.7691 12.8724 12.6796 12.8724 12.5691V4.95184C12.8724 4.75925 12.6269 4.67794 12.5119 4.83245L4.85112 15.1284C4.60569 15.4583 4.84111 15.9269 5.25226 15.9269H9.44163C9.55209 15.9269 9.64163 16.0164 9.64163 16.1269V23.7442C9.64163 23.9368 9.88712 24.0181 10.0021 23.8636L17.6629 13.5676C17.9083 13.2377 17.6729 12.7691 17.2618 12.7691H13.0724Z" fill="#E66026"/>
+<path d="M13.0724 12.7691C12.9619 12.7691 12.8724 12.6796 12.8724 12.5691V4.95184C12.8724 4.75925 12.6269 4.67794 12.5119 4.83245L4.85112 15.1284C4.60569 15.4583 4.84111 15.9269 5.25226 15.9269H9.44163C9.55209 15.9269 9.64163 16.0164 9.64163 16.1269V23.7442C9.64163 23.9368 9.88712 24.0181 10.0021 23.8636L17.6629 13.5676C17.9083 13.2377 17.6729 12.7691 17.2618 12.7691H13.0724Z" stroke="#E66026" stroke-width="1.5"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_702_245" x="-1.19209e-07" y="-1.49012e-07" width="22.514" height="28.696" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="2"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.901961 0 0 0 0 0.376471 0 0 0 0 0.14902 0 0 0 0.46 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_702_245"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_702_245" result="shape"/>
+</filter>
+</defs>
+</svg>
