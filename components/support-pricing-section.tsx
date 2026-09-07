@@ -1,11 +1,12 @@
 "use client";
 
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { WaveWords } from "@/components/wave-words";
 import { useParallaxAnimationCycle } from "@/components/full-page-parallax";
 import { ItAdminVisual } from "@/components/it-admin-visual";
 import { CallbackDialog } from "@/components/callback-dialog";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 import {
   calculateRkeeperPricing,
   RKEEPER_PRODUCT_ID,
@@ -405,7 +406,7 @@ function PricingFooter({
 }
 
 export function SupportPricingSection() {
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
   const animationCycle = useParallaxAnimationCycle();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const headingInView = useInView(headingRef, { amount: 0.5 });

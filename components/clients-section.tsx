@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useAnimation, useReducedMotion } from "framer-motion";
+import { motion, useAnimation } from "framer-motion";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 import { ClientsStatsDots } from "@/components/clients-stats-dots";
 import { LiquidLogo } from "@/components/liquid-logo";
 import { WaveWords } from "@/components/wave-words";
@@ -54,7 +55,7 @@ function ClientsWave({
 }
 
 export function ClientsSection() {
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
   const animationCycle = useParallaxAnimationCycle();
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useRef(false);

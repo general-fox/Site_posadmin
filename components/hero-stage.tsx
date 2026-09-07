@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { HeroDust } from "@/components/hero-dust";
 import { CircuitLines } from "@/components/circuit-lines";
 import { HeroCapsules } from "@/components/hero-capsules";
 import { FlipWords } from "@/components/flip-words";
 import { WaveWords } from "@/components/wave-words";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 
 const waveEase = [0.33, 1, 0.68, 1] as const;
 
@@ -57,7 +58,7 @@ export function GlowLayer() {
 }
 
 export function HeroStage() {
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
   const titleBoxRef = useRef<HTMLHeadingElement>(null);
   const [titleSize, setTitleSize] = useState({ w: 460, h: 148 });
   const [titleDone, setTitleDone] = useState(false);

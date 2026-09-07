@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "framer-motion";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 
 type Speck = {
   x: number;
@@ -39,7 +39,7 @@ function spawn(w: number, h: number): Speck {
 
 export function HeroDust() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
 
   useEffect(() => {
     const canvas = canvasRef.current;

@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 import { useParallaxEntry } from "@/components/full-page-parallax";
 
 function Glyph({ children }: { children: ReactNode }) {
@@ -136,7 +137,7 @@ const TILES = [
 
 export function ServicesTiles() {
   const parallaxEntry = useParallaxEntry();
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
 
   return (
     <ul className="grid h-full grid-cols-1 content-center gap-3 sm:grid-cols-2">

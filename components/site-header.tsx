@@ -13,10 +13,10 @@ import {
   motion,
   useMotionTemplate,
   useMotionValue,
-  useReducedMotion,
 } from "framer-motion";
 import { useParallaxActiveSlide } from "@/components/full-page-parallax";
 import { SiteLogoMark } from "@/components/site-logo-mark";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 
 const links = [
   { href: "/#about", label: "О нас" },
@@ -66,7 +66,7 @@ export function SiteHeader() {
   const [productsActive, setProductsActive] = useState(false);
   const aboutActive = activeSlide > 0 && !priceActive && !productsActive;
   const lightSurface = activeSlide > 0;
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
   const navRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
   const aboutRef = useRef<HTMLAnchorElement>(null);

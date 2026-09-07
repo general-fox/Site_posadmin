@@ -5,10 +5,10 @@ import {
   AnimatePresence,
   motion,
   useInView,
-  useReducedMotion,
 } from "framer-motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CallbackDialog } from "@/components/callback-dialog";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 
 type ProductView = "overview" | "booking" | "guests" | "campaigns";
 
@@ -404,7 +404,7 @@ function ProductDashboard({
 }
 
 export function ProductsSection() {
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const inView = useInView(sectionRef, { amount: 0.25 });
   const [activeView, setActiveView] = useState<ProductView>("overview");

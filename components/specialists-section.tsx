@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 import { SupportChat } from "@/components/support-chat";
 import { ServicesTiles } from "@/components/services-tiles";
 import { WaveWords } from "@/components/wave-words";
@@ -10,7 +10,7 @@ const DIVIDER =
   "linear-gradient(180deg, rgba(50,47,47,0) 0%, rgba(50,47,47,0.26) 50%, rgba(50,47,47,0) 100%)";
 
 export function SpecialistsSection() {
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
   const parallaxEntry = useParallaxEntry();
 
   return (

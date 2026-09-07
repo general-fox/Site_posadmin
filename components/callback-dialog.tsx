@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   useEffect,
   useId,
@@ -9,6 +9,7 @@ import {
   type FormEvent,
   type MouseEvent,
 } from "react";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 
 type CallbackDialogProps = {
   onClose: () => void;
@@ -69,7 +70,7 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
   const titleId = useId();
   const descriptionId = useId();
   const phoneHintId = useId();
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
   const [minDate, setMinDate] = useState("");
   const [minTime, setMinTime] = useState("");
   const [selectedDate, setSelectedDate] = useState("");

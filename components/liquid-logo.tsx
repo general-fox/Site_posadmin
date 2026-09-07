@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "framer-motion";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 
 const VERT = `
 attribute vec2 position;
@@ -187,7 +187,7 @@ export function LiquidLogo({
   markPx,
   className,
 }: LiquidLogoProps) {
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hovered = useRef(false);

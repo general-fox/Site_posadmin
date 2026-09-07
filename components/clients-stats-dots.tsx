@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "framer-motion";
+import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 
 const TAU = Math.PI * 2;
 const DEG = Math.PI / 180;
@@ -79,7 +79,7 @@ function drawGuilloche(
 
 export function ClientsStatsDots() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const reduced = useReducedMotion();
+  const reduced = useHydratedReducedMotion();
 
   useEffect(() => {
     const canvas = canvasRef.current;
