@@ -1,28 +1,9 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-
-const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-
-function subscribe(onChange: () => void) {
-  const mediaQuery = window.matchMedia(REDUCED_MOTION_QUERY);
-  mediaQuery.addEventListener("change", onChange);
-
-  return () => mediaQuery.removeEventListener("change", onChange);
-}
-
-function getSnapshot() {
-  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
-}
-
-function getServerSnapshot() {
-  return false;
-}
-
 /**
- * Keeps the server render and the browser's first hydration render identical,
- * then applies the visitor's reduced-motion preference.
+ * Marketing motion is kept enabled on every device so the site presentation
+ * remains consistent regardless of the operating-system animation setting.
  */
 export function useHydratedReducedMotion() {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return false;
 }

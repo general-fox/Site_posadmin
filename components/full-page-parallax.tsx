@@ -244,7 +244,6 @@ export function FullPageParallax({
 
   useEffect(() => {
     if (compactFlow || activeSlide !== 1) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     let lenis: Lenis | null = null;
     let activationTimer: ReturnType<typeof setTimeout> | null = null;
@@ -340,22 +339,13 @@ export function FullPageParallax({
       pendingScroll.current = null;
       if (compactFlow) {
         document.getElementById("about")?.scrollIntoView({
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-            .matches
-            ? "auto"
-            : "smooth",
+          behavior: "smooth",
           block: "start",
         });
         return;
       }
       if (activeSlide === 0) moveTo(1);
-      else {
-        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          window.scrollTo(0, 0);
-        } else {
-          scrollWithLenis(0);
-        }
-      }
+      else scrollWithLenis(0);
     };
 
     const goHome = () => {
@@ -396,14 +386,8 @@ export function FullPageParallax({
           history.pushState(null, "", "#pricing");
         }
 
-        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
-          .matches
-          ? "auto"
-          : "smooth";
-
-        if (compactFlow || behavior === "auto") {
-          pricing.scrollIntoView({ behavior, block: "start" });
-          if (!compactFlow && activeSlide === 0) moveTo(1);
+        if (compactFlow) {
+          pricing.scrollIntoView({ behavior: "smooth", block: "start" });
           return;
         }
 
@@ -424,20 +408,38 @@ export function FullPageParallax({
           history.pushState(null, "", "#products");
         }
 
-        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
-          .matches
-          ? "auto"
-          : "smooth";
-
-        if (compactFlow || behavior === "auto") {
-          products.scrollIntoView({ behavior, block: "start" });
-          if (!compactFlow && activeSlide === 0) moveTo(1);
+        if (compactFlow) {
+          products.scrollIntoView({ behavior: "smooth", block: "start" });
           return;
         }
 
         scrollWithLenis(products);
         if (activeSlide === 0) {
           moveTo(1);
+        }
+        return;
+      }
+
+      if (href.startsWith("#") && url.hash) {
+        const target = document.getElementById(url.hash.slice(1));
+        if (!target) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        if (window.location.hash !== url.hash) {
+          history.pushState(null, "", url.hash);
+        }
+
+        if (compactFlow) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+
+        if (activeSlide === 0) {
+          pendingScroll.current = { target };
+          moveTo(1);
+        } else {
+          scrollWithLenis(target);
         }
         return;
       }

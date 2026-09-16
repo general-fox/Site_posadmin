@@ -60,11 +60,13 @@ function NavArrow() {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
   const activeSlide = useParallaxActiveSlide();
   const [priceActive, setPriceActive] = useState(false);
   const [productsActive, setProductsActive] = useState(false);
-  const aboutActive = activeSlide > 0 && !priceActive && !productsActive;
+  const aboutActive =
+    page === "about" ||
+    (activeSlide > 0 && !priceActive && !productsActive);
   const lightSurface = activeSlide > 0;
   const reduced = useHydratedReducedMotion();
   const navRef = useRef<HTMLElement>(null);
@@ -100,6 +102,7 @@ export function SiteHeader() {
   }, [aboutActive, placeCapsule, priceActive, productsActive]);
 
   useEffect(() => {
+    if (page !== "home") return;
     const pricing = document.querySelector(
       '[aria-labelledby="support-pricing-title"]',
     );
@@ -127,7 +130,7 @@ export function SiteHeader() {
       window.removeEventListener("scroll", syncActiveSection);
       window.removeEventListener("resize", syncActiveSection);
     };
-  }, []);
+  }, [page]);
 
   useLayoutEffect(() => {
     resetCapsule();
@@ -164,6 +167,7 @@ export function SiteHeader() {
     <header
       className="site-header fixed top-0 left-0 z-50 h-20 w-full bg-transparent"
       data-surface={lightSurface ? "light" : "dark"}
+      data-page={page}
     >
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-center px-4 md:px-10 xl:px-[120px]">
         <motion.nav
@@ -206,46 +210,45 @@ export function SiteHeader() {
               </span>
             </span>
           </Link>
-          {links.map((item, i) => (
-            <Link
-              key={item.href}
-              ref={
-                item.href === "/#about"
-                  ? aboutRef
-                  : item.href === "/#pricing"
-                    ? priceRef
-                    : item.href === "/#products"
-                      ? productsRef
-                      : undefined
-              }
-              href={item.href}
-              className={itemClass}
-              aria-current={
-                (item.href === "/#about" && aboutActive) ||
-                (item.href === "/#pricing" && priceActive) ||
-                (item.href === "/#products" && productsActive)
-                  ? "page"
-                  : undefined
-              }
-              onMouseEnter={(event) => placeCapsule(event.currentTarget)}
-            >
-              <motion.span
-                className="nav-link relative inline-block whitespace-nowrap"
-                data-active={
-                  (item.href === "/#about" && aboutActive) ||
-                  (item.href === "/#pricing" && priceActive) ||
-                  (item.href === "/#products" && productsActive)
-                    ? "true"
-                    : undefined
+          {links.map((item, i) => {
+            const href =
+              page === "about" && item.href === "/#about"
+                ? "/about"
+                : item.href;
+            const active =
+              (item.href === "/#about" && aboutActive) ||
+              (item.href === "/#pricing" && priceActive) ||
+              (item.href === "/#products" && productsActive);
+
+            return (
+              <Link
+                key={item.href}
+                ref={
+                  item.href === "/#about"
+                    ? aboutRef
+                    : item.href === "/#pricing"
+                      ? priceRef
+                      : item.href === "/#products"
+                        ? productsRef
+                        : undefined
                 }
-                {...reveal(2.18 + i * 0.07, reduced)}
+                href={href}
+                className={itemClass}
+                aria-current={active ? "page" : undefined}
+                onMouseEnter={(event) => placeCapsule(event.currentTarget)}
               >
-                {item.label}
-              </motion.span>
-            </Link>
-          ))}
+                <motion.span
+                  className="nav-link relative inline-block whitespace-nowrap"
+                  data-active={active ? "true" : undefined}
+                  {...reveal(2.18 + i * 0.07, reduced)}
+                >
+                  {item.label}
+                </motion.span>
+              </Link>
+            );
+          })}
           <Link
-            href="/#contact"
+            href={page === "about" ? "#contact" : "/#contact"}
             className="relative z-10 flex h-12 shrink-0 items-center gap-2.5 pr-5 pl-4 md:flex"
             onMouseEnter={(event) => placeCapsule(event.currentTarget, true)}
           >
