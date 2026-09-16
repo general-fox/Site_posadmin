@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { CallbackDialog } from "@/components/callback-dialog";
-import { FullPageParallax } from "@/components/full-page-parallax";
 import { SiteHeader } from "@/components/site-header";
 import { SiteLogoMark } from "@/components/site-logo-mark";
+import styles from "./about-page.module.css";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -24,16 +24,19 @@ const teamNodes = [
 const outcomes = [
   {
     number: "01",
+    label: "Запуск объекта",
     title: "Запускаем",
     text: "Подбираем решения и оборудование, рассчитываем сроки, координируем монтаж и пусконаладку до готовности объекта.",
   },
   {
     number: "02",
+    label: "Единое окно",
     title: "Сопровождаем",
     text: "Поддерживаем программный и технический контур: r_keeper, ККТ, сети, рабочие места, ГИС и электронный документооборот.",
   },
   {
     number: "03",
+    label: "Интеграции",
     title: "Развиваем",
     text: "Находим причины повторяющихся проблем, создаём интеграции и дорабатываем системы под реальные процессы заведения.",
   },
@@ -42,21 +45,25 @@ const outcomes = [
 const processSteps = [
   {
     number: "01",
+    label: "Обращение",
     title: "Вы описываете задачу",
     text: "В одном обращении — без поиска нужного отдела и повторного объяснения ситуации.",
   },
   {
     number: "02",
+    label: "Подбор команды",
     title: "Менеджер собирает команду",
     text: "Подключает специалистов тех направлений, которые действительно нужны для решения.",
   },
   {
     number: "03",
+    label: "Контроль",
     title: "Мы ведём задачу целиком",
     text: "Координируем участников, контролируем сроки и анализируем последствия решений.",
   },
   {
     number: "04",
+    label: "Результат",
     title: "Вы получаете результат",
     text: "Один ответственный контур вместо нескольких несвязанных подрядчиков.",
   },
@@ -127,6 +134,288 @@ function ArrowIcon() {
   );
 }
 
+function LaunchPreview() {
+  return (
+    <div className="absolute right-5 -bottom-9 left-5 h-[148px] transform-gpu overflow-hidden rounded-t-[18px] border border-b-0 border-[#d8d7cf] bg-[#fbfbf7]/92 p-4 shadow-[0_14px_40px_rgba(50,47,47,0.08)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-focus:-translate-y-9 group-hover:-translate-y-9 sm:right-6 sm:left-6">
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-medium tracking-[0.14em] text-[#969691] uppercase">
+          Готовность объекта
+        </span>
+        <span className="rounded-full bg-[#e66026]/10 px-2.5 py-1 text-[9px] font-medium text-[#b64719]">
+          в работе
+        </span>
+      </div>
+      <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[#deded5]">
+        <motion.div
+          className="h-full rounded-full bg-[#e66026]"
+          initial={{ width: "18%" }}
+          transition={{ delay: 0.3, duration: 1.2, ease: EASE }}
+          viewport={{ amount: 0.6, once: true }}
+          whileInView={{ width: "78%" }}
+        />
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-2 text-[9px] text-[#646565]">
+        <span>Расчёт</span>
+        <span className="text-center">Монтаж</span>
+        <span className="text-right">Запуск</span>
+      </div>
+      <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-[#e3e2da] pt-2.5 text-[9px]">
+        <span className="text-[#969691]">Следующий этап</span>
+        <span className="font-medium text-[#322f2f]">Пусконаладка →</span>
+      </div>
+    </div>
+  );
+}
+
+function SupportPreview() {
+  const systems = ["r_keeper", "ККТ и ОФД", "Сеть и рабочие места"];
+
+  return (
+    <div className="absolute right-5 -bottom-9 left-5 h-[162px] transform-gpu overflow-hidden rounded-t-[18px] border border-b-0 border-[#d8d7cf] bg-[#fbfbf7]/92 px-4 pt-3 shadow-[0_14px_40px_rgba(50,47,47,0.08)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-focus:-translate-y-9 group-hover:-translate-y-9 sm:right-6 sm:left-6">
+      <div className="flex items-center justify-between border-b border-[#e3e2da] pb-2.5">
+        <span className="text-[10px] font-medium">Состояние систем</span>
+        <span className="flex items-center gap-1.5 text-[9px] text-[#5e6d50]">
+          <motion.span
+            animate={{ opacity: [0.45, 1, 0.45] }}
+            className="size-1.5 rounded-full bg-[#799462]"
+            transition={{ duration: 1.8, repeat: Infinity }}
+          />
+          стабильно
+        </span>
+      </div>
+      <div className="divide-y divide-[#ebeae3]">
+        {systems.map((system, index) => (
+          <div className="flex items-center justify-between py-2" key={system}>
+            <span className="text-[9px] text-[#646565]">{system}</span>
+            <span className="flex items-center gap-1.5 text-[9px] text-[#969691]">
+              {index === 1 ? "проверено 2 мин назад" : "в сети"}
+              <span className="size-1.5 rounded-full bg-[#799462]" />
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-[#e3e2da] pt-2.5 text-[9px]">
+        <span className="text-[#969691]">Мониторинг</span>
+        <span className="font-medium text-[#5e6d50]">24/7 без пауз</span>
+      </div>
+    </div>
+  );
+}
+
+function DevelopmentPreview() {
+  const nodes = ["CRM", "Склад", "r_keeper", "Доставка"];
+
+  return (
+    <div className="absolute right-5 -bottom-9 left-5 h-[154px] transform-gpu overflow-hidden rounded-t-[18px] border border-b-0 border-[#d8d7cf] bg-[#fbfbf7]/92 shadow-[0_14px_40px_rgba(50,47,47,0.08)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-focus:-translate-y-9 group-hover:-translate-y-9 sm:right-6 sm:left-6">
+      <svg
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-[118px] w-full"
+        preserveAspectRatio="none"
+        viewBox="0 0 320 118"
+      >
+        <path
+          d="M55 34 C92 34 102 59 138 59 M182 59 C218 59 229 34 266 34 M160 76 V101"
+          fill="none"
+          stroke="#c9c8bf"
+          strokeDasharray="4 5"
+          strokeWidth="1.2"
+        />
+        <motion.path
+          d="M55 34 C92 34 102 59 138 59 M182 59 C218 59 229 34 266 34"
+          fill="none"
+          initial={{ pathLength: 0 }}
+          stroke="#e66026"
+          strokeWidth="1.5"
+          transition={{ delay: 0.2, duration: 1.2, ease: EASE }}
+          viewport={{ amount: 0.7, once: true }}
+          whileInView={{ pathLength: 1 }}
+        />
+      </svg>
+      <div className="absolute inset-x-4 top-4 flex items-start justify-between">
+        {nodes.slice(0, 2).map((node) => (
+          <span
+            className="rounded-full border border-[#d8d7cf] bg-white px-2.5 py-1.5 text-[9px] font-medium"
+            key={node}
+          >
+            {node}
+          </span>
+        ))}
+      </div>
+      <div className="absolute top-[43px] left-1/2 -translate-x-1/2 rounded-full bg-[#322f2f] px-3 py-2 text-[9px] font-medium text-[#f5f5ed] shadow-lg">
+        {nodes[2]}
+      </div>
+      <div className="absolute top-[82px] left-1/2 -translate-x-1/2 rounded-full border border-[#e66026]/25 bg-[#fff4ed] px-2.5 py-1.5 text-[9px] font-medium text-[#b64719]">
+        {nodes[3]}
+      </div>
+      <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-[#e3e2da] pt-2.5 text-[9px]">
+        <span className="text-[#969691]">Связано систем</span>
+        <span className="font-medium text-[#322f2f]">4 · единый контур</span>
+      </div>
+    </div>
+  );
+}
+
+function AutomationPreview({ index }: { index: number }) {
+  if (index === 0) return <LaunchPreview />;
+  if (index === 1) return <SupportPreview />;
+  return <DevelopmentPreview />;
+}
+
+function ProcessPreview({ index }: { index: number }) {
+  if (index === 0) {
+    return (
+      <div className="absolute right-6 -bottom-9 left-6 h-[172px] transform-gpu overflow-hidden rounded-t-[20px] border border-b-0 border-[#d8d7cf] bg-[#fbfbf7] p-4 shadow-[0_18px_45px_rgba(15,15,10,0.09)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-focus:-translate-y-9 group-hover:-translate-y-9 sm:right-7 sm:left-7">
+        <div className="flex items-center justify-between border-b border-[#e6e5de] pb-3">
+          <span className="text-[9px] font-medium tracking-[0.13em] text-[#969691] uppercase">
+            Новое обращение
+          </span>
+          <span className="flex items-center gap-1.5 text-[9px] text-[#b64719]">
+            <span className="size-1.5 rounded-full bg-[#e66026]" />
+            принято
+          </span>
+        </div>
+        <div className="mt-3 max-w-[82%] rounded-[13px] rounded-tl-[4px] bg-[#eeeee7] px-3.5 py-2.5 text-[10px] leading-[15px] text-[#555552]">
+          Нужно подготовить новую кассовую зону к открытию в пятницу.
+        </div>
+        <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-[#e3e2da] pt-2.5 text-[9px]">
+          <span className="text-[#969691]">Канал связи</span>
+          <span className="font-medium text-[#322f2f]">один рабочий чат</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 1) {
+    const members = [
+      ["АМ", "Аккаунт-менеджер", "координация"],
+      ["ИК", "Инженер ККТ", "подключён"],
+      ["РП", "Специалист r_keeper", "подключён"],
+    ];
+
+    return (
+      <div className="absolute right-6 -bottom-9 left-6 h-[178px] transform-gpu overflow-hidden rounded-t-[20px] border border-b-0 border-[#d8d7cf] bg-[#fbfbf7] px-4 pt-3 shadow-[0_18px_45px_rgba(15,15,10,0.09)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-focus:-translate-y-9 group-hover:-translate-y-9 sm:right-7 sm:left-7">
+        <div className="flex items-center justify-between pb-2">
+          <span className="text-[9px] font-medium tracking-[0.13em] text-[#969691] uppercase">
+            Команда задачи
+          </span>
+          <span className="rounded-full bg-[#ecece5] px-2 py-1 text-[8px] text-[#646565]">
+            3 специалиста
+          </span>
+        </div>
+        <div className="divide-y divide-[#e9e8e1]">
+          {members.map(([initials, role, status], memberIndex) => (
+            <div className="flex items-center gap-2.5 py-1.5" key={role}>
+              <span
+                className={`flex size-6 items-center justify-center rounded-full text-[7px] font-semibold ${
+                  memberIndex === 0
+                    ? "bg-[#322f2f] text-white"
+                    : "bg-[#e66026]/12 text-[#b64719]"
+                }`}
+              >
+                {initials}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[9px] font-medium text-[#4f4e4b]">
+                {role}
+              </span>
+              <span className="text-[8px] text-[#969691]">{status}</span>
+            </div>
+          ))}
+        </div>
+        <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-[#e3e2da] pt-2.5 text-[9px]">
+          <span className="text-[#969691]">Ответственный</span>
+          <span className="font-medium text-[#322f2f]">один менеджер</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 2) {
+    const stages = ["Диагностика", "Решение", "Проверка"];
+
+    return (
+      <div className="absolute right-6 -bottom-9 left-6 h-[172px] transform-gpu overflow-hidden rounded-t-[20px] border border-b-0 border-[#d8d7cf] bg-[#fbfbf7] p-4 shadow-[0_18px_45px_rgba(15,15,10,0.09)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-focus:-translate-y-9 group-hover:-translate-y-9 sm:right-7 sm:left-7">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] font-medium tracking-[0.13em] text-[#969691] uppercase">
+            Ход работ
+          </span>
+          <span className="text-[9px] font-medium text-[#b64719]">67%</span>
+        </div>
+        <div className="relative mt-5 flex justify-between before:absolute before:top-[7px] before:right-3 before:left-3 before:h-px before:bg-[#d8d7cf]">
+          {stages.map((stage, stageIndex) => (
+            <div className="relative z-10 flex w-[31%] flex-col items-center" key={stage}>
+              <motion.span
+                className={`size-[15px] rounded-full border-[4px] border-[#fbfbf7] ${
+                  stageIndex < 2 ? "bg-[#e66026]" : "bg-[#cfcec6]"
+                }`}
+                initial={{ scale: 0.6 }}
+                transition={{ delay: 0.25 + stageIndex * 0.13, duration: 0.5, ease: EASE }}
+                viewport={{ amount: 0.7, once: true }}
+                whileInView={{ scale: 1 }}
+              />
+              <span className="mt-2 text-center text-[8px] leading-3 text-[#646565]">
+                {stage}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 h-1 overflow-hidden rounded-full bg-[#e2e1da]">
+          <motion.div
+            className="h-full rounded-full bg-[#e66026]"
+            initial={{ width: "18%" }}
+            transition={{ delay: 0.3, duration: 1.1, ease: EASE }}
+            viewport={{ amount: 0.7, once: true }}
+            whileInView={{ width: "67%" }}
+          />
+        </div>
+        <div className="absolute inset-x-4 bottom-3 flex items-center justify-between border-t border-[#e3e2da] pt-2.5 text-[9px]">
+          <span className="text-[#969691]">Контроль</span>
+          <span className="font-medium text-[#322f2f]">до полной готовности</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute right-6 -bottom-9 left-6 h-[172px] transform-gpu overflow-hidden rounded-t-[20px] border border-b-0 border-[#d8d7cf] bg-[#fbfbf7] px-5 pt-5 shadow-[0_18px_45px_rgba(15,15,10,0.09)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform group-focus:-translate-y-9 group-hover:-translate-y-9 sm:right-7 sm:left-7">
+      <div className="flex items-center gap-4">
+        <motion.span
+          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#718b5e] text-white"
+          initial={{ scale: 0.72, rotate: -12 }}
+          transition={{ delay: 0.25, duration: 0.65, ease: EASE }}
+          viewport={{ amount: 0.7, once: true }}
+          whileInView={{ scale: 1, rotate: 0 }}
+        >
+          <svg aria-hidden="true" className="size-5" viewBox="0 0 20 20">
+            <path
+              d="m5.2 10.2 3.1 3.1 6.6-7"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+          </svg>
+        </motion.span>
+        <div>
+          <p className="text-[9px] font-medium tracking-[0.13em] text-[#718b5e] uppercase">
+            Задача закрыта
+          </p>
+          <p className="mt-1.5 text-[15px] font-medium leading-5 text-[#322f2f]">
+            Всё готово к работе
+          </p>
+          <p className="mt-1 text-[9px] leading-[14px] text-[#777772]">
+            Результат и отчёт — в одном диалоге
+          </p>
+        </div>
+      </div>
+      <div className="absolute inset-x-5 bottom-3 flex items-center justify-between border-t border-[#e3e2da] pt-2.5 text-[9px]">
+        <span className="text-[#969691]">Материалы</span>
+        <span className="font-medium text-[#322f2f]">отчёт уже отправлен</span>
+      </div>
+    </div>
+  );
+}
+
 function TeamNode({
   className,
   index,
@@ -139,7 +428,7 @@ function TeamNode({
   return (
     <motion.div
       animate={{ y: [0, index % 2 === 0 ? -6 : 6, 0] }}
-      className={`absolute z-10 flex min-h-10 items-center rounded-full border border-[#f5f5ed]/15 bg-[#f5f5ed]/10 px-3 text-[10px] font-medium whitespace-nowrap text-[#f5f5ed] shadow-[0_14px_40px_rgba(0,0,0,0.24)] backdrop-blur-md sm:min-h-11 sm:px-4 sm:text-[12px] ${className}`}
+      className={`absolute z-10 flex min-h-9 items-center rounded-full border border-[#f5f5ed]/15 bg-[#f5f5ed]/10 px-2 text-[9px] font-medium whitespace-nowrap text-[#f5f5ed] shadow-[0_14px_40px_rgba(0,0,0,0.24)] backdrop-blur-md lg:min-h-10 lg:px-2.5 lg:text-[10px] ${className}`}
       initial={{ opacity: 0, scale: 0.84 }}
       transition={{
         delay: 0.75 + index * 0.12,
@@ -234,7 +523,7 @@ function TeamConstellation() {
 
       <motion.div
         animate={{ scale: [1, 1.035, 1] }}
-        className="absolute left-1/2 top-1/2 z-20 flex size-[132px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-[#f5f5ed]/15 bg-[#171711]/90 shadow-[0_0_80px_rgba(230,96,38,0.16)] backdrop-blur-xl sm:size-[164px]"
+        className="absolute left-1/2 top-1/2 z-20 flex size-[32%] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-[#f5f5ed]/15 bg-[#171711]/90 shadow-[0_0_80px_rgba(230,96,38,0.16)] backdrop-blur-xl"
         initial={{ opacity: 0, scale: 0.82 }}
         transition={{
           duration: 4.4,
@@ -246,8 +535,8 @@ function TeamConstellation() {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
       >
-        <SiteLogoMark className="h-auto w-[78px] text-[#f5f5ed] sm:w-[94px]" />
-        <span className="mt-2 text-[9px] tracking-[0.16em] text-[#f5f5ed]/45 uppercase sm:text-[10px]">
+        <SiteLogoMark className="h-auto w-[68%] text-[#f5f5ed]" />
+        <span className="mt-2 text-[7px] tracking-[0.08em] text-[#f5f5ed]/60 uppercase lg:text-[8px]">
           единая команда
         </span>
       </motion.div>
@@ -263,10 +552,14 @@ export function AboutPage() {
   const [callbackOpen, setCallbackOpen] = useState(false);
 
   return (
-    <FullPageParallax header={<SiteHeader page="about" />}>
+    <div className={styles.page}>
+      <SiteHeader page="about" />
+      <main className={styles.content} aria-label="О компании Posadmin">
       <section
-        className="relative min-h-[820px] overflow-hidden rounded-b-[44px] bg-[#0f0f0a] font-[family-name:var(--font-inter)] text-[#f5f5ed] sm:rounded-b-[56px]"
+        className={styles.hero}
+        aria-labelledby="about-title"
         data-about-hero
+        data-header-surface="dark"
       >
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -left-[16%] top-[42%] h-[540px] w-[540px] rounded-full bg-[#e66026]/10 blur-[120px]" />
@@ -274,8 +567,8 @@ export function AboutPage() {
           <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(245,245,237,.18)_1px,transparent_1px),linear-gradient(90deg,rgba(245,245,237,.18)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:linear-gradient(to_bottom,black,transparent_92%)]" />
         </div>
 
-        <div className="relative mx-auto grid min-h-[820px] w-full max-w-[1440px] items-center gap-14 px-4 pb-20 pt-32 md:px-10 md:pt-36 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16 xl:px-[120px]">
-          <div className="max-w-[600px]">
+        <div className={styles.heroLayout}>
+          <div className="min-w-0">
             <motion.p
               animate={{ opacity: 1, y: 0 }}
               className="text-[11px] font-medium tracking-[0.18em] text-[#e66026] uppercase"
@@ -286,31 +579,32 @@ export function AboutPage() {
             </motion.p>
             <motion.h1
               animate={{ opacity: 1, y: 0 }}
-              className="mt-5 text-[44px] font-medium leading-[0.98] tracking-[0.3px] sm:text-[62px] sm:tracking-[0.6px] lg:text-[72px] lg:tracking-[1.28px]"
+              className={styles.heroTitle}
+              id="about-title"
               initial={{ opacity: 0, y: 34 }}
               transition={{ delay: 0.32, duration: 1, ease: EASE }}
             >
               Автоматизация,
-              <span className="block text-[#f5f5ed]/55">за которой стоит команда</span>
+              <span className="block text-[#f5f5ed]/68">за которой стоит команда</span>
             </motion.h1>
-            <motion.p
+            <motion.div
               animate={{ opacity: 1, y: 0 }}
-              className="mt-7 max-w-[570px] text-[16px] leading-[26px] tracking-[0.1px] text-[#f5f5ed]/68 sm:text-[18px] sm:leading-[29px] sm:tracking-[0.15px]"
+              className={styles.heroCopy}
               initial={{ opacity: 0, y: 24 }}
               transition={{ delay: 0.48, duration: 0.8, ease: EASE }}
             >
-              Объединяем специалистов по программному обеспечению, оборудованию,
-              кассам, государственным системам и интеграциям. Вам не приходится
-              координировать нескольких подрядчиков — мы берём эту работу на себя.
-            </motion.p>
+              <p>Объединяем специалистов по программному обеспечению, оборудованию,
+              кассам, государственным системам и интеграциям.</p>
+              <p>Вам не приходится координировать нескольких подрядчиков — мы берём эту работу на себя.</p>
+            </motion.div>
             <motion.div
               animate={{ opacity: 1, y: 0 }}
-              className="mt-9 flex flex-wrap gap-3"
+              className="mt-7 flex flex-wrap items-center gap-3"
               initial={{ opacity: 0, y: 20 }}
               transition={{ delay: 0.62, duration: 0.7, ease: EASE }}
             >
               <button
-                className="flex min-h-12 items-center gap-3 rounded-full bg-[#e66026] px-7 text-[14px] font-medium text-white transition-transform hover:-translate-y-0.5 hover:bg-[#cf501c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5f5ed]"
+                className="flex min-h-12 items-center gap-2 rounded-full bg-[#e66026] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#cf501c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5f5ed] sm:px-5 sm:text-[14px]"
                 onClick={() => setCallbackOpen(true)}
                 type="button"
               >
@@ -318,7 +612,7 @@ export function AboutPage() {
                 <ArrowIcon />
               </button>
               <a
-                className="hero-glass-btn flex min-h-12 items-center rounded-full px-7 text-[14px] font-medium text-[#f5f5ed]"
+                className="flex min-h-12 items-center rounded-full text-[13px] font-medium text-[#f5f5ed]/85 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f5f5ed] sm:px-3 sm:text-[14px]"
                 href="#approach"
               >
                 Как мы работаем
@@ -327,6 +621,7 @@ export function AboutPage() {
           </div>
 
           <motion.div
+            className={styles.heroDiagram}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             initial={{ opacity: 0, scale: 0.96, y: 26 }}
             transition={{ delay: 0.38, duration: 1.05, ease: EASE }}
@@ -337,159 +632,169 @@ export function AboutPage() {
       </section>
 
       <section
-        aria-label="Компания в цифрах"
-        className="flex min-h-svh items-center bg-[#f5f5ed] px-4 py-20 font-[family-name:var(--font-inter)] text-[#322f2f] md:px-10 md:py-24 xl:px-[120px]"
+        aria-labelledby="about-services-title"
+        id="expertise"
       >
         <div className="mx-auto w-full max-w-[1200px]">
-          <div className="grid gap-px overflow-hidden rounded-[30px] border border-[#d8d7cf] bg-[#d8d7cf] sm:grid-cols-3">
-            {[
-              ["Более 15 лет", "на рынке автоматизации"],
-              ["1 000+", "запущенных объектов"],
-              ["До 15 минут", "первичное реагирование"],
-            ].map(([value, label], index) => (
-              <motion.div
-                className="bg-[#f5f5ed] px-7 py-9 sm:min-h-[190px] sm:px-8 sm:py-10"
-                initial={{ opacity: 0, y: 22 }}
-                key={value}
-                transition={{ delay: index * 0.1, duration: 0.7, ease: EASE }}
-                viewport={{ amount: 0.5, once: true }}
-                whileInView={{ opacity: 1, y: 0 }}
-              >
-                <p className="text-[38px] font-medium leading-none tracking-[-0.16px] sm:text-[44px]">
-                  {value}
-                </p>
-                <p className="mt-4 text-[14px] leading-5 tracking-[0.1px] text-[#646565]">
-                  {label}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          <Reveal className="mt-14 grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-20">
-            <p className="pt-2 text-[11px] font-medium tracking-[0.18em] text-[#e66026] uppercase">
+          <Reveal>
+            <p className="text-[11px] font-medium tracking-[0.18em] text-[#e66026] uppercase">
               Чем мы занимаемся
             </p>
-            <div>
-              <h2 className="max-w-[850px] text-[36px] font-medium leading-[1.06] tracking-[-0.16px] sm:text-[52px]">
-                Весь контур автоматизации — в одной команде
-              </h2>
-              <p className="mt-6 max-w-[770px] text-[16px] leading-[27px] tracking-[0.1px] text-[#646565] sm:text-[18px] sm:leading-[30px] sm:tracking-[0.15px]">
+            <h2 className={styles.sectionTitle} id="about-services-title">
+              <span className="block">Весь контур автоматизации.</span>
+              <span className="mt-1 block text-[#777772]">
+                Одна команда на каждом этапе.
+              </span>
+            </h2>
+
+            <div className={styles.introDetails}>
+              <p className={styles.sectionCopy}>
                 От первого расчёта и установки оборудования до ежедневной
                 технической поддержки и разработки индивидуальных решений. Один
                 менеджер сопровождает проект и координирует нужных специалистов.
               </p>
+
+              <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[18px] border border-[#d8d7cf] bg-[#d8d7cf]">
+                {[
+                  ["15+ лет", "автоматизируем бизнес"],
+                  ["1 000+", "запущенных объектов"],
+                  ["до 15 мин", "первичная реакция"],
+                ].map(([value, label], index) => (
+                  <motion.div
+                    className="bg-[#efefe8] px-3 py-4 sm:px-4"
+                    initial={{ opacity: 0, y: 12 }}
+                    key={value}
+                    transition={{ delay: 0.12 + index * 0.08, duration: 0.6, ease: EASE }}
+                    viewport={{ amount: 0.5, once: true }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                  >
+                    <p className="text-[17px] font-medium leading-snug tracking-[-0.16px] sm:text-[20px]">
+                      {value}
+                    </p>
+                    <p className="mt-2 text-[10px] leading-[15px] text-[#646565] sm:text-[11px] sm:leading-4">
+                      {label}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </Reveal>
-        </div>
-      </section>
 
-      <div className="overflow-x-clip bg-[#f5f5ed] font-[family-name:var(--font-inter)] text-[#322f2f]">
-        <section className="px-4 py-16 md:px-10 md:py-24 xl:px-[120px]">
-          <div className="mx-auto w-full max-w-[1200px]">
-          <div className="mt-14 grid gap-4 lg:grid-cols-3">
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
             {outcomes.map((outcome, index) => (
               <motion.article
-                className="group min-h-[320px] rounded-[28px] border border-[#d8d7cf] bg-white/45 p-7 transition-colors hover:bg-white/75 sm:p-8"
-                initial={{ opacity: 0, y: 34 }}
+                className="group relative min-h-[360px] overflow-hidden rounded-[28px] border border-[#d8d7cf] bg-[#ecece5] p-6 pb-[186px] outline-none transition-[border-color,box-shadow] duration-300 focus-visible:border-[#e66026]/55 focus-visible:shadow-[0_0_0_4px_rgba(230,96,38,0.12)] sm:p-7 sm:pb-[186px]"
+                initial={{ opacity: 0, y: 28 }}
                 key={outcome.title}
-                transition={{ delay: index * 0.11, duration: 0.75, ease: EASE }}
+                transition={{ delay: index * 0.1, duration: 0.72, ease: EASE }}
+                tabIndex={0}
                 viewport={{ amount: 0.25, once: true }}
                 whileInView={{ opacity: 1, y: 0 }}
               >
-                <div className="flex items-start justify-between">
-                  <span className="text-[11px] font-medium tracking-[0.15em] text-[#969691]">
-                    {outcome.number}
+                <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:radial-gradient(circle,rgba(50,47,47,.16)_0.7px,transparent_0.8px)] [background-size:13px_13px] [mask-image:linear-gradient(to_bottom,black,transparent_68%)]" />
+                <div className="relative flex items-start justify-between gap-5">
+                  <div>
+                    <p className="text-[9px] font-medium tracking-[0.15em] text-[#e66026] uppercase">
+                      {outcome.label}
+                    </p>
+                    <h3 className="mt-3 text-[25px] font-medium leading-[1.2] tracking-[-0.3px] sm:text-[26px]">
+                      {outcome.title}
+                    </h3>
+                  </div>
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#d8d7cf] bg-[#f8f8f3] text-[#322f2f] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-focus:-rotate-90 group-hover:-rotate-90">
+                    <ArrowIcon />
                   </span>
-                  <motion.span
-                    className="size-2 rounded-full bg-[#e66026]"
-                    transition={{ duration: 1.8, ease: "easeInOut", repeat: Infinity }}
-                    whileInView={{ boxShadow: ["0 0 0 0 rgba(230,96,38,.35)", "0 0 0 12px rgba(230,96,38,0)"] }}
-                  />
                 </div>
-                <h3 className="mt-24 text-[30px] font-medium tracking-[-0.16px]">
-                  {outcome.title}
-                </h3>
-                <p className="mt-4 text-[14px] leading-[23px] tracking-[0.1px] text-[#646565]">
+                <p className="relative mt-4 max-w-[420px] text-[14px] leading-[23px] text-[#646565]">
                   {outcome.text}
                 </p>
+
+                <AutomationPreview index={index} />
               </motion.article>
             ))}
           </div>
-          </div>
-        </section>
+        </div>
+      </section>
 
-      <section className="px-4 py-16 md:px-10 md:py-24 xl:px-[120px]" id="approach">
-        <div className="relative mx-auto w-full max-w-[1200px] overflow-hidden rounded-[38px] bg-[#0f0f0a] px-6 py-14 text-[#f5f5ed] sm:px-10 sm:py-16 lg:px-14 lg:py-20">
-          <div className="pointer-events-none absolute -right-32 top-0 size-[440px] rounded-full bg-[#e66026]/12 blur-[100px]" />
-          <Reveal className="relative max-w-[770px]">
+      <section id="approach" aria-labelledby="about-process-title">
+        <div data-header-surface="light" className={styles.panel}>
+          <div className="pointer-events-none absolute -right-32 top-0 size-[440px] rounded-full bg-[#e66026]/10 blur-[100px]" />
+          <Reveal className="relative max-w-[900px]">
             <p className="text-[11px] font-medium tracking-[0.18em] text-[#e66026] uppercase">
               Один чат · одна команда
             </p>
-            <h2 className="mt-5 text-[36px] font-medium leading-[1.06] tracking-[-0.16px] sm:text-[52px]">
+            <h2 className={styles.sectionTitle} id="about-process-title">
               Вы ставите задачу один раз. Дальше координация — на нас.
             </h2>
           </Reveal>
 
-          <div className="relative mt-14 grid gap-4 lg:grid-cols-4">
-            <motion.div
-              className="absolute left-[7%] right-[7%] top-[23px] hidden h-px origin-left bg-gradient-to-r from-[#e66026] via-[#f5f5ed]/30 to-[#e66026] lg:block"
-              initial={{ scaleX: 0 }}
-              transition={{ delay: 0.2, duration: 1.4, ease: EASE }}
-              viewport={{ amount: 0.8, once: true }}
-              whileInView={{ scaleX: 1 }}
-            />
+          <div
+            className="relative mt-8 grid gap-4 lg:grid-cols-2"
+            data-header-surface="light"
+          >
             {processSteps.map((step, index) => (
               <motion.article
-                className="relative rounded-[24px] border border-[#f5f5ed]/10 bg-[#f5f5ed]/[0.055] p-6 backdrop-blur-sm"
+                className="group relative min-h-[360px] overflow-hidden rounded-[28px] border border-[#cfcdc3] bg-[#f1f0ea] p-6 pb-[202px] text-[#322f2f] outline-none transition-[border-color,box-shadow] duration-300 focus-visible:border-[#e66026]/55 focus-visible:shadow-[0_0_0_4px_rgba(230,96,38,0.12)] sm:p-7 sm:pb-[202px]"
                 initial={{ opacity: 0, y: 28 }}
                 key={step.number}
                 transition={{ delay: 0.28 + index * 0.12, duration: 0.7, ease: EASE }}
+                tabIndex={0}
                 viewport={{ amount: 0.25, once: true }}
                 whileInView={{ opacity: 1, y: 0 }}
               >
-                <span className="relative z-10 flex size-12 items-center justify-center rounded-full border border-[#e66026]/40 bg-[#171711] text-[11px] font-medium text-[#e66026]">
-                  {step.number}
-                </span>
-                <h3 className="mt-9 text-[20px] font-medium leading-[26px] tracking-[0.1px]">
-                  {step.title}
-                </h3>
-                <p className="mt-3 text-[13px] leading-[21px] tracking-[0.1px] text-[#f5f5ed]/55">
+                <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:radial-gradient(circle,rgba(50,47,47,.15)_0.7px,transparent_0.8px)] [background-size:13px_13px] [mask-image:linear-gradient(to_bottom,black,transparent_58%)]" />
+                <div className="relative flex items-start justify-between gap-5">
+                  <div>
+                    <p className="text-[9px] font-medium tracking-[0.15em] text-[#e66026] uppercase">
+                      {step.number} · {step.label}
+                    </p>
+                    <h3 className="mt-3 max-w-[360px] text-[24px] font-medium leading-[1.2] tracking-[-0.3px] sm:text-[28px]">
+                      {step.title}
+                    </h3>
+                  </div>
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[#d8d7cf] bg-[#f8f8f3] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-focus:-rotate-90 group-hover:-rotate-90">
+                    <ArrowIcon />
+                  </span>
+                </div>
+                <p className="relative mt-4 max-w-[440px] text-[14px] leading-[23px] text-[#646565]">
                   {step.text}
                 </p>
+
+                <ProcessPreview index={index} />
               </motion.article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-4 py-20 md:px-10 md:py-28 xl:px-[120px]">
+      <section aria-labelledby="about-principles-title">
         <div className="mx-auto w-full max-w-[1200px]">
-          <Reveal className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-20">
-            <p className="pt-2 text-[11px] font-medium tracking-[0.18em] text-[#e66026] uppercase">
+          <Reveal className={styles.principlesHeader}>
+            <div>
+            <p className="text-[11px] font-medium tracking-[0.18em] text-[#e66026] uppercase">
               Философия компании
             </p>
-            <div>
-              <h2 className="max-w-[850px] text-[36px] font-medium leading-[1.06] tracking-[-0.16px] sm:text-[52px]">
+              <h2 className={styles.sectionTitle} id="about-principles-title">
                 Ищем решение, а не оправдание
               </h2>
-              <p className="mt-6 max-w-[780px] text-[16px] leading-[27px] tracking-[0.1px] text-[#646565] sm:text-[18px] sm:leading-[30px] sm:tracking-[0.15px]">
+            </div>
+              <p className={styles.sectionCopy}>
                 Мы работаем на результат, дорожим репутацией и постоянно
                 развиваемся. Для клиента это означает вдумчивые решения,
                 качественные инструменты и команду, которая не перекладывает
                 ответственность.
               </p>
-            </div>
           </Reveal>
 
-          <div className="mt-14 border-t border-[#d8d7cf]">
-            {principles.map((principle, index) => (
+          <div className="mt-8 border-t border-[#d8d7cf]">
+            {principles.map((principle) => (
               <motion.article
                 className="grid gap-4 border-b border-[#d8d7cf] py-7 sm:grid-cols-[72px_0.7fr_1.3fr] sm:items-start sm:gap-8 sm:py-9"
-                initial={{ opacity: 0, x: index % 2 === 0 ? -22 : 22 }}
+                initial={{ opacity: 0, y: 20 }}
                 key={principle.title}
                 transition={{ duration: 0.7, ease: EASE }}
                 viewport={{ amount: 0.45, once: true }}
-                whileInView={{ opacity: 1, x: 0 }}
+                whileInView={{ opacity: 1, y: 0 }}
               >
                 <span className="text-[11px] font-medium tracking-[0.15em] text-[#969691]">
                   {principle.number}
@@ -506,8 +811,8 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="px-4 pb-6 pt-8 md:px-10 md:pb-10 xl:px-[120px]" id="contact">
-        <div className="relative mx-auto w-full max-w-[1200px] overflow-hidden rounded-[38px] bg-[#e66026] px-6 py-12 text-white sm:px-10 sm:py-16 lg:px-14">
+      <section id="contact" aria-labelledby="about-contact-title">
+        <div className="relative overflow-hidden rounded-[28px] bg-[#e66026] p-7 text-white sm:rounded-[32px] sm:p-9 lg:p-10">
           <div className="pointer-events-none absolute -right-24 -top-48 size-[520px] rounded-full border border-white/20" />
           <div className="pointer-events-none absolute -right-8 -top-32 size-[360px] rounded-full border border-white/20" />
           <div className="relative grid gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
@@ -515,7 +820,7 @@ export function AboutPage() {
               <p className="text-[11px] font-medium tracking-[0.18em] text-white/65 uppercase">
                 Давайте обсудим задачу
               </p>
-              <h2 className="mt-5 max-w-[760px] text-[40px] font-medium leading-[1.02] tracking-[-0.16px] sm:text-[58px]">
+              <h2 className={styles.sectionTitle} id="about-contact-title">
                 Соберём команду под ваш проект
               </h2>
               <p className="mt-5 max-w-[630px] text-[15px] leading-[25px] tracking-[0.1px] text-white/75 sm:text-[17px] sm:leading-[28px] sm:tracking-[0.15px]">
@@ -551,18 +856,16 @@ export function AboutPage() {
           </div>
         </div>
       </section>
+      </main>
 
-      <footer className="px-4 py-8 md:px-10 xl:px-[120px]">
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-5 border-t border-[#d8d7cf] pt-7 text-[#646565] sm:flex-row sm:items-center sm:justify-between">
+      <footer className={styles.footer}>
           <Link aria-label="Posadmin — на главную" href="/">
             <SiteLogoMark className="h-auto w-[95px] text-[#322f2f]" />
           </Link>
           <p className="text-[12px]">© 2026 Posadmin. Автоматизация ресторанного бизнеса.</p>
-        </div>
       </footer>
 
       <CallbackDialog onClose={() => setCallbackOpen(false)} open={callbackOpen} />
-      </div>
-    </FullPageParallax>
+    </div>
   );
 }

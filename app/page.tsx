@@ -10,7 +10,7 @@ import { ProductsSection } from "@/components/products-section";
 export default function HomePage() {
   return (
     <FullPageParallax header={<SiteHeader />}>
-      <div className="relative flex h-svh w-full flex-col overflow-hidden rounded-b-[50px] bg-[#0F0F0A]">
+      <div data-header-surface="dark" className="relative flex h-svh w-full flex-col overflow-hidden rounded-b-[50px] bg-[#0F0F0A]">
         <GlowLayer />
         <div className="h-20 shrink-0" aria-hidden="true" />
         <HeroSection />

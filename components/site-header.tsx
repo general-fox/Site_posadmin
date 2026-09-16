@@ -67,7 +67,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
   const aboutActive =
     page === "about" ||
     (activeSlide > 0 && !priceActive && !productsActive);
-  const lightSurface = activeSlide > 0;
+  const [surface, setSurface] = useState<"light" | "dark">("dark");
   const reduced = useHydratedReducedMotion();
   const navRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
@@ -79,6 +79,52 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
   const [opened, setOpened] = useState(false);
   const rightInset = useMotionValue(0);
   const clipPath = useMotionTemplate`inset(0px ${rightInset}px 0px 0px round 30px)`;
+
+  useEffect(() => {
+    const nav = navRef.current;
+    const header = nav?.closest("header");
+    if (!nav || !header) return;
+
+    let frame = 0;
+    // The intro moves via CSS transforms without a scroll event. Keep sampling
+    // through that transition, then only update on scroll or layout changes.
+    const transitionUntil = performance.now() + 2000;
+
+    const syncSurface = () => {
+      frame = 0;
+      const bounds = nav.getBoundingClientRect();
+      const x = bounds.left + bounds.width / 2;
+      const y = bounds.top + bounds.height / 2;
+      const underneath = document
+        .elementsFromPoint(x, y)
+        .find((element) => !header.contains(element));
+      const background = underneath?.closest<HTMLElement>("[data-header-surface]");
+      const next = background?.dataset.headerSurface === "dark" ? "dark" : "light";
+
+      setSurface((current) => (current === next ? current : next));
+      if (performance.now() < transitionUntil) {
+        frame = requestAnimationFrame(syncSurface);
+      }
+    };
+
+    const scheduleSync = () => {
+      if (!frame) frame = requestAnimationFrame(syncSurface);
+    };
+
+    scheduleSync();
+    window.addEventListener("scroll", scheduleSync, { passive: true });
+    window.addEventListener("resize", scheduleSync);
+    const resizeObserver = new ResizeObserver(scheduleSync);
+    resizeObserver.observe(nav);
+    resizeObserver.observe(document.body);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleSync);
+      window.removeEventListener("resize", scheduleSync);
+      resizeObserver.disconnect();
+    };
+  }, [activeSlide, page]);
 
   const placeCapsule = useCallback((el: HTMLElement, fillToEnd = false) => {
     const nav = navRef.current;
@@ -166,7 +212,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
   return (
     <header
       className="site-header fixed top-0 left-0 z-50 h-20 w-full bg-transparent"
-      data-surface={lightSurface ? "light" : "dark"}
+      data-surface={surface}
       data-page={page}
     >
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-center px-4 md:px-10 xl:px-[120px]">
