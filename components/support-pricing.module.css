@@ -1,0 +1,73 @@
+.section { padding-block: calc(var(--section-space) / 2); }
+.tabs { display: flex; gap: 4px; padding: 6px; margin-bottom: var(--grid-gap); width: fit-content; max-width: 100%; background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--card-radius); }
+.tabs button { min-height: 60px; padding: 10px 24px; border-radius: var(--control-radius); color: var(--text-body); font-size: var(--font-body); font-weight: var(--control-font-weight); line-height: 1.45; cursor: pointer; transition: background .2s ease, color .2s ease; }
+.tabs button, .toggle, .details summary { letter-spacing: var(--control-letter-spacing); font-variation-settings: normal; font-optical-sizing: auto; }
+.tabs button span { display: block; margin-top: 4px; font-size: var(--font-small); font-weight: 400; color: var(--text-body); }
+.tabs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 5px rgb(92 69 41 / .04); }
+.calculator { display: grid; grid-template-columns: minmax(0, 1fr) 380px; border: 1px solid var(--border); background: var(--surface); border-radius: var(--card-radius); align-items: start; }
+.configuration { padding: 32px; min-width: 0; }
+.configHeading { display: flex; align-items: center; gap: 12px; }
+.configHeading h3 { font-size: 22px; font-weight: 500; line-height: 1.35; }
+.step { display: grid; place-items: center; flex-shrink: 0; height: 32px; width: 32px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: 50%; font-size: var(--font-label); color: var(--text-body); }
+.countRow { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 28px 0; margin-bottom: 4px; }
+.countRow label { font-size: var(--font-body); font-weight: 500; line-height: 1.5; }
+.countRow p { font-size: var(--font-small); line-height: 1.55; margin-top: 4px; color: var(--text-body); }
+.stepper { display: flex; flex-shrink: 0; border: 1px solid var(--border-strong); border-radius: var(--control-radius); overflow: hidden; height: 48px; background: var(--surface); transition: border-color .2s ease, box-shadow .2s ease; }
+.stepper button { width: 44px; font-size: 22px; cursor: pointer; transition: background .2s ease; }
+.stepper button:disabled { opacity: .35; cursor: not-allowed; }
+.stepper button:hover:enabled { background: var(--surface-soft); }
+.stepper input { appearance: textfield; -moz-appearance: textfield; width: 60px; border: 0; background: transparent; text-align: center; font-size: 16px; min-width: 0; }
+.stepper input::-webkit-inner-spin-button { appearance: none; }
+/* The shared marketing focus outline is outside the input and gets clipped by
+   this compound control. Put one focus boundary on the whole stepper instead. */
+.section .stepper input:focus { outline: none; box-shadow: none; }
+.stepper:has(input:focus) { border-color: var(--text-olive); box-shadow: inset 0 0 0 1px var(--text-olive); }
+.section .stepper button:focus-visible { outline: 2px solid var(--text-olive); outline-offset: -4px; border-radius: var(--control-radius); }
+.modules { display: grid; gap: 16px; }
+.module { border: 1px solid var(--border); background: var(--surface); border-radius: var(--card-radius); padding: 24px; transition: background .2s ease, border-color .2s ease; }
+.selected { border-color: var(--border-strong); background: var(--surface-soft); }
+.moduleTop { display: flex; align-items: start; gap: 12px; }
+.moduleIcon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: var(--control-radius); color: var(--text-olive); font-size: 20px; }
+.moduleTitle { flex: 1; min-width: 0; }
+.moduleTitle h4 { font-size: 16px; font-weight: 500; line-height: 1.5; max-width: 320px; }
+.moduleTitle p { margin-top: 8px; font-size: 18px; font-weight: 500; line-height: 1.5; }
+.moduleTitle p span { font-size: var(--font-small); font-weight: 400; color: var(--text-body); white-space: nowrap; }
+.included { flex-shrink: 0; font-size: var(--font-label); line-height: 1.5; color: var(--text-olive); padding: 6px 10px; background: var(--surface-selected); border-radius: 6px; }
+.toggle { display: flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 8px; min-height: 44px; border: 1px solid var(--border); border-radius: var(--control-radius); padding: 8px 12px; font-size: var(--font-small); cursor: pointer; background: var(--surface); color: var(--text-olive); transition: background .2s ease, border-color .2s ease; }
+.toggle[aria-pressed="true"] { background: var(--surface-selected); border-color: var(--border-strong); }
+.toggle:hover:enabled { border-color: var(--text-olive); }
+.toggle:disabled { opacity: .5; cursor: not-allowed; }
+.moduleHint { font-size: var(--font-body); color: var(--text-body); line-height: 1.65; margin-top: 16px; }
+.optionalLabel { font-size: var(--font-small); line-height: 1.55; color: var(--text-body); margin: 8px 0 0; }
+.details { margin-top: 16px; border-top: 1px solid var(--border); font-size: var(--font-small); }
+.details summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; cursor: pointer; padding-top: 8px; list-style: none; }
+.details summary::-webkit-details-marker { display: none; }
+.details summary span { font-size: 20px; transition: transform .2s ease; }
+.details[open] summary span { transform: rotate(45deg); }
+.details ul { display: grid; gap: 12px; padding-top: 12px; line-height: 1.65; color: var(--text-body); }
+.details li { display: flex; gap: 10px; }
+.details li span { color: var(--text-olive); }
+.summary { position: sticky; top: 104px; min-width: 0; margin: 12px; padding: 28px; background: var(--surface-muted); border-radius: var(--control-radius); }
+.summaryTop > p { font-size: 20px; font-weight: 500; line-height: 1.35; }
+.liveDot { display: flex; align-items: center; gap: 8px; font-size: var(--font-label); line-height: 1.5; color: var(--text-body); margin-top: 10px; }
+.liveDot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--text-olive); }
+.total { font-size: clamp(40px, 4vw, 48px); font-weight: 500; letter-spacing: -.3px; line-height: 1.1; margin-top: 28px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.total span { font-size: 28px; font-weight: 400; }
+.period { color: var(--text-body); font-size: var(--font-small); line-height: 1.55; margin-top: 10px; }
+.summaryItems { display: grid; gap: 16px; margin: 24px 0; padding: 24px 0; border-block: 1px solid var(--border); font-size: var(--font-small); color: var(--text-body); line-height: 1.6; }
+.summaryItems > div { display: flex; justify-content: space-between; gap: 16px; }
+.summaryItems strong { white-space: nowrap; font-weight: 500; color: var(--ink); }
+.summary > button { width: 100%; margin-bottom: 12px; padding-inline: 14px; }
+.feedback { min-height: 40px; font-size: var(--font-label); color: var(--text-body); line-height: 1.65; margin-top: 4px; }
+.help { display: flex; justify-content: space-between; align-items: center; gap: 32px; margin-top: var(--section-gap); }
+.help > div { display: flex; align-items: center; gap: 20px; }
+.help > div > span { font-size: 28px; color: var(--text-olive); }
+.help p { font-size: 16px; line-height: 1.65; }
+.help p span { color: var(--text-body); font-size: var(--font-body); }
+.help > button { flex-shrink: 0; }
+@media (max-width: 1120px) { .calculator { grid-template-columns: minmax(0, 1fr) 340px; } .configuration { padding: 24px; } .summary { padding: 24px; } .moduleIcon { display: none; } .module { padding: 20px; } .countRow { flex-wrap: wrap; gap: 16px; } }
+@media (max-width: 900px) { .calculator { grid-template-columns: 1fr; } .countRow { flex-wrap: nowrap; } .summary { position: static; margin: 0 24px 24px; } .moduleIcon { display: grid; } .help { align-items: start; flex-direction: column; gap: 16px; } }
+@media (max-width: 767px) { .tabs { width: 100%; } .tabs button { flex: 1; min-width: 0; padding: 10px 8px; font-size: 14px; } .tabs button span { font-size: var(--font-label); } .configuration { padding: 24px 20px; } .configHeading h3 { font-size: 20px; } .countRow { flex-wrap: wrap; } .module { padding: 20px; } .moduleIcon { display: none; } .summary { margin: 0 12px 12px; } }
+@media (max-width: 440px) { .configuration { padding: 24px 16px; } .moduleTop { flex-wrap: wrap; gap: 12px; } .moduleTitle { flex-basis: 100%; } .module { padding: 16px; } .toggle { min-width: 118px; } .included { order: -1; } .configHeading { gap: 10px; } .summary { padding: 24px 20px; } .help > div { gap: 12px; } }
+@media (forced-colors: active) { .stepper:has(input:focus) { outline: 2px solid Highlight; outline-offset: 2px; } }
+@media (prefers-reduced-motion: reduce) { .tabs button, .stepper, .stepper button, .module, .toggle, .details summary span { transition: none; } }

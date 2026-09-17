@@ -1,133 +1,132 @@
-import type { CSSProperties } from "react";
+"use client";
 
-const MESSAGES = [
-  { from: "you", text: "Помогите провести скидку в заказ" },
-  { from: "posadmin", text: "Поправили, проверьте" },
-  { from: "you", text: "Не печатает принтер на Горячем цеху" },
-  { from: "posadmin", text: "Конечно, когда вам удобно?" },
-  { from: "you", text: "Помогите построить отчет по продажам за прошлый месяц" },
-  { from: "posadmin", text: "Готово" },
-  { from: "you", text: "Добавьте Цезарь в папку салаты" },
-  { from: "posadmin", text: "Здравствуйте, принято" },
-  { from: "you", text: "Добавьте пожалуйста на план зала Веранда 3 новых стола" },
-  { from: "posadmin", text: "Добрый день, подключаемся" },
-  { from: "you", text: "Кассовая смена не закрывается" },
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useMarketingReducedMotion } from "./marketing-ui";
+import styles from "./support-chat.module.css";
+
+const CONVERSATIONS = [
+  [
+    { from: "you", text: "Не печатает принтер на кухне.", time: "12:04" },
+    { from: "team", text: "Печать восстановили. Проверьте, пожалуйста.", time: "12:06" },
+    { from: "you", text: "Всё работает, спасибо!", time: "12:07" },
+  ],
+  [
+    { from: "you", text: "Добавьте три стола на веранду, пожалуйста.", time: "14:20" },
+    { from: "team", text: "Готово, столы добавлены.", time: "14:24" },
+    { from: "you", text: "Вижу, спасибо!", time: "14:25" },
+  ],
+  [
+    { from: "you", text: "Нужен отчёт по продажам за месяц.", time: "16:10" },
+    { from: "team", text: "Отчёт готов — можно скачать.", time: "16:14" },
+    { from: "you", text: "Получилось, спасибо!", time: "16:15" },
+  ],
 ] as const;
 
-const CURTAIN_LAYERS = [
-  { blur: "1px", from: "0%", to: "88%" },
-  { blur: "2px", from: "0%", to: "68%" },
-  { blur: "4px", from: "0%", to: "48%" },
-  { blur: "8px", from: "0%", to: "30%" },
-  { blur: "14px", from: "0%", to: "16%" },
-] as const;
-
-function ChatCurtain({ edge }: { edge: "top" | "bottom" }) {
-  return (
-    <div
-      className={`chat-curtain ${edge === "top" ? "chat-curtain-top" : "chat-curtain-bottom"}`}
-      aria-hidden
-    >
-      {CURTAIN_LAYERS.map((layer) => (
-        <span
-          key={layer.blur}
-          className="chat-curtain-layer"
-          style={
-            {
-              "--curtain-blur": layer.blur,
-              "--curtain-from": layer.from,
-              "--curtain-to": layer.to,
-            } as CSSProperties
-          }
-        />
-      ))}
-      <span className="chat-curtain-wash" />
-    </div>
-  );
-}
-
-function Tail({ outgoing }: { outgoing: boolean }) {
-  return (
-    <svg
-      className="block h-[14px] w-[24px]"
-      viewBox="0 0 24 14"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      {outgoing ? (
-        <path d="M0.848373 5.94366C6.09033 10.1542 9.75203 11.6466 15.5983 13.3277C16.204 13.5019 16.6515 12.7141 16.2334 12.2425C13.9065 9.61793 13.191 6.8757 15.7395 1.29483C15.9607 0.810356 15.5045 0.275628 14.9974 0.438333L1.04067 4.91612C0.589863 5.06075 0.479265 5.64718 0.848373 5.94366Z" />
-      ) : (
-        <path d="M23.1516 5.94366C17.9097 10.1542 14.248 11.6466 8.40167 13.3277C7.79598 13.5019 7.34855 12.7141 7.76663 12.2425C10.0935 9.61793 10.809 6.8757 8.26052 1.29483C8.03929 0.810356 8.49546 0.275628 9.0026 0.438333L22.9593 4.91612C23.4101 5.06075 23.5207 5.64718 23.1516 5.94366Z" />
-      )}
-    </svg>
-  );
-}
-
-function Message({ from, text }: { from: "you" | "posadmin"; text: string }) {
-  const outgoing = from === "you";
-
-  return (
-    <div
-      className={`flex w-full flex-col py-[15px] ${
-        outgoing ? "items-end" : "items-start"
-      }`}
-    >
-      <div
-        className={`flex max-w-[280px] flex-col gap-[6px] ${
-          outgoing ? "items-end" : "items-start"
-        }`}
-      >
-        <span className="px-[4px] text-[11px] leading-none tracking-[0.2px] whitespace-nowrap text-[#5C5B57]">
-          {outgoing ? "Вы" : "Posadmin"}
-        </span>
-        <div
-          className={`support-chat-bubble flex flex-col ${
-            outgoing ? "items-end text-white" : "items-start text-[#E6E6DE]"
-          }`}
-        >
-          <div
-            className={`-mb-[8px] rounded-[20px] px-[16px] py-[11px] text-[14px] leading-[1.3] tracking-[0.15px] text-[#2A2828] ${
-              outgoing
-                ? "border border-[rgba(50,47,47,0.06)] bg-white"
-                : "bg-[#E6E6DE]"
-            }`}
-          >
-            {text}
-          </div>
-          <Tail outgoing={outgoing} />
-        </div>
-      </div>
-    </div>
-  );
-}
+// Question → operator typing → answer → guest typing → thanks → result → transition.
+const STEP_DURATION = [1300, 2200, 1800, 1300, 700, 4200, 450] as const;
 
 export function SupportChat() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const remainingTime = useRef<number>(STEP_DURATION[0]);
+  const reducedMotion = useMarketingReducedMotion();
+  const [inView, setInView] = useState(false);
+  const [visibleDocument, setVisibleDocument] = useState(true);
+  const [timeline, setTimeline] = useState({ conversation: 0, step: 0 });
+  const running = inView && visibleDocument && !reducedMotion;
+  const step = reducedMotion ? 5 : timeline.step;
+  const messages = CONVERSATIONS[reducedMotion ? 0 : timeline.conversation];
+  const typing = step === 1 ? "team" : step === 3 ? "you" : null;
+  const visibleCount = step >= 4 ? 3 : step >= 2 ? 2 : 1;
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setInView(entry.isIntersecting);
+    }, { threshold: 0.3 });
+    observer.observe(root);
+    const handleVisibility = () => setVisibleDocument(!document.hidden);
+    handleVisibility();
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!running) return;
+    const startedAt = performance.now();
+    let completed = false;
+    const timeout = window.setTimeout(() => {
+      completed = true;
+      const nextStep = (timeline.step + 1) % STEP_DURATION.length;
+      remainingTime.current = STEP_DURATION[nextStep];
+      setTimeline({
+        step: nextStep,
+        conversation: nextStep === 0
+          ? (timeline.conversation + 1) % CONVERSATIONS.length
+          : timeline.conversation,
+      });
+    }, remainingTime.current);
+    return () => {
+      window.clearTimeout(timeout);
+      if (!completed) {
+        remainingTime.current = Math.max(0, remainingTime.current - (performance.now() - startedAt));
+      }
+    };
+  }, [running, timeline]);
+
   return (
-    <div className="flex h-full flex-col gap-[24px] overflow-hidden rounded-[25px] px-[24px] pt-[24px] pb-[8px] md:gap-[32px]">
-      <div className="flex w-full flex-col gap-[15px] text-[#322F2F]">
-        <h3 className="text-[22px] font-normal leading-normal tracking-[0.45px] xl:text-[24px] xl:tracking-[0.6px]">
-          Техническая поддержка 24/7
-        </h3>
-        <p className="text-[14px] leading-[20px] tracking-[0.2px]">
-          Две линии технической поддержки&nbsp; оперативно решают ежедневные
-          вопросы
-        </p>
+    <div className={styles.root} ref={rootRef} data-running={running} data-reduced={reducedMotion}>
+      <div className={styles.intro}>
+        <div><h3>Поддержка 24/7</h3><p>Две линии поддержки — в одном чате.</p></div>
       </div>
 
-      <div className="relative min-h-0 w-full flex-1 overflow-hidden">
-        <ChatCurtain edge="top" />
-        <div className="support-chat-track flex w-full flex-col px-4">
-          {[0, 1].map((loop) =>
-            MESSAGES.map((message, i) => (
-              <Message
-                key={`${loop}-${i}`}
-                from={message.from}
-                text={message.text}
-              />
-            )),
-          )}
+      <div className={styles.window}>
+        <div className={styles.header}>
+          <span className={styles.avatar} aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14v-3a8 8 0 0 1 16 0v3M4 11H3a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h2v-6H4Zm16 0h1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-2v-6h1Zm0 6v1a3 3 0 0 1-3 3h-3" /><path d="M11 20h3v2h-3z" /></svg>
+          </span>
+          <div className={styles.identity}><span>Команда Posadmin</span><small>Telegram или MAX</small></div>
+          <span className={styles.status}><i aria-hidden="true" />{typing === "team" ? "печатает…" : "На связи"}</span>
         </div>
-        <ChatCurtain edge="bottom" />
+
+        <div className={styles.conversation} key={reducedMotion ? "static" : timeline.conversation} data-leaving={step === 6} aria-live="off">
+          <motion.ol layout={!reducedMotion} className={styles.messages} aria-label="Анимация переписки с технической поддержкой">
+            <AnimatePresence initial={false} mode="popLayout">
+              {messages.slice(0, visibleCount).map((message, index) => (
+                <motion.li
+                  layout={!reducedMotion ? "position" : false}
+                  key={message.text}
+                  className={[styles.message, message.from === "you" ? styles.outgoing : styles.incoming].join(" ")}
+                  initial={reducedMotion ? false : { opacity: 0, y: 9, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, transition: { duration: reducedMotion ? 0 : 0.15 } }}
+                  transition={{ duration: reducedMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <span className={styles.srOnly}>{message.from === "you" ? "Вы: " : "Posadmin: "}</span>
+                  <p>{message.text}</p>
+                  <span className={styles.timestamp} aria-hidden="true">{message.time}{message.from === "you" && <svg width="15" height="10" viewBox="0 0 18 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="m1 6 4 4 8-8" />{(index > 0 || step > 0) && <path d="m10 10 7-8" />}</svg>}</span>
+                </motion.li>
+              ))}
+              {typing && <motion.li
+                layout="position"
+                key={`typing-${typing}`}
+                className={`${styles.typing} ${typing === "team" ? styles.typingIncoming : styles.typingOutgoing}`}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                transition={{ duration: 0.25 }}
+                aria-hidden="true"
+              ><span /><span /><span /></motion.li>}
+            </AnimatePresence>
+          </motion.ol>
+          <div className={styles.resultSlot}>
+            <span className={styles.resolved} data-visible={step >= 5} aria-hidden={step < 5}><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m4 8 2.5 2.5L12 5" /><circle cx="8" cy="8" r="6.5" /></svg>Задача решена</span>
+          </div>
+        </div>
       </div>
     </div>
   );

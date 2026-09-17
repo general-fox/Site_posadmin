@@ -1,0 +1,57 @@
+.section {
+  --contact-muted: #bab7ac;
+  --contact-line: rgb(245 245 237 / .14);
+  position: relative;
+  isolation: isolate;
+  margin-top: calc(var(--section-space) / 2);
+  border-radius: 20px 20px 0 0;
+  background: var(--dark-background);
+  color: var(--milk);
+  scroll-margin-top: 0;
+}
+.section.flushTop { margin-top: 0; }
+.glow { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(ellipse at 0% 30%, rgb(var(--accent-rgb) / .16), transparent 58%); }
+.content { position: relative; }
+.section .eyebrow, .section .lead, .muted { color: var(--contact-muted); }
+.section .eyebrow::before { background: #e38f45; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: var(--grid-gap); }
+.direct { display: flex; flex-direction: column; justify-content: space-between; align-items: start; gap: 44px; min-width: 0; padding: 40px; background: var(--accent-soft); border: 1px solid rgb(var(--accent-rgb) / .28); border-radius: var(--card-radius); }
+.label { color: var(--contact-muted); font-size: var(--font-small); line-height: 1.5; font-weight: 400; }
+.phone { display: inline-flex; align-items: center; min-height: 48px; margin-top: 20px; color: var(--milk); font-size: clamp(24px, 2.7vw, 34px); line-height: 1.3; letter-spacing: -.3px; white-space: nowrap; font-variant-numeric: lining-nums; text-underline-offset: 6px; text-decoration-thickness: 1px; }
+.phone:hover { text-decoration-line: underline; }
+.hours { margin-top: 16px; color: var(--contact-muted); font-size: var(--font-body); line-height: 1.7; }
+.actions { display: flex; flex-direction: column; align-items: start; gap: 12px; }
+.channel { color: var(--contact-muted); font-size: var(--font-small); line-height: 1.5; }
+.actions .telegram { color: var(--milk); border-color: rgb(var(--accent-rgb) / .5); }
+.actions .telegram:hover { background: rgb(var(--accent-rgb) / .55); border-color: rgb(var(--accent-rgb) / .6); }
+.actions .telegram:active { background: rgb(var(--accent-rgb) / .46); }
+.actions > button { margin-top: 8px; }
+.offices { min-width: 0; padding: 0 40px; background: rgb(245 245 237 / .035); border: 1px solid var(--contact-line); border-radius: var(--card-radius); }
+.office { padding: 32px 0 24px; }
+.office + .office { border-top: 1px solid var(--contact-line); }
+.officeTop { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.officeNumber { font-size: var(--font-label); color: var(--contact-muted); font-variant-numeric: tabular-nums; }
+.office h3 { margin-top: 12px; font-size: 28px; font-weight: 500; line-height: 1.25; letter-spacing: -.2px; }
+.office address { margin-top: 8px; color: var(--contact-muted); font-style: normal; font-size: var(--font-body); line-height: 1.6; }
+.office a { margin-top: 12px; }
+/* Keep light focus rings inside the dark cards, not the light callback dialog. */
+.section .grid :is(a, button):focus-visible { outline: 2px solid var(--milk); outline-offset: 4px; }
+@media (max-width: 1000px) {
+  .direct { padding: 32px; }
+  .offices { padding-inline: 32px; }
+  .phone { font-size: 27px; }
+}
+@media (max-width: 767px) {
+  .grid { grid-template-columns: 1fr; }
+  .direct { padding: 28px 24px; gap: 32px; }
+  .offices { padding-inline: 24px; }
+  .office { padding-block: 28px 20px; }
+  .office h3 { font-size: 26px; }
+  .phone { font-size: clamp(24px, 6.5vw, 30px); margin-top: 12px; }
+}
+@media (max-width: 380px) {
+  .direct { padding-inline: 20px; }
+  .offices { padding-inline: 20px; }
+  .phone { font-size: 23px; }
+  .actions > a { gap: 10px; padding-inline: 16px; }
+}

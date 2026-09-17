@@ -9,8 +9,9 @@ import { ProductsSection } from "@/components/products-section";
 
 export default function HomePage() {
   return (
+    <>
     <FullPageParallax header={<SiteHeader />}>
-      <div data-header-surface="dark" className="relative flex h-svh w-full flex-col overflow-hidden rounded-b-[50px] bg-[#0F0F0A]">
+      <div data-header-surface="dark" className="hero-surface relative flex h-svh w-full flex-col overflow-hidden bg-[var(--hero-background)]">
         <GlowLayer />
         <div className="h-20 shrink-0" aria-hidden="true" />
         <HeroSection />
@@ -20,5 +21,6 @@ export default function HomePage() {
       <SupportPricingSection />
       <ProductsSection />
     </FullPageParallax>
+    </>
   );
 }

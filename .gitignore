@@ -15,6 +15,7 @@ node_modules/
 
 # next.js
 /.next/
+/.next-build/
 /.next.stale-*/
 /out/
 

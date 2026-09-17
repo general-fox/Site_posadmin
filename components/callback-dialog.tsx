@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   useEffect,
   useId,
@@ -9,7 +9,9 @@ import {
   type FormEvent,
   type MouseEvent,
 } from "react";
-import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
+import { ArrowRight, useMarketingReducedMotion } from "./marketing-ui";
+import ui from "./marketing.module.css";
+import styles from "./callback-dialog.module.css";
 
 type CallbackDialogProps = {
   onClose: () => void;
@@ -65,12 +67,11 @@ function formatRussianPhone(value: string) {
 
 export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const dateInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const titleId = useId();
   const descriptionId = useId();
   const phoneHintId = useId();
-  const reduced = useHydratedReducedMotion();
+  const reduced = useMarketingReducedMotion();
   const [minDate, setMinDate] = useState("");
   const [minTime, setMinTime] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -191,17 +192,22 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
 
     setMinDate(currentDate);
     setMinTime(currentTime);
-    setSelectedDate(currentDate);
-    setSelectedTime(currentTime);
+    // Switching modes should not discard a future slot the visitor chose.
+    if (!selectedDate || selectedDate < currentDate) {
+      setSelectedDate(currentDate);
+      setSelectedTime(currentTime);
+    } else if (selectedDate === currentDate && selectedTime < currentTime) {
+      setSelectedTime(currentTime);
+    }
     setContactSoon(false);
-    window.requestAnimationFrame(() => dateInputRef.current?.focus());
   };
 
   return (
     <dialog
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
-      className="m-auto max-h-[calc(100svh-32px)] w-[min(520px,calc(100vw-32px))] overflow-visible bg-transparent p-0 text-[#322f2f] backdrop:bg-[rgba(15,15,10,0.56)] backdrop:backdrop-blur-[5px]"
+      className={styles.dialog}
+      data-lenis-prevent
       onCancel={(event) => {
         event.preventDefault();
         closeDialog();
@@ -213,13 +219,13 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
       {open ? (
         <motion.div
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="relative max-h-[calc(100svh-32px)] overflow-y-auto rounded-[28px] border border-[#d5d5c8] bg-[var(--milk)] px-5 py-6 shadow-[0_24px_80px_rgba(15,15,10,0.24)] sm:px-8 sm:py-8"
-          initial={reduced ? false : { opacity: 0, scale: 0.96, y: 18 }}
+          className={styles.panel}
+          initial={reduced ? false : { opacity: 0, scale: 0.99, y: 12 }}
           transition={{ duration: reduced ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
           <button
             aria-label="Закрыть окно"
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#d5d5c8] text-[#646565] transition-colors hover:border-[#e66026] hover:text-[#e66026] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e66026]"
+            className={styles.close}
             onClick={closeDialog}
             type="button"
           >
@@ -229,20 +235,21 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
           </button>
 
           {submitted ? (
-            <div className="flex min-h-[300px] flex-col items-center justify-center px-2 text-center font-[family-name:var(--font-inter)]">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e66026] text-white" aria-hidden="true">
+            <div className={styles.success} role="status">
+              <span className={styles.successIcon} aria-hidden="true">
                 <svg className="h-7 w-7" viewBox="0 0 28 28">
                   <path d="M7 14.5L11.5 19L21 9.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
                 </svg>
               </span>
-              <h2 className="mt-5 text-[28px] font-medium leading-[34px]" id={titleId}>Заявка принята</h2>
-              <p className="mt-3 max-w-[360px] text-[15px] leading-6 text-[#646565]" id={descriptionId}>
+              <p className={ui.eyebrow}>Спасибо за обращение</p>
+              <h2 className={styles.title} id={titleId}>Заявка принята</h2>
+              <p className={styles.description} id={descriptionId}>
                 {contactSoon
                   ? "Менеджер свяжется с вами в ближайшее время."
                   : "Менеджер свяжется с вами в выбранные дату и время."}
               </p>
               <button
-                className="mt-7 min-h-11 rounded-full bg-[#e66026] px-8 text-[14px] font-medium text-white transition-colors hover:bg-[#cf501c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e66026]"
+                className={`${ui.primary} ${styles.submit}`}
                 onClick={closeDialog}
                 type="button"
               >
@@ -250,8 +257,8 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
               </button>
             </div>
           ) : (
-            <form className="font-[family-name:var(--font-inter)]" onSubmit={handleSubmit}>
-              <label className="absolute left-[-9999px]" aria-hidden="true">
+            <form onSubmit={handleSubmit}>
+              <label className={styles.honeypot} aria-hidden="true">
                 Не заполняйте это поле
                 <input
                   autoComplete="off"
@@ -260,24 +267,20 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                   type="text"
                 />
               </label>
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e66026] text-white" aria-hidden="true">
-                <svg className="h-6 w-6" viewBox="0 0 24 24">
-                  <path d="M7 3V6M17 3V6M4 9H20M6.5 5H17.5C18.881 5 20 6.119 20 7.5V18C20 19.381 18.881 20.5 17.5 20.5H6.5C5.119 20.5 4 19.381 4 18V7.5C4 6.119 5.119 5 6.5 5Z" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-                </svg>
-              </span>
-              <h2 className="mt-5 max-w-[390px] pr-10 text-[28px] font-medium leading-[34px]" id={titleId}>
+              <p className={`${ui.eyebrow} ${styles.eyebrow}`}>Связь с менеджером</p>
+              <h2 className={styles.title} id={titleId}>
                 Когда вам удобно поговорить?
               </h2>
-              <p className="mt-3 max-w-[420px] text-[15px] leading-6 text-[#646565]" id={descriptionId}>
-                Оставьте номер — менеджер может позвонить в ближайшее время или в выбранные дату и время.
+              <p className={styles.description} id={descriptionId}>
+                Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу.
               </p>
 
-              <label className="mt-7 block">
-                <span className="mb-2 block text-[13px] font-medium text-[#646565]">Номер телефона</span>
+              <label className={styles.phoneField}>
+                <span className={styles.label}>Номер телефона</span>
                 <input
                   aria-describedby={phoneHintId}
                   autoComplete="tel"
-                  className="h-12 w-full rounded-[14px] border border-[#d5d5c8] bg-white/65 px-4 text-[15px] outline-none transition-colors placeholder:text-[#9d9c9b] hover:border-[#b8b8aa] focus:border-[#e66026]"
+                  className={styles.fieldControl}
                   inputMode="tel"
                   maxLength={18}
                   name="phone"
@@ -297,51 +300,51 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                   type="tel"
                   value={phone}
                 />
-                <span className="mt-1.5 block text-[11px] leading-4 text-[#969691]" id={phoneHintId}>
-                  Российский номер в формате +7 (999) 123-45-67
+                <span className={styles.hint} id={phoneHintId}>
+                  Например, +7 (999) 123-45-67
                 </span>
               </label>
 
-              <div className="mt-4 rounded-[16px] border border-[#d5d5c8] bg-white/35 px-4 py-3.5">
-                <label className="flex cursor-pointer items-center gap-3">
-                  <input
-                    checked={contactSoon}
-                    className="h-5 w-5 shrink-0 cursor-pointer accent-[#e66026]"
-                    name="contactSoon"
-                    onChange={(event) => setContactSoon(event.target.checked)}
-                    type="checkbox"
-                  />
-                  <span className="text-[14px] font-medium text-[#322f2f]">
-                    Связаться в ближайшее время
-                  </span>
-                </label>
-                <p className="mt-1 pl-8 text-[12px] leading-[18px] text-[#969691]">
-                  Менеджер позвонит в ближайший рабочий период.
+              <fieldset className={styles.timing}>
+                <legend className={styles.label}>Когда позвонить</legend>
+                <div className={styles.choices}>
+                  <label className={styles.choice}>
+                    <input
+                      checked={contactSoon}
+                      name="callbackTiming"
+                      onChange={() => { setContactSoon(true); setSubmitError(""); }}
+                      type="radio"
+                      value="soon"
+                    />
+                    <span>В ближайшее время</span>
+                  </label>
+                  <label className={styles.choice}>
+                    <input
+                      checked={!contactSoon}
+                      name="callbackTiming"
+                      onChange={() => { showScheduleFields(); setSubmitError(""); }}
+                      type="radio"
+                      value="scheduled"
+                    />
+                    <span>Выбрать дату</span>
+                  </label>
+                </div>
+                <p className={styles.scheduleHint}>
+                  {contactSoon ? "Менеджер на связи в будни с 10:00 до 19:00." : "Укажите удобные для вас дату и время звонка."}
                 </p>
-                {contactSoon ? (
-                  <button
-                    className="mt-2 ml-8 text-left text-[13px] font-medium text-[#e66026] underline decoration-[#e66026]/35 underline-offset-4 transition-colors hover:text-[#cf501c]"
-                    onClick={showScheduleFields}
-                    type="button"
-                  >
-                    Выбрать дату и время
-                  </button>
-                ) : null}
-              </div>
+              </fieldset>
 
-              <AnimatePresence initial={false}>
                 {!contactSoon ? (
                   <motion.div
-                    animate={{ height: "auto", opacity: 1, y: 0 }}
-                    className="grid overflow-hidden sm:grid-cols-2"
-                    exit={{ height: 0, opacity: 0, y: -6 }}
-                    initial={reduced ? false : { height: 0, opacity: 0, y: -6 }}
-                    transition={{ duration: reduced ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={styles.schedule}
+                    initial={reduced ? false : { opacity: 0, y: -4 }}
+                    transition={{ duration: reduced ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <label className="mt-4 block sm:pr-2">
-                      <span className="mb-2 block text-[13px] font-medium text-[#646565]">Удобная дата</span>
+                    <label>
+                      <span className={styles.label}>Удобная дата</span>
                       <input
-                        className="h-12 w-full rounded-[14px] border border-[#d5d5c8] bg-white/65 px-4 text-[15px] outline-none [color-scheme:light] transition-colors hover:border-[#b8b8aa] focus:border-[#e66026]"
+                        className={styles.fieldControl}
                         min={minDate}
                         name="date"
                         onChange={(event) => {
@@ -360,16 +363,15 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                             setSelectedTime(currentTime);
                           }
                         }}
-                        ref={dateInputRef}
                         required
                         type="date"
                         value={selectedDate}
                       />
                     </label>
-                    <label className="mt-4 block sm:pl-2">
-                      <span className="mb-2 block text-[13px] font-medium text-[#646565]">Удобное время</span>
+                    <label>
+                      <span className={styles.label}>Удобное время</span>
                       <input
-                        className="h-12 w-full rounded-[14px] border border-[#d5d5c8] bg-white/65 px-4 text-[15px] outline-none [color-scheme:light] transition-colors hover:border-[#b8b8aa] focus:border-[#e66026]"
+                        className={styles.fieldControl}
                         min={selectedDate === minDate ? minTime : undefined}
                         name="time"
                         onChange={(event) =>
@@ -396,11 +398,8 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                     </label>
                   </motion.div>
                 ) : null}
-              </AnimatePresence>
-
-              <label className="mt-5 flex cursor-pointer items-start gap-3 text-[12px] leading-[18px] text-[#646565]">
+              <label className={styles.consent}>
                 <input
-                  className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-[#e66026]"
                   name="personalDataConsent"
                   required
                   type="checkbox"
@@ -410,7 +409,7 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
 
               {submitError ? (
                 <p
-                  className="mt-4 rounded-[12px] bg-[#fff0ea] px-4 py-3 text-[13px] leading-5 text-[#a53d16]"
+                  className={styles.error}
                   role="alert"
                 >
                   {submitError}
@@ -418,11 +417,13 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
               ) : null}
 
               <button
-                className="mt-5 min-h-12 w-full rounded-full bg-[#e66026] px-6 text-[15px] font-medium text-white transition-colors hover:bg-[#cf501c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e66026] disabled:cursor-wait disabled:opacity-65"
+                className={`${ui.primary} ${styles.submit}`}
                 disabled={submitting}
+                aria-busy={submitting}
                 type="submit"
               >
                 {submitting ? "Отправляем…" : "Оставить заявку"}
+                {!submitting && <ArrowRight />}
               </button>
             </form>
           )}

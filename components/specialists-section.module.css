@@ -1,0 +1,14 @@
+.section { color: var(--ink); scroll-margin-top: 0; font-family: var(--font-inter), sans-serif; }
+.shell { width: min(100% - var(--page-gutter) * 2,var(--content-max)); margin-inline: auto; padding: var(--section-space) 0 calc(var(--section-space) / 2); }
+.intro { display: grid; grid-template-columns: 1.25fr 1fr; gap: 64px; align-items: end; flex-shrink: 0; }
+.intro h2 { font-size: clamp(30px,3.2vw,44px); font-weight: 500; line-height: 1.15; letter-spacing: -.16px; margin-top: 18px; }
+.intro h2 > span { color: var(--text-muted); }
+.description > p { font-size: var(--font-body); line-height: 1.65; color: var(--text-body); max-width: 440px; }
+.description > a { margin-top: 12px; }
+.description > a:focus-visible { outline: 2px solid var(--accent-focus); outline-offset: 4px; }
+.expertise { display: grid; grid-template-columns: minmax(0,1.75fr) minmax(360px,1fr); gap: var(--grid-gap); margin-top: var(--section-gap); min-height: 460px; }
+.chat { min-height: 0; background: var(--surface-muted); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.tiles { min-height: 0; min-width: 0; }
+/* Content sets the section height at every viewport; nothing is clipped to a screen. */
+@media (max-width: 1050px) { .intro { gap: 32px; } .expertise { grid-template-columns: 1fr; min-height: 0; } .chat { min-height: 460px; } }
+@media (max-width: 767px) { .intro { grid-template-columns: 1fr; gap: 24px; } .intro h2 { font-size: clamp(30px,8vw,42px); } }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
-import "lenis/dist/lenis.css";
+import { BackToTop } from "@/components/back-to-top";
 import "./globals.css";
 
 const inter = Inter({
@@ -26,23 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`${inter.variable} ${montserrat.variable}`}>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                history.scrollRestoration = "manual";
-                const navigation = performance.getEntriesByType("navigation")[0];
-                if (navigation && navigation.type === "reload") {
-                  window.scrollTo(0, 0);
-                }
-              } catch {}
-            `,
-          }}
-        />
-      </head>
-      <body className="min-h-full antialiased">{children}</body>
+    <html lang="ru" data-scroll-behavior="smooth" className={`${inter.variable} ${montserrat.variable}`}>
+      <body className="min-h-full antialiased">
+        {children}
+        <BackToTop />
+      </body>
     </html>
   );
 }

@@ -22,11 +22,10 @@ const links = [
   { href: "/#about", label: "О нас" },
   { href: "/#pricing", label: "Прайс" },
   { href: "/#products", label: "Продукты" },
-  { href: "/uslugi", label: "Услуги" },
 ] as const;
 
 const itemClass =
-  "relative z-10 hidden h-12 w-[90px] shrink-0 items-center justify-center md:flex";
+  "relative z-10 hidden h-12 w-[90px] shrink-0 items-center justify-center rounded-[8px] focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[var(--accent-focus)] md:flex";
 
 const waveEase = [0.33, 1, 0.68, 1] as const;
 const openEase = [0.22, 1, 0.36, 1] as const;
@@ -64,9 +63,11 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
   const activeSlide = useParallaxActiveSlide();
   const [priceActive, setPriceActive] = useState(false);
   const [productsActive, setProductsActive] = useState(false);
+  const [contactActive, setContactActive] = useState(false);
   const aboutActive =
-    page === "about" ||
-    (activeSlide > 0 && !priceActive && !productsActive);
+    !contactActive &&
+    (page === "about" ||
+      (activeSlide > 0 && !priceActive && !productsActive));
   const [surface, setSurface] = useState<"light" | "dark">("dark");
   const reduced = useHydratedReducedMotion();
   const navRef = useRef<HTMLElement>(null);
@@ -74,11 +75,32 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
   const aboutRef = useRef<HTMLAnchorElement>(null);
   const priceRef = useRef<HTMLAnchorElement>(null);
   const productsRef = useRef<HTMLAnchorElement>(null);
+  const contactRef = useRef<HTMLAnchorElement>(null);
+  const mobileMenuRef = useRef<HTMLDetailsElement>(null);
   const [capsule, setCapsule] = useState({ x: 0, width: 165 });
   const [ready, setReady] = useState(false);
   const [opened, setOpened] = useState(false);
   const rightInset = useMotionValue(0);
-  const clipPath = useMotionTemplate`inset(0px ${rightInset}px 0px 0px round 30px)`;
+  const clipPath = useMotionTemplate`inset(0px ${rightInset}px 0px 0px round 12px)`;
+
+  useEffect(() => {
+    const dismiss = (event: MouseEvent) => {
+      const menu = mobileMenuRef.current;
+      if (!menu?.open || !(event.target instanceof Element)) return;
+      if (!menu.contains(event.target) || event.target.closest("a")) menu.open = false;
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || !mobileMenuRef.current?.open) return;
+      mobileMenuRef.current.open = false;
+      mobileMenuRef.current.querySelector("summary")?.focus();
+    };
+    document.addEventListener("click", dismiss, true);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("click", dismiss, true);
+      document.removeEventListener("keydown", escape);
+    };
+  }, []);
 
   useEffect(() => {
     const nav = navRef.current;
@@ -86,10 +108,6 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
     if (!nav || !header) return;
 
     let frame = 0;
-    // The intro moves via CSS transforms without a scroll event. Keep sampling
-    // through that transition, then only update on scroll or layout changes.
-    const transitionUntil = performance.now() + 2000;
-
     const syncSurface = () => {
       frame = 0;
       const bounds = nav.getBoundingClientRect();
@@ -102,9 +120,6 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
       const next = background?.dataset.headerSurface === "dark" ? "dark" : "light";
 
       setSurface((current) => (current === next ? current : next));
-      if (performance.now() < transitionUntil) {
-        frame = requestAnimationFrame(syncSurface);
-      }
     };
 
     const scheduleSync = () => {
@@ -137,49 +152,55 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
   }, []);
 
   const resetCapsule = useCallback(() => {
-    const active = productsActive
-      ? productsRef.current
-      : priceActive
-        ? priceRef.current
-        : aboutActive
-          ? aboutRef.current
-          : logoRef.current;
-    if (active) placeCapsule(active);
-  }, [aboutActive, placeCapsule, priceActive, productsActive]);
+    const active = contactActive
+      ? contactRef.current
+      : productsActive
+        ? productsRef.current
+        : priceActive
+          ? priceRef.current
+          : aboutActive
+            ? aboutRef.current
+            : logoRef.current;
+    const visibleActive = active?.offsetWidth ? active : logoRef.current;
+    if (visibleActive) placeCapsule(visibleActive, visibleActive === contactRef.current);
+  }, [aboutActive, contactActive, placeCapsule, priceActive, productsActive]);
 
   useEffect(() => {
-    if (page !== "home") return;
-    const pricing = document.querySelector(
-      '[aria-labelledby="support-pricing-title"]',
-    );
-    const products = document.getElementById("products");
-    if (!(pricing instanceof HTMLElement) || !products) return;
-
     const syncActiveSection = () => {
-      const pricingBounds = pricing.getBoundingClientRect();
-      const productsBounds = products.getBoundingClientRect();
+      // The responsive scroll layout can remount the sections. Read the
+      // current nodes instead of retaining detached ones across breakpoints.
       const activationLine = window.innerHeight * 0.42;
-      setPriceActive(
-        pricingBounds.top <= activationLine &&
-          pricingBounds.bottom >= activationLine,
-      );
-      setProductsActive(
-        productsBounds.top <= activationLine &&
-          productsBounds.bottom >= activationLine,
-      );
+      const intersectsActivationLine = (id: string) => {
+        const section = document.getElementById(id);
+        if (!section) return false;
+        const bounds = section.getBoundingClientRect();
+        return bounds.top <= activationLine && bounds.bottom >= activationLine;
+      };
+      const contacts = intersectsActivationLine("contact");
+      setContactActive(contacts);
+      setPriceActive(page === "home" && !contacts && intersectsActivationLine("pricing"));
+      setProductsActive(page === "home" && !contacts && intersectsActivationLine("products"));
     };
 
     syncActiveSection();
     window.addEventListener("scroll", syncActiveSection, { passive: true });
     window.addEventListener("resize", syncActiveSection);
+    const observer = new ResizeObserver(syncActiveSection);
+    observer.observe(document.body);
     return () => {
       window.removeEventListener("scroll", syncActiveSection);
       window.removeEventListener("resize", syncActiveSection);
+      observer.disconnect();
     };
   }, [page]);
 
   useLayoutEffect(() => {
     resetCapsule();
+    const nav = navRef.current;
+    if (!nav) return;
+    const observer = new ResizeObserver(resetCapsule);
+    observer.observe(nav);
+    return () => observer.disconnect();
   }, [reduced, resetCapsule]);
 
   useLayoutEffect(() => {
@@ -201,8 +222,8 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
     setReady(true);
 
     const controls = animate(rightInset, 0, {
-      delay: 2.05,
-      duration: 0.8,
+      delay: 0.35,
+      duration: 0.55,
       ease: openEase,
     });
     void controls.then(() => setOpened(true));
@@ -218,14 +239,14 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-center px-4 md:px-10 xl:px-[120px]">
         <motion.nav
           ref={navRef}
-          className="site-nav relative flex h-12 shrink-0 items-center gap-2 overflow-hidden rounded-[30px]"
+          className="site-nav relative flex h-12 shrink-0 items-center gap-2 overflow-hidden rounded-[12px]"
           aria-label="Основное меню"
-          initial={reduced ? false : { y: "115%", opacity: 0 }}
+          initial={reduced ? false : { y: 12, opacity: 0 }}
           animate={{ y: "0%", opacity: 1 }}
           transition={
             reduced
               ? { duration: 0 }
-              : { delay: 0.92, duration: 1.15, ease: waveEase }
+              : { delay: 0.08, duration: 0.55, ease: waveEase }
           }
           style={{
             visibility: ready ? "visible" : "hidden",
@@ -234,9 +255,9 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
           onMouseLeave={resetCapsule}
         >
           <motion.span
-            className="site-nav-chip pointer-events-none absolute top-0 bottom-0 left-0 z-0 rounded-[30px]"
+            className="site-nav-chip pointer-events-none absolute top-[3px] bottom-[3px] left-[3px] z-0 rounded-[8px]"
             initial={false}
-            animate={{ x: capsule.x, width: capsule.width }}
+            animate={{ x: capsule.x, width: Math.max(0, capsule.width - 6) }}
             transition={
               reduced
                 ? { duration: 0 }
@@ -247,7 +268,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
             ref={logoRef}
             href="/"
             aria-label="posadmin, на главную"
-            className="relative z-10 flex h-12 shrink-0 items-center justify-center px-5 md:px-[35px]"
+            className="relative z-10 flex h-12 shrink-0 items-center justify-center rounded-[8px] px-5 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[var(--accent-focus)] md:px-[35px]"
             onMouseEnter={(event) => placeCapsule(event.currentTarget)}
           >
             <span className="relative inline-block h-[17.43px] w-[94.795px] overflow-hidden">
@@ -286,7 +307,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
                 <motion.span
                   className="nav-link relative inline-block whitespace-nowrap"
                   data-active={active ? "true" : undefined}
-                  {...reveal(2.18 + i * 0.07, reduced)}
+                  {...reveal(0.48 + i * 0.035, reduced)}
                 >
                   {item.label}
                 </motion.span>
@@ -294,24 +315,40 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
             );
           })}
           <Link
+            ref={contactRef}
             href={page === "about" ? "#contact" : "/#contact"}
-            className="relative z-10 flex h-12 shrink-0 items-center gap-2.5 pr-5 pl-4 md:flex"
+            className="relative z-10 hidden h-12 shrink-0 items-center gap-2.5 rounded-[8px] pr-5 pl-4 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[var(--accent-focus)] min-[400px]:flex"
+            aria-current={contactActive ? "page" : undefined}
             onMouseEnter={(event) => placeCapsule(event.currentTarget, true)}
           >
             <motion.span
               className="nav-link relative inline-block whitespace-nowrap"
-              {...reveal(2.46, reduced)}
+              data-active={contactActive ? "true" : undefined}
+              {...reveal(0.64, reduced)}
             >
               Контакты
             </motion.span>
             <motion.span
               className="relative inline-block"
-              {...reveal(2.52, reduced)}
+              {...reveal(0.68, reduced)}
             >
               <NavArrow />
             </motion.span>
           </Link>
         </motion.nav>
+        <details ref={mobileMenuRef} className="relative ml-2 shrink-0 md:hidden">
+          <summary className="site-nav flex h-12 cursor-pointer list-none items-center justify-center rounded-[10px] px-4 font-[family-name:var(--font-inter)] text-[13px] font-medium focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--accent-focus)] [&::-webkit-details-marker]:hidden">Меню</summary>
+          <nav aria-label="Мобильное меню" className="site-mobile-menu fixed top-[76px] right-4 left-4 grid gap-1 rounded-[12px] border border-[rgb(245_245_237_/_0.12)] p-3 font-[family-name:var(--font-inter)] shadow-[0_16px_40px_rgba(50,47,43,0.16)]">
+            {links.map((item) => {
+              const active =
+                (item.href === "/#about" && aboutActive) ||
+                (item.href === "/#pricing" && priceActive) ||
+                (item.href === "/#products" && productsActive);
+              return <Link key={item.href} href={page === "about" && item.href === "/#about" ? "/about" : item.href} aria-current={active ? "page" : undefined} className="flex min-h-12 items-center justify-between rounded-lg px-4 text-[14px] hover:bg-[rgb(245_245_237_/_0.12)] focus-visible:outline-2 focus-visible:outline-[var(--milk)]">{item.label}<span aria-hidden="true">↗</span></Link>;
+            })}
+            <Link href={page === "about" ? "#contact" : "/#contact"} aria-current={contactActive ? "page" : undefined} className="flex min-h-12 items-center justify-between rounded-lg px-4 text-[14px] hover:bg-[rgb(245_245_237_/_0.12)] focus-visible:outline-2 focus-visible:outline-[var(--milk)]">Контакты<span aria-hidden="true">↗</span></Link>
+          </nav>
+        </details>
       </div>
     </header>
   );

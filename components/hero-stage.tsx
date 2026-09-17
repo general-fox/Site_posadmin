@@ -8,12 +8,13 @@ import { HeroCapsules } from "@/components/hero-capsules";
 import { FlipWords } from "@/components/flip-words";
 import { WaveWords } from "@/components/wave-words";
 import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
+import { HeroActions } from "@/components/hero-actions";
 
 const waveEase = [0.33, 1, 0.68, 1] as const;
 
 function LightningIcon() {
   return (
-    <div className="relative size-6 shrink-0">
+    <div className="hero-lightning relative size-6 shrink-0" aria-hidden="true">
       <div className="absolute top-[2px] left-[5px] h-5 w-[14px]">
         <div className="absolute inset-[-21.74%_-30.41%]">
           <img
@@ -59,9 +60,12 @@ export function GlowLayer() {
 
 export function HeroStage() {
   const reduced = useHydratedReducedMotion();
+  const stageRef = useRef<HTMLDivElement>(null);
   const titleBoxRef = useRef<HTMLHeadingElement>(null);
-  const [titleSize, setTitleSize] = useState({ w: 460, h: 148 });
+  const [titleSize, setTitleSize] = useState({ w: 460, h: 148, containerWidth: 1440, containerHeight: 720 });
   const [titleDone, setTitleDone] = useState(false);
+  const compact = titleSize.containerWidth <= 900 || titleSize.containerHeight <= 520;
+  const short = titleSize.containerWidth > 480 && titleSize.containerHeight <= 520;
 
   // Safety net in case the title animation never reports completion.
   useEffect(() => {
@@ -75,47 +79,51 @@ export function HeroStage() {
 
   useLayoutEffect(() => {
     const el = titleBoxRef.current;
-    if (!el) return;
+    const stage = stageRef.current;
+    if (!el || !stage) return;
     const measure = () => {
-      const box = el.getBoundingClientRect();
-      setTitleSize({ w: Math.round(box.width), h: Math.round(box.height) });
+      // Capsule offsets use layout pixels, independent of the hero's parallax.
+      const next = {
+        w: el.offsetWidth,
+        h: el.offsetHeight,
+        containerWidth: stage.clientWidth,
+        containerHeight: stage.clientHeight,
+      };
+      setTitleSize((current) => current.w === next.w && current.h === next.h &&
+        current.containerWidth === next.containerWidth && current.containerHeight === next.containerHeight ? current : next);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
+    ro.observe(stage);
     return () => ro.disconnect();
   }, []);
 
   return (
-    <div className="pointer-events-none absolute inset-0">
+    <div ref={stageRef} className="hero-stage pointer-events-none absolute inset-0" data-compact={compact} data-short={short}>
       <CircuitLines side="left" delay={0.12} reduced={reduced} />
       <CircuitLines side="right" delay={0.28} reduced={reduced} />
 
       <motion.div
-        className="hero-glass-btn absolute bottom-[40px] left-[35.85px] flex items-center justify-center overflow-hidden rounded-[50px] px-[14px] py-[8px]"
-        initial={reduced ? false : { opacity: 0, scale: 0.44 }}
-        animate={{ opacity: 1, scale: 1 }}
+        className="hero-dealer hero-glass-btn absolute bottom-[40px] left-[35.85px] flex items-center justify-center overflow-hidden rounded-[8px] px-[14px] py-[8px]"
+        initial={reduced ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={
           reduced
             ? { duration: 0 }
             : {
-                delay: 1.15,
-                opacity: { duration: 0.26, ease: "easeOut" },
-                scale: {
-                  type: "spring",
-                  stiffness: 420,
-                  damping: 10.5,
-                  mass: 0.7,
-                },
+                delay: 0.75,
+                duration: 0.55,
+                ease: waveEase,
               }
         }
       >
-        <p className="font-[family-name:var(--font-montserrat)] text-[11px] font-medium leading-normal whitespace-nowrap text-[#F5F5ED]">
+        <p className="font-[family-name:var(--font-montserrat)] text-[11px] font-medium leading-normal whitespace-nowrap text-[var(--milk)]">
           Официальный дилер r_keeper
         </p>
       </motion.div>
 
-      <div className="absolute top-[88px] left-1/2 z-[2] flex w-[calc(100%-32px)] -translate-x-1/2 items-center justify-center gap-2 text-center sm:top-[102px] sm:w-auto sm:gap-2.5">
+      <div className="hero-tagline absolute top-[88px] left-1/2 z-[2] flex w-[calc(100%-32px)] items-center justify-center gap-2 text-center sm:top-[102px] sm:w-auto sm:gap-2.5">
         <motion.div
           initial={reduced ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -127,7 +135,7 @@ export function HeroStage() {
         >
           <LightningIcon />
         </motion.div>
-        <p className="font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[20px] tracking-[0.1px] text-[#F5F5ED] sm:text-[18px] sm:leading-normal sm:tracking-[0.2px] sm:whitespace-nowrap">
+        <p className="font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[20px] tracking-[0.1px] text-[var(--milk)] sm:text-[18px] sm:leading-normal sm:tracking-[0.2px] sm:whitespace-nowrap">
           <WaveWords
             text="Единая команда для всего контура автоматизации"
             base={0.52}
@@ -138,14 +146,22 @@ export function HeroStage() {
         </p>
       </div>
 
-      <div className="absolute inset-0 z-[2] flex flex-col items-center justify-center px-6 pt-20">
-        <div className="flex w-max max-w-full flex-col items-center">
-          <div className="relative mb-8 overflow-visible">
+      <div className="hero-content absolute inset-0 z-[2] flex flex-col items-center justify-center px-6 pt-20">
+        <div className="hero-copy flex w-max max-w-full flex-col items-center">
+          <div className="hero-title-group relative mb-8 overflow-visible">
+            <HeroCapsules
+              reduced={reduced}
+              width={titleSize.w}
+              height={titleSize.h}
+              containerWidth={titleSize.containerWidth}
+              compact={compact}
+              short={short}
+            />
             <h1
               ref={titleBoxRef}
               className="relative z-20 flex flex-col items-center text-center font-[family-name:var(--font-inter)] text-[40px] font-medium leading-[1.08] tracking-[0.3px] whitespace-nowrap sm:text-[52px] lg:text-[64px] lg:tracking-[1.28px]"
             >
-              <span className="text-[#F5F5ED]">
+              <span className="text-[var(--milk)]">
                 <WaveWords
                   text="Автоматизация"
                   base={0.92}
@@ -153,7 +169,7 @@ export function HeroStage() {
                   reduced={reduced}
                 />
               </span>
-              <span className="text-[#F5F5ED]/80">
+              <span className="text-[var(--milk)]/80">
                 <FlipWords
                   base={1.08}
                   duration={1.15}
@@ -162,39 +178,9 @@ export function HeroStage() {
                 />
               </span>
             </h1>
-            <HeroCapsules
-              reduced={reduced}
-              width={titleSize.w}
-              height={titleSize.h}
-            />
           </div>
 
-          <motion.a
-            href="/#contact"
-            className="hero-glass-btn pointer-events-auto flex items-center justify-center rounded-[50px] px-[35px] py-[13px] font-[family-name:var(--font-montserrat)] text-[14px] font-medium leading-normal whitespace-nowrap text-[#F5F5ED]"
-            initial={reduced ? false : { opacity: 0, scale: 0.44 }}
-            animate={
-              titleDone
-                ? { opacity: 1, scale: 1 }
-                : { opacity: 0, scale: 0.44 }
-            }
-            transition={
-              reduced
-                ? { duration: 0 }
-                : {
-                    delay: 0.14,
-                    opacity: { duration: 0.26, ease: "easeOut" },
-                    scale: {
-                      type: "spring",
-                      stiffness: 420,
-                      damping: 10.5,
-                      mass: 0.7,
-                    },
-                  }
-            }
-          >
-            Запустить проект
-          </motion.a>
+          <HeroActions ready={titleDone} reduced={reduced} />
         </div>
       </div>
     </div>

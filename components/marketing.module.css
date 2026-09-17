@@ -1,0 +1,25 @@
+/* Whitespace separates independent chapters. Neighbours each own half of the
+   pause; card gaps and heading-to-content spacing remain compact. */
+.section { background: var(--milk); color: var(--ink); padding: calc(var(--section-space) / 2) var(--page-gutter); scroll-margin-top: 48px; font-family: var(--font-inter), sans-serif; }
+.shell { width: 100%; max-width: var(--content-max); margin-inline: auto; }
+.eyebrow { display: flex; align-items: center; gap: 10px; color: var(--text-body); font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: var(--orange); animation: var(--accent-pulse); }
+.heading { margin: 20px 0 0; font-size: var(--heading-section); line-height: 1.15; font-weight: 500; letter-spacing: -.3px; text-wrap: balance; }
+.muted { color: var(--text-muted); }
+.lead { color: var(--text-body); font-size: 16px; line-height: 1.65; }
+.sectionHeader { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,.9fr); align-items: end; gap: 64px; margin-bottom: var(--section-gap); }
+.primary, .secondary { display: inline-flex; align-items: center; justify-content: center; gap: 16px; min-height: 48px; padding: 13px 22px; border-radius: var(--control-radius); font-size: var(--font-body); font-weight: var(--control-font-weight); line-height: 1.4; cursor: pointer; transition: background .2s, transform .2s, border-color .2s; }
+.primary, .secondary, .textLink { letter-spacing: var(--control-letter-spacing); font-variation-settings: normal; font-optical-sizing: auto; }
+.primary { background: var(--action); color: var(--action-ink); border: 1px solid var(--action); }
+.primary:hover { background: var(--action-hover); border-color: var(--action-hover); transform: translateY(-2px); }
+.primary:active { background: var(--action-pressed); border-color: var(--action-pressed); transform: translateY(0); }
+.secondary { background: transparent; border: 1px solid var(--border); color: var(--ink); }
+.secondary:hover { background: var(--surface-muted); border-color: var(--border-strong); }
+.primary:disabled, .secondary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.textLink { display: inline-flex; align-items: center; gap: 16px; min-height: 44px; font-size: 14px; font-weight: var(--control-font-weight); text-underline-offset: 5px; }
+.textLink:hover { text-decoration: underline; }
+.section :is(button,a,input,summary):focus-visible { outline: 2px solid var(--accent-focus); outline-offset: 4px; }
+.badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; color: var(--text-olive); font-size: var(--font-label); font-weight: 500; white-space: nowrap; }
+@media (max-width: 1000px) { .sectionHeader { gap: 32px; } }
+@media (max-width: 767px) { .sectionHeader { grid-template-columns: 1fr; gap: 24px; } .heading { font-size: var(--heading-section); } .lead { font-size: var(--font-body); } }
+@media (prefers-reduced-motion: reduce) { .eyebrow::before { animation: none; } .primary, .secondary { transition: none; } .primary:hover { transform: none; } }

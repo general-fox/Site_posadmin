@@ -209,6 +209,10 @@ export function LiquidLogo({
     if (!program) return;
 
     const buffer = gl.createBuffer();
+    if (!buffer) {
+      gl.deleteProgram(program);
+      return;
+    }
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(
       gl.ARRAY_BUFFER,
@@ -234,6 +238,11 @@ export function LiquidLogo({
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
     const texture = gl.createTexture();
+    if (!texture) {
+      gl.deleteBuffer(buffer);
+      gl.deleteProgram(program);
+      return;
+    }
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -244,11 +253,19 @@ export function LiquidLogo({
 
     const scratch = document.createElement("canvas");
     const ctx = scratch.getContext("2d");
+    if (!ctx) {
+      gl.deleteTexture(texture);
+      gl.deleteBuffer(buffer);
+      gl.deleteProgram(program);
+      return;
+    }
     const image = new Image();
     let ink = { x: 0, y: 0, width: 1, height: 1 };
     let mid = 0.26;
     let ready = false;
     let disposed = false;
+    let failed = false;
+    let inView = true;
 
     let progress = 0;
     let time = 0;
@@ -261,8 +278,23 @@ export function LiquidLogo({
       if (still instanceof HTMLImageElement) still.style.opacity = on ? "0" : "1";
     };
 
+    const stop = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      last = 0;
+    };
+
+    const showFallback = () => {
+      failed = true;
+      ready = false;
+      stop();
+      showFx(false);
+    };
+
+    showFx(false);
+
     const uploadTexture = () => {
-      if (!ready || !ctx) return;
+      if (!ready || failed || disposed) return;
       const rect = host.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const w = Math.max(1, Math.round(rect.width * dpr));
@@ -317,6 +349,11 @@ export function LiquidLogo({
     };
 
     const draw = () => {
+      if (!ready || failed || disposed) return;
+      if (gl.isContextLost()) {
+        showFallback();
+        return;
+      }
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.uniform1f(uniforms.progress, easeOut(progress));
@@ -330,6 +367,10 @@ export function LiquidLogo({
 
     const tick = (now: number) => {
       frame = 0;
+      if (!ready || failed || disposed || !inView || document.hidden) {
+        last = 0;
+        return;
+      }
       const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
       last = now;
       time += dt;
@@ -340,18 +381,19 @@ export function LiquidLogo({
       if (progress > target) progress = Math.max(target, progress - dt * speed);
 
       draw();
+      if (failed) return;
 
       if (progress !== target || progress > 0) {
-        showFx(true);
         frame = requestAnimationFrame(tick);
       } else {
-        showFx(false);
+        // Keep the same ink geometry at rest and on hover. The final frame at
+        // progress=0 stays visible without running an idle animation loop.
         last = 0;
       }
     };
 
     const wake = () => {
-      if (!ready || frame) return;
+      if (!ready || failed || disposed || frame || !inView || document.hidden) return;
       last = 0;
       frame = requestAnimationFrame(tick);
     };
@@ -372,28 +414,75 @@ export function LiquidLogo({
     host.addEventListener("pointerover", onOver);
     host.addEventListener("pointerout", onOut);
 
-    const observer = new ResizeObserver(() => {
-      uploadTexture();
-      draw();
-    });
-    observer.observe(host);
+    const refresh = () => {
+      if (!ready || failed || disposed) return;
+      try {
+        uploadTexture();
+        draw();
+        if (!failed) showFx(true);
+      } catch {
+        showFallback();
+      }
+    };
 
-    image.onload = () => {
-      if (disposed) return;
-      ink = measureInk(image);
-      ready = true;
-      uploadTexture();
+    const pause = () => {
+      stop();
+      hovered.current = false;
+      progress = 0;
+      if (!document.hidden) draw();
+    };
+    const resume = () => {
+      if (!inView || document.hidden || disposed || failed) return;
+      hovered.current = host.matches(":hover");
       draw();
       if (hovered.current) wake();
     };
+    const onVisibilityChange = () => {
+      if (document.hidden) pause();
+      else resume();
+    };
+    const onContextLost = () => showFallback();
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    canvas.addEventListener("webglcontextlost", onContextLost);
+    const visibilityObserver = typeof IntersectionObserver === "function"
+      ? new IntersectionObserver(([entry]) => {
+        inView = entry.isIntersecting;
+        if (inView) resume();
+        else pause();
+      })
+      : null;
+    visibilityObserver?.observe(host);
+
+    const observer = new ResizeObserver(refresh);
+    observer.observe(host);
+
+    image.onload = () => {
+      if (disposed || failed) return;
+      try {
+        ink = measureInk(image);
+        ready = true;
+        refresh();
+        if (hovered.current) wake();
+      } catch {
+        showFallback();
+      }
+    };
+    image.onerror = () => { if (!disposed) showFallback(); };
     image.src = src;
 
     return () => {
       disposed = true;
-      if (frame) cancelAnimationFrame(frame);
+      stop();
       observer.disconnect();
+      visibilityObserver?.disconnect();
       host.removeEventListener("pointerover", onOver);
       host.removeEventListener("pointerout", onOut);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      canvas.removeEventListener("webglcontextlost", onContextLost);
+      image.onload = null;
+      image.onerror = null;
+      showFx(false);
       gl.deleteTexture(texture);
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);

@@ -1,0 +1,50 @@
+.dialog { width: min(600px, calc(100vw - 32px)); pointer-events: auto; }
+.panel { padding: 36px; }
+.panel h2:focus { outline: none; }
+.progressLabel { display: flex; justify-content: space-between; gap: 12px; padding-right: 36px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
+.progressLabel > span:last-child { white-space: nowrap; color: var(--text-muted); }
+.progress { display: flex; gap: 6px; margin: 18px 0 28px; }
+.progress > span { flex: 1; height: 3px; border-radius: 2px; background: var(--border); transition: background .2s; }
+.progress > span[data-complete="true"] { background: var(--orange); }
+.stageOptions { display: grid; gap: 12px; margin-top: 28px; border: 0; padding: 0; }
+.stageOption { position: relative; display: flex; align-items: center; gap: 16px; padding: 22px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; transition: border-color .2s, background .2s; }
+.stageOption:hover { border-color: var(--border-strong); }
+.stageOption:has(input:checked) { background: var(--accent-soft); border-color: var(--accent-border); }
+.stageOption:has(input:focus-visible) { outline: 2px solid var(--action-focus); outline-offset: 3px; }
+.stageOption input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.stageOption strong { display: block; font-size: 17px; line-height: 1.4; font-weight: 500; }
+.stageOption strong + span { display: block; margin-top: 6px; font-size: 13px; line-height: 1.6; color: var(--text-body); }
+.selectionMark { display: grid; place-items: center; flex-shrink: 0; margin-left: auto; width: 22px; height: 22px; border: 1px solid var(--border-strong); border-radius: 50%; color: transparent; font-size: 13px; }
+.stageOption:has(input:checked) .selectionMark { background: var(--action); border-color: var(--accent-border); color: var(--ink); }
+.taskField { margin-top: 26px; }
+.dialog .textarea { height: 168px; min-height: 136px; max-height: 320px; resize: vertical; font-size: 15px; line-height: 1.65; }
+.textarea::placeholder { color: var(--text-muted); opacity: 1; }
+.taskHint { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-top: 9px; color: var(--text-body); font-size: 11px; line-height: 1.5; }
+.taskHint > span:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.summary { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; margin-top: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--border); font-size: 12px; line-height: 1.5; }
+.summary > span { font-weight: 500; }
+.summary button { margin-left: auto; padding: 5px 0; color: var(--text-body); cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.summary p { flex-basis: 100%; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; color: var(--text-body); }
+.contactMethods { margin-top: 22px; padding: 0; border: 0; min-width: 0; }
+.contactField { display: block; margin-top: 20px; }
+.actions { display: flex; gap: 12px; margin-top: 28px; }
+.next { flex: 1; justify-content: space-between; }
+.dialog .next:hover { transform: none; }
+.back { padding-inline: 18px; }
+.footnote { margin-top: 14px; color: var(--text-body); text-align: center; font-size: 12px; line-height: 1.6; }
+.requestNumber { margin-top: 16px; color: var(--text-body); font-size: 12px; overflow-wrap: anywhere; }
+.dialog :is(button, input, textarea):disabled { cursor: wait; }
+.dialog textarea:focus, .dialog textarea:focus-visible { border: 2px solid var(--action-focus); padding: 12px 13px; outline: none; box-shadow: none; }
+.dialog [aria-invalid="true"] { border-color: var(--action-focus); }
+@media (max-width: 480px) {
+  .panel { padding: 28px 22px 24px; }
+  .stageOption { padding: 18px 16px; gap: 12px; }
+  .stageOption strong { font-size: 16px; }
+  .progressLabel { font-size: 11px; padding-right: 26px; gap: 8px; }
+  .actions { gap: 8px; }
+  .next { padding-inline: 15px; font-size: 14px; }
+  .back { padding-inline: 14px; font-size: 14px; }
+  .dialog .textarea { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .progress > span, .stageOption { transition: none; } }
+@media (forced-colors: active) { .stageOption:has(input:checked) { border-color: Highlight; } .stageOption:has(input:checked) .selectionMark { color: Highlight; } }

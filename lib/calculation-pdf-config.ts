@@ -1,11 +1,12 @@
+import { SITE_CONTACTS } from "./site-contacts";
+
 export const CALCULATION_PDF_CONFIG = {
   calculationPrefix: process.env.PDF_CALCULATION_PREFIX ?? "PA",
   validityDays: 7,
   siteLabel: "posadmin.ru",
   siteUrl: "https://posadmin.ru",
-  phone: "8 (800) 600-40-36",
-  telegramUrl:
-    process.env.NEXT_PUBLIC_TELEGRAM_URL ?? "https://t.me/posadmin",
+  phone: SITE_CONTACTS.phone,
+  telegramUrl: SITE_CONTACTS.telegramUrl,
   conditions: [
     "Расчёт относится к одному объекту и выбранному количеству рабочих мест.",
     "Лицензии, оборудование и услуги третьих лиц не включены, если прямо не указано иное.",
