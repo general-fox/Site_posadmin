@@ -13,12 +13,12 @@ const COLORS = {
   background: "#F5F5ED",
   surface: "#FAFAF5",
   border: "#D8D8CB",
-  dark: "#25221D",
-  muted: "#727366",
+  ink: "#322F2B",
+  muted: "#646456",
   sand: "#F4EDE0",
   accentBorder: "#E1BB92",
-  darkSurface: "#34312B",
-  lightMuted: "#C9C7BB",
+  accentSurface: "#ECC39B",
+  surfaceMuted: "#EBEBE0",
 };
 
 const PAGE_WIDTH = 595;
@@ -26,6 +26,7 @@ const PAGE_HEIGHT = 842;
 const PAGE_LEFT = 36;
 const CONTENT_WIDTH = 523;
 const SERVICE_TOP = 153;
+const CONTINUATION_TOP = 88;
 const SERVICE_BOTTOM = 763;
 const BLOCK_GAP = 16;
 const CONSULTATION_HEIGHT = 152;
@@ -56,7 +57,6 @@ type OverviewPageData = {
   monthlyTotal: number;
   workplaceCount: number;
   workplaceSubtitle: string;
-  parameterRows: Array<[string, string]>;
 };
 
 type CalculationDocumentData = {
@@ -164,7 +164,7 @@ function footer(page: number, total: number): Content[] {
   return [
     lineAt(PAGE_LEFT, 793),
     textAt(PAGE_LEFT, 804, CALCULATION_PDF_CONFIG.siteLabel, {
-      width: 96, fontSize: 9, color: COLORS.dark, link: CALCULATION_PDF_CONFIG.siteUrl,
+      width: 96, fontSize: 9, color: COLORS.ink, link: CALCULATION_PDF_CONFIG.siteUrl,
     }),
     textAt(150, 805, "Предварительный расчёт · не является публичной офертой", {
       width: 348, fontSize: 8, color: COLORS.muted,
@@ -180,29 +180,17 @@ function pageOneContent(data: OverviewPageData): Content[] {
     textAt(PAGE_LEFT, 104, data.title, { font: "InterMedium", fontSize: 29, lineHeight: 1.07 }),
     textAt(PAGE_LEFT, 181, `Сформирован ${date(data.generatedAt)}`, { width: 245, fontSize: 9, color: COLORS.muted }),
     textAt(315, 181, `Актуален ${CALCULATION_PDF_CONFIG.validityDays} календарных дней`, { width: 244, alignment: "right", fontSize: 9, color: COLORS.muted }),
-    rectAt(PAGE_LEFT, 210, CONTENT_WIDTH, 123, COLORS.dark),
-    textAt(56, 230, "Предварительная стоимость", { width: 293, fontSize: 10, color: COLORS.lightMuted }),
-    textAt(56, 254, `${currency(data.monthlyTotal)} ₽`, { width: 294, font: "InterMedium", fontSize: 32, color: COLORS.background }),
-    textAt(57, 301, "в месяц", { width: 200, fontSize: 10, color: COLORS.lightMuted }),
-    rectAt(382, 229, 157, 85, COLORS.darkSurface, "#5B564D"),
+    rectAt(PAGE_LEFT, 210, CONTENT_WIDTH, 123, COLORS.accentSurface, COLORS.accentBorder),
+    textAt(56, 230, "Предварительная стоимость", { width: 293, fontSize: 10, color: COLORS.ink }),
+    textAt(56, 254, `${currency(data.monthlyTotal)} ₽`, { width: 294, font: "InterMedium", fontSize: 32, color: COLORS.ink }),
+    textAt(57, 301, "в месяц", { width: 200, fontSize: 10, color: COLORS.ink }),
+    rectAt(382, 229, 157, 85, COLORS.background, COLORS.accentBorder),
     dotAt(399, 247, 2.5),
-    textAt(397, 260, workplaceLabel(data.workplaceCount), { width: 129, font: "InterMedium", fontSize: 12, color: COLORS.background }),
-    textAt(397, 285, data.workplaceSubtitle, { width: 129, fontSize: 9, color: COLORS.lightMuted }),
-    textAt(PAGE_LEFT, 360, "Параметры расчёта", { font: "InterMedium", fontSize: 15 }),
+    textAt(397, 260, workplaceLabel(data.workplaceCount), { width: 129, font: "InterMedium", fontSize: 12, color: COLORS.ink }),
+    textAt(397, 285, data.workplaceSubtitle, { width: 129, fontSize: 9, color: COLORS.muted }),
   ];
 
-  let cursor = 389;
-  for (const [label, value] of data.parameterRows) {
-    const lineCount = Math.max(linesFor(label, 208, 10), linesFor(value, 285, 10));
-    const height = Math.max(29, lineCount * 13.8 + 14);
-    content.push(
-      textAt(PAGE_LEFT, cursor, label, { width: 208, fontSize: 10, color: COLORS.muted }),
-      textAt(274, cursor, value, { width: 285, fontSize: 10 }),
-      lineAt(PAGE_LEFT, cursor + height - 9),
-    );
-    cursor += height;
-  }
-  cursor += 17;
+  let cursor = 365;
   content.push(textAt(PAGE_LEFT, cursor, "Условия расчёта", { font: "InterMedium", fontSize: 15 }));
   cursor += 29;
   for (const condition of CALCULATION_PDF_CONFIG.conditions) {
@@ -245,21 +233,21 @@ function consultationContent(y: number): Content[] {
   const qrX = 446;
   const qrY = y + 21;
   return [
-    rectAt(PAGE_LEFT, y, CONTENT_WIDTH, CONSULTATION_HEIGHT, COLORS.dark),
-    textAt(54, y + 20, "Обсудим вашу конфигурацию", { width: 355, font: "InterMedium", fontSize: 17, color: COLORS.background }),
-    textAt(54, y + 48, "Специалист проверит расчёт и подготовит\nитоговое предложение для вашего проекта.", { width: 345, fontSize: 10.5, color: COLORS.lightMuted }),
-    textAt(54, y + 89, "Написать менеджеру в Telegram", { width: 355, link: CALCULATION_PDF_CONFIG.telegramUrl, font: "InterMedium", fontSize: 11, color: COLORS.accent }),
-    textAt(54, y + 111, CALCULATION_PDF_CONFIG.phone, { width: 220, link: `tel:${CALCULATION_PDF_CONFIG.phone.replace(/\D/g, "")}`, fontSize: 10.5, color: COLORS.background }),
-    textAt(54, y + 130, "По будням с 10:00 до 19:00", { width: 355, fontSize: 8.5, color: COLORS.lightMuted }),
+    rectAt(PAGE_LEFT, y, CONTENT_WIDTH, CONSULTATION_HEIGHT, COLORS.surfaceMuted, COLORS.border),
+    textAt(54, y + 20, "Обсудим вашу конфигурацию", { width: 355, font: "InterMedium", fontSize: 17, color: COLORS.ink }),
+    textAt(54, y + 48, "Специалист проверит расчёт и подготовит\nитоговое предложение для вашего проекта.", { width: 345, fontSize: 10.5, color: COLORS.muted }),
+    textAt(54, y + 89, "Написать менеджеру в Telegram", { width: 355, link: CALCULATION_PDF_CONFIG.telegramUrl, font: "InterMedium", fontSize: 11, color: COLORS.ink, decoration: "underline" }),
+    textAt(54, y + 111, CALCULATION_PDF_CONFIG.phone, { width: 220, link: `tel:${CALCULATION_PDF_CONFIG.phone.replace(/\D/g, "")}`, fontSize: 10.5, color: COLORS.ink }),
+    textAt(54, y + 130, "По будням с 10:00 до 19:00", { width: 355, fontSize: 8.5, color: COLORS.muted }),
     // A native vector QR with a four-module quiet zone remains crisp in print.
-    positioned(qrX, qrY, { qr: CALCULATION_PDF_CONFIG.telegramUrl, fit: 70, padding: 4, eccLevel: "M", foreground: COLORS.dark, background: "#FFFFFF" }),
+    positioned(qrX, qrY, { qr: CALCULATION_PDF_CONFIG.telegramUrl, fit: 70, padding: 4, eccLevel: "M", foreground: COLORS.ink, background: "#FFFFFF" }),
     // Native QR nodes have no link annotation; the transparent overlay makes
     // the complete code (including its quiet zone) clickable in PDF viewers.
     positioned(qrX, qrY, {
       svg: '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90"><rect width="90" height="90" fill="#FFFFFF" fill-opacity="0"/></svg>',
       width: 90, height: 90, link: CALCULATION_PDF_CONFIG.telegramUrl,
     }),
-    textAt(qrX - 4, y + 113, "Менеджер Posadmin", { width: 94, alignment: "center", fontSize: 8, color: COLORS.lightMuted, link: CALCULATION_PDF_CONFIG.telegramUrl }),
+    textAt(qrX - 4, y + 113, "Менеджер Posadmin", { width: 94, alignment: "center", fontSize: 8, color: COLORS.muted, link: CALCULATION_PDF_CONFIG.telegramUrl }),
   ];
 }
 
@@ -271,13 +259,13 @@ function legalContent(y: number): Content[] {
 }
 
 function planServicePages(cards: ServiceCard[]): ServicePage[] {
-  const availableHeight = SERVICE_BOTTOM - SERVICE_TOP;
   const pages: ServicePage[] = [];
+  const availableHeight = () => SERVICE_BOTTOM - (pages.length === 0 ? SERVICE_TOP : CONTINUATION_TOP);
   let page: ServicePage = { cards: [], includeSupport: false };
   let height = 0;
   for (const card of cards) {
     const required = (page.cards.length ? BLOCK_GAP : 0) + serviceCardHeight(card);
-    if (height + required > availableHeight && page.cards.length) {
+    if (height + required > availableHeight() && page.cards.length) {
       pages.push(page);
       page = { cards: [], includeSupport: false };
       height = 0;
@@ -286,7 +274,7 @@ function planServicePages(cards: ServiceCard[]): ServicePage[] {
     page.cards.push(card);
   }
   const supportHeight = (page.cards.length ? BLOCK_GAP : 0) + CONSULTATION_HEIGHT + BLOCK_GAP + LEGAL_HEIGHT;
-  if (height + supportHeight > availableHeight) {
+  if (height + supportHeight > availableHeight()) {
     if (page.cards.length) pages.push(page);
     page = { cards: [], includeSupport: true };
   } else page.includeSupport = true;
@@ -296,13 +284,14 @@ function planServicePages(cards: ServiceCard[]): ServicePage[] {
 
 function servicePageContent(page: ServicePage, index: number): Content[] {
   const hasCards = page.cards.length > 0;
-  const content: Content[] = [
+  const showHeading = index === 0 || !hasCards;
+  const content: Content[] = showHeading ? [
     textAt(PAGE_LEFT, 87, hasCards ? "Состав сопровождения" : "Следующий шаг", { font: "InterMedium", fontSize: 27 }),
     textAt(PAGE_LEFT, 126, hasCards
-      ? index === 0 ? "Что входит в выбранную конфигурацию" : "Продолжение выбранной конфигурации"
+      ? "Что входит в выбранную конфигурацию"
       : "Уточним детали и подготовим итоговое предложение", { fontSize: 10, color: COLORS.muted }),
-  ];
-  let cursor = SERVICE_TOP;
+  ] : [];
+  let cursor = showHeading ? SERVICE_TOP : CONTINUATION_TOP;
   page.cards.forEach((card, cardIndex) => {
     if (cardIndex) cursor += BLOCK_GAP;
     content.push(...serviceCardContent(card, cursor));
@@ -327,7 +316,7 @@ function buildDocumentDefinition(data: CalculationDocumentData): TDocumentDefini
   });
   return {
     pageSize: { width: PAGE_WIDTH, height: PAGE_HEIGHT }, pageMargins: [0, 0, 0, 0], compress: true,
-    defaultStyle: { font: "Inter", color: COLORS.dark },
+    defaultStyle: { font: "Inter", color: COLORS.ink },
     info: { title: `${data.metadataTitle} ${data.calculationNumber}`, author: "Posadmin", subject: data.metadataSubject, creator: "Калькулятор Posadmin" },
     background: { canvas: [{ type: "rect", x: 0, y: 0, w: PAGE_WIDTH, h: PAGE_HEIGHT, color: COLORS.background }] },
     content,
@@ -341,12 +330,6 @@ function getRkeeperDocumentData(data: RkeeperPdfData): CalculationDocumentData {
     overview: {
       generatedAt: data.generatedAt, title: "Сопровождение\nr_keeper",
       monthlyTotal: calculation.monthlyTotal, workplaceCount: calculation.workplaceCount, workplaceSubtitle: "кассира / официанта",
-      parameterRows: [
-        ["Программный продукт", calculation.product.name],
-        ["Рабочие места кассира / официанта", String(calculation.workplaceCount)],
-        ["Базовый модуль", calculation.baseModule.name.replace(" r_keeper", "")],
-        ["Дополнительные модули", calculation.additionalModules.length ? calculation.additionalModules.map((module) => module.name).join(", ") : "Не выбраны"],
-      ],
     },
     serviceCards: [{ label: "Базовый модуль", module: calculation.baseModule }, ...calculation.additionalModules.map((module) => ({ label: module.name, module }))],
     metadataTitle: "Предварительный расчёт r_keeper",
@@ -361,12 +344,6 @@ function getItAdministrationDocumentData(data: ItAdministrationPdfData): Calcula
     overview: {
       generatedAt: data.generatedAt, title: "Системное\nIT-администрирование",
       monthlyTotal: calculation.monthlyTotal, workplaceCount: calculation.workplaceCount, workplaceSubtitle: "сотрудников",
-      parameterRows: [
-        ["Направление", calculation.product.name],
-        ["Рабочие места сотрудников", String(calculation.workplaceCount)],
-        ["Выбранные модули", calculation.selectedModules.length ? calculation.selectedModules.map((module) => module.name).join(", ") : "Не выбраны"],
-        ["Предварительная стоимость", `${currency(calculation.monthlyTotal)} ₽/мес.`],
-      ],
     },
     serviceCards: calculation.selectedModules.map((module) => ({ label: module.name, module })),
     metadataTitle: "Предварительный расчёт IT администрирования",

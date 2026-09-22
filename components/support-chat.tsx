@@ -24,7 +24,7 @@ const CONVERSATIONS = [
 ] as const;
 
 // Question → operator typing → answer → guest typing → thanks → result → transition.
-const STEP_DURATION = [1300, 2200, 1800, 1300, 700, 4200, 450] as const;
+const STEP_DURATION = [1000, 1700, 1400, 1000, 550, 4200, 450] as const;
 
 export function SupportChat() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -81,7 +81,7 @@ export function SupportChat() {
   return (
     <div className={styles.root} ref={rootRef} data-running={running} data-reduced={reducedMotion}>
       <div className={styles.intro}>
-        <div><h3>Поддержка 24/7</h3><p>Две линии поддержки — в одном чате.</p></div>
+        <div><h3>Поддержка 24/7</h3><p>Вся команда в одном чате</p></div>
       </div>
 
       <div className={styles.window}>

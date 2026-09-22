@@ -1,0 +1,19 @@
+.root { position: relative; max-width: 360px; }
+.root[data-open="true"] { z-index: 5; }
+.trigger { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--control-radius); background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; line-height: 1.4; text-align: left; cursor: pointer; transition: border-color .2s ease, background-color .2s ease; }
+.trigger[data-placeholder="true"] { color: var(--text-body); }
+.trigger:hover:enabled { border-color: var(--text-olive); background: var(--surface-soft); }
+.trigger[aria-expanded="true"] { border-color: var(--text-olive); }
+.root .trigger:focus-visible { outline: 2px solid var(--text-olive); outline-offset: 3px; }
+.trigger:disabled { opacity: .5; cursor: not-allowed; }
+.chevron { display: block; flex-shrink: 0; color: var(--text-body); transition: transform .2s ease; }
+.trigger[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+.options { position: absolute; top: calc(100% + 8px); inset-inline: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 6px; list-style: none; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); box-shadow: 0 12px 32px rgb(50 47 43 / .1); scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.options[data-above="true"] { top: auto; bottom: calc(100% + 8px); }
+.options > li { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 42px; padding: 10px; border: 1px solid transparent; border-radius: 6px; color: var(--ink); font-size: 14px; line-height: 1.5; cursor: pointer; }
+.options > li[aria-selected="true"] { background: var(--surface-selected); color: var(--text-olive); }
+.options > li[data-active="true"] { background: var(--accent-soft); border-color: var(--accent-border); }
+.options > li[data-other="true"] { margin-top: 6px; border-top-color: var(--border); }
+.options svg { display: block; flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) { .trigger, .chevron { transition: none; } }
+@media (forced-colors: active) { .options > li[data-active="true"] { outline: 1px solid Highlight; outline-offset: -2px; } }

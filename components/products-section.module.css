@@ -6,6 +6,7 @@
 .cardTop { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .wordmark { font-size: 26px; font-weight: 600; letter-spacing: -.2px; }
 .wordmark > span { font-size: 15px; margin-left: 4px; vertical-align: top; color: var(--text-olive); }
+.starIcon { display: inline-block; flex-shrink: 0; vertical-align: -.125em; }
 .loyaltyCard .wordmark > span { color: var(--accent-text); }
 .loyaltyCard .cardTop > :last-child { color: var(--accent-text); border-color: var(--accent-border); }
 .productCard h3 { font-size: clamp(32px, 3vw, 40px); font-weight: 500; line-height: 1.15; letter-spacing: -.2px; margin-top: 32px; }

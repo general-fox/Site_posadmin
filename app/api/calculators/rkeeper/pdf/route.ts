@@ -13,6 +13,10 @@ import {
   isCalculationPdfRateLimited,
 } from "@/lib/calculation-pdf-api";
 import { createRkeeperPdf } from "@/lib/rkeeper-pdf";
+import {
+  isOnsiteSupportAvailable,
+  isOnsiteSupportLocation,
+} from "@/lib/onsite-support";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +25,7 @@ type RkeeperPdfRequest = {
   product?: unknown;
   workplaceCount?: unknown;
   selectedAdditionalModules?: unknown;
+  location?: unknown;
 };
 
 function parseRequest(body: RkeeperPdfRequest) {
@@ -58,9 +63,23 @@ function parseRequest(body: RkeeperPdfRequest) {
     );
   }
 
+  const location = body.location;
+  if (location !== undefined && !isOnsiteSupportLocation(location)) {
+    throw new CalculationPdfInputError("Некорректный город или регион");
+  }
+  if (
+    selectedModules.includes("onsite-hardware-support") &&
+    !isOnsiteSupportAvailable(location)
+  ) {
+    throw new CalculationPdfInputError(
+      "Выездное сопровождение доступно только в городах и регионах из списка",
+    );
+  }
+
   return {
     workplaceCount: Number(body.workplaceCount),
     selectedModules: selectedModules as RkeeperAdditionalModuleId[],
+    location,
   };
 }
 
@@ -74,10 +93,11 @@ export async function POST(request: Request) {
 
   try {
     const body = (await request.json()) as RkeeperPdfRequest;
-    const { workplaceCount, selectedModules } = parseRequest(body);
+    const { workplaceCount, selectedModules, location } = parseRequest(body);
     const calculation = calculateRkeeperPricing(
       workplaceCount,
       selectedModules,
+      location,
     );
     const generatedAt = new Date();
     const calculationNumber = createCalculationNumber(generatedAt);

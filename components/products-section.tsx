@@ -40,7 +40,7 @@ const PRODUCT_VIEWS: Array<{
     id: "guests",
     icon: "/products/guests.svg",
     label: "Гости",
-    eyebrow: "FexBonus",
+    eyebrow: "FlexBonusb",
     title: "Каждый гость — знакомый",
   },
   {
@@ -73,6 +73,12 @@ function Icon({ src, size = 16 }: { src: string; size?: number }) {
       <Image alt="" fill sizes={`${size}px`} src={src} />
     </span>
   );
+}
+
+function StarIcon() {
+  return <svg className={styles.starIcon} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
+    <path d="M12 3v18M3 12h18M5.636 5.636l12.728 12.728M5.636 18.364 18.364 5.636" />
+  </svg>;
 }
 
 function TabIcon({ src }: { src: string }) {
@@ -358,7 +364,7 @@ function ProductDashboard({
     <div className="relative overflow-hidden rounded-[22px] border border-[var(--border-strong)] bg-[var(--surface-deep)] shadow-[0_32px_90px_rgba(50,47,47,0.18)]">
       <div className="relative flex min-h-11 items-center gap-3 border-b border-[var(--border)] px-3">
         <div className="flex gap-1.5" aria-hidden="true"><span className="size-2 rounded-full bg-[#c7c5be]" /><span className="size-2 rounded-full bg-[#d1cfc8]" /><span className="size-2 rounded-full bg-[#d9d7d0]" /></div>
-        <p className="font-[family-name:var(--font-montserrat)] text-[12px] font-medium tracking-[0.15px]">POSADMIN SPACE</p>
+        <p className="font-[family-name:var(--font-montserrat)] text-[12px] font-medium tracking-[0.15px]">Flex Spase</p>
         <span className="ml-auto hidden rounded-full bg-[var(--milk)] px-2 py-1 text-[12px] text-[var(--text-body)] sm:block">Пример интерфейса</span>
       </div>
 
@@ -376,7 +382,7 @@ function ProductDashboard({
             ))}
           </div>
           <div className="mt-5 rounded-[11px] bg-[var(--ink)] p-3 text-white">
-            <p className="text-[12px] font-medium">ReZebra + FexBonus</p>
+            <p className="text-[12px] font-medium">ReZebra + FlexBonusb</p>
             <p className="mt-1.5 text-[12px] leading-[1.6] text-white/75">Скоро в одном окне</p>
           </div>
         </aside>
@@ -466,18 +472,18 @@ export function ProductsSection() {
           <div className={styles.cardBottom}><span>Залы · Бронирования · Визиты</span><a href="https://rezebra.ru/" target="_blank" rel="noreferrer" className={ui.textLink}>На сайт ReZebra <ArrowRight diagonal /></a></div>
         </SectionReveal>
         <SectionReveal className={`${styles.productCard} ${styles.loyaltyCard}`} delay={0.1} distance={24}>
-          <div className={styles.cardTop}><span className={styles.wordmark}>FexBonus<span>✳</span></span><span className={ui.badge}>Лояльность</span></div>
+          <div className={styles.cardTop}><span className={styles.wordmark}>FlexBonusb<span><StarIcon /></span></span><span className={ui.badge}>Лояльность</span></div>
           <h3>Первый визит<br />Начало истории</h3>
           <p>Бонусы, скидки и сертификаты, которые дают гостям повод вернуться. Предложения — с учётом их интересов.</p>
           <div className={styles.loyaltyIllustration} aria-hidden="true">
-            <div className={styles.loyaltyPass}><div><span>FexBonus</span><span>Карта гостя</span></div><p>Приятно видеть<br />вас снова.</p><div><span>Ваш баланс</span><strong>2 400 <small>бонусов</small></strong></div></div>
-            <div className={styles.bonusToast}><span>✳</span><div>+350 бонусов<small>За новый визит</small></div></div>
+            <div className={styles.loyaltyPass}><div><span>FlexBonusb</span><span>Карта гостя</span></div><p>Приятно видеть<br />вас снова.</p><div><span>Ваш баланс</span><strong>2 400 <small>бонусов</small></strong></div></div>
+            <div className={styles.bonusToast}><span><StarIcon /></span><div>+350 бонусов<small>За новый визит</small></div></div>
           </div>
           <div className={styles.cardBottom}><span>Бонусы · Скидки · Сертификаты</span><button type="button" className={ui.textLink} onClick={() => setCallbackOpen(true)}>Узнать о подключении <ArrowRight /></button></div>
         </SectionReveal>
       </div>
       <div className={styles.space}>
-        <SectionReveal className={styles.spaceIntro} distance={22}><div><span className={ui.badge}>Следующий шаг · в разработке</span><h3>Два продукта<br />Одно пространство</h3></div><p className={ui.lead}>Объединяем ReZebra и FexBonus, добавляем отчёты по гостям и рассылки через Telegram и SMS. Посмотрите, каким может быть ваш рабочий день.</p></SectionReveal>
+        <SectionReveal className={styles.spaceIntro} distance={22}><div><span className={ui.badge}>Следующий шаг · в разработке</span><h3>Два продукта<br />Одно пространство</h3></div><p className={ui.lead}>Объединяем ReZebra и FlexBonusb, добавляем отчёты по гостям и рассылки через Telegram и SMS. Посмотрите, каким может быть ваш рабочий день.</p></SectionReveal>
         <SectionReveal distance={18}>
         <div ref={demoRef}>
           <div className={styles.demoControls}>

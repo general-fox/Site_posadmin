@@ -33,7 +33,7 @@ export function SiteFooter({ page = "home" }: { page?: "home" | "about" }) {
           <h2>Наши продукты</h2>
           <ul>
             <li><a className={styles.productLink} href="https://rezebra.ru/" target="_blank" rel="noopener noreferrer" aria-label="ReZebra — сайт продукта, откроется в новой вкладке">ReZebra<ArrowRight diagonal /></a><p className={styles.productNote}>Бронирование столов</p></li>
-            <li><Link href="/#products">FexBonus</Link><p className={styles.productNote}>Лояльность гостей</p></li>
+            <li><Link href="/#products">FlexBonusb</Link><p className={styles.productNote}>Лояльность гостей</p></li>
           </ul>
         </nav>
         <div className={`${styles.column} ${styles.contact}`}>

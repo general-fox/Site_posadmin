@@ -1,3 +1,8 @@
+import {
+  isOnsiteSupportAvailable,
+  type OnsiteSupportLocation,
+} from "@/lib/onsite-support";
+
 export const RKEEPER_PRODUCT_ID = "r_keeper" as const;
 
 export type RkeeperAdditionalModuleId =
@@ -34,9 +39,6 @@ export const RKEEPER_TARIFF = {
     id: "remote-technical-support",
     name: "Удалённое техническое сопровождение r_keeper",
     features: [
-      "Персональный менеджер",
-      "Выделенный канал в мессенджере Telegram или MAX",
-      "Гарантированные сроки реагирования и решения задач",
       "Установка и настройка модулей комплекса r_keeper",
       "Обновление и профилактика модулей r_keeper",
       "Диагностика и устранение сбоев r_keeper",
@@ -44,6 +46,9 @@ export const RKEEPER_TARIFF = {
       "Удалённое сопровождение ККТ",
       "Удалённое сопровождение ГИС",
       "Срочные запросы по словарям",
+      "Персональный менеджер",
+      "Выделенный канал в мессенджере Telegram или MAX",
+      "Гарантированные сроки реагирования и решения задач",
     ],
   },
   additionalModules: [
@@ -98,11 +103,17 @@ export function isRkeeperAdditionalModuleId(
 export function calculateRkeeperPricing(
   workplaceCount: number,
   selectedAdditionalModuleIds: RkeeperAdditionalModuleId[],
+  location?: OnsiteSupportLocation,
 ): RkeeperCalculation {
   const modulePrice = getRkeeperModulePrice(workplaceCount);
   const selectedIdSet = new Set(selectedAdditionalModuleIds);
   const additionalModules = RKEEPER_TARIFF.additionalModules
-    .filter((module) => selectedIdSet.has(module.id))
+    .filter(
+      (module) =>
+        selectedIdSet.has(module.id) &&
+        (module.id !== "onsite-hardware-support" ||
+          isOnsiteSupportAvailable(location)),
+    )
     .map((module) => ({
       ...module,
       features: [...module.features],

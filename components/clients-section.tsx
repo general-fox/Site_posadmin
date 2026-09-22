@@ -1,7 +1,8 @@
 "use client";
 
 import { ClientsStatsDots } from "@/components/clients-stats-dots";
-import { LiquidLogo } from "@/components/liquid-logo";
+import Image from "next/image";
+import type { PointerEvent } from "react";
 import { SectionReveal, useScrollReveal } from "./marketing-ui";
 import ui from "./marketing.module.css";
 
@@ -17,6 +18,23 @@ const CLIENTS = [
   { name: "Колбасный цех", src: "/clients/kc.svg", href: "https://kolbasnyy-tsekh.ru/" },
   { name: "Сыроварня", src: "/clients/sirovarnya.svg", href: "https://www.syrovarnya.com/" },
 ] as const;
+
+function updateClientGlow(event: PointerEvent<HTMLAnchorElement>) {
+  const card = event.currentTarget;
+  if (event.pointerType !== "mouse") {
+    delete card.dataset.pointerInside;
+    return;
+  }
+
+  const bounds = card.getBoundingClientRect();
+  card.style.setProperty("--client-pointer-x", `${event.clientX - bounds.left}px`);
+  card.style.setProperty("--client-pointer-y", `${event.clientY - bounds.top}px`);
+  card.dataset.pointerInside = "true";
+}
+
+function hideClientGlow(event: PointerEvent<HTMLAnchorElement>) {
+  delete event.currentTarget.dataset.pointerInside;
+}
 
 export function ClientsSection() {
   const logoGridRef = useScrollReveal<HTMLDivElement>({ distance: 12, rows: true });
@@ -40,8 +58,19 @@ export function ClientsSection() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`${client.name} — сайт клиента (откроется в новой вкладке)`}
+                onPointerEnter={updateClientGlow}
+                onPointerMove={updateClientGlow}
+                onPointerLeave={hideClientGlow}
+                onPointerCancel={hideClientGlow}
               >
-                <LiquidLogo src={client.src} alt={client.name} className="client-logo-canvas" />
+                <span className="client-logo-mark">
+                  <Image
+                    src={client.src}
+                    alt={client.name}
+                    fill
+                    sizes="(max-width: 639px) 30vw, (max-width: 1050px) 12vw, 105px"
+                  />
+                </span>
               </a>
             ))}
           </div>

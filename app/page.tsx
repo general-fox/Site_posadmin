@@ -19,6 +19,7 @@ export default function HomePage() {
       <SpecialistsSection />
       <ClientsSection />
       <SupportPricingSection />
+      <SupportPricingSection service="it" />
       <ProductsSection />
     </FullPageParallax>
     </>

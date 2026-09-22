@@ -178,7 +178,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
       };
       const contacts = intersectsActivationLine("contact");
       setContactActive(contacts);
-      setPriceActive(page === "home" && !contacts && intersectsActivationLine("pricing"));
+      setPriceActive(page === "home" && !contacts && (intersectsActivationLine("pricing") || intersectsActivationLine("it-pricing")));
       setProductsActive(page === "home" && !contacts && intersectsActivationLine("products"));
     };
 
