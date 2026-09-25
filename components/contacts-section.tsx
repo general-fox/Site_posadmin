@@ -69,7 +69,7 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
                   <span className={styles.label}>{office.region}</span>
                   <span className={styles.officeNumber} aria-hidden="true">0{index + 1}</span>
                 </div>
-                <h3>{office.city}</h3>
+                <h3 id={`office-${index + 1}`}>{office.city}</h3>
                 <address>{office.street}</address>
                 <a
                   className={ui.textLink}

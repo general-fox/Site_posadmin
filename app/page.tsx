@@ -6,6 +6,13 @@ import { ClientsSection } from "@/components/clients-section";
 import { FullPageParallax } from "@/components/full-page-parallax";
 import { SupportPricingSection } from "@/components/support-pricing-section";
 import { ProductsSection } from "@/components/products-section";
+import { buildPageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Автоматизация ресторанов и сопровождение r_keeper",
+  description: SITE_DESCRIPTION,
+  path: "/",
+});
 
 export default function HomePage() {
   return (

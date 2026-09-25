@@ -7,7 +7,7 @@ import { ArrowRight } from "./marketing-ui";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { HeroDust } from "./hero-dust";
 
-export function SiteFooter({ page = "home" }: { page?: "home" | "about" }) {
+export function SiteFooter() {
   return (
     <footer className={styles.footer} data-header-surface="dark">
       <div className={styles.dust} aria-hidden="true"><HeroDust coverage="full" subtle /></div>
@@ -24,9 +24,10 @@ export function SiteFooter({ page = "home" }: { page?: "home" | "about" }) {
           <h2>Компания</h2>
           <ul>
             <li><Link href="/about">О нас</Link></li>
+            <li><Link href="/services">Услуги</Link></li>
             <li><Link href="/#pricing">Прайс</Link></li>
             <li><Link href="/#products">Продукты</Link></li>
-            <li><Link href={page === "about" ? "#contact" : "/#contact"}>Контакты</Link></li>
+            <li><Link href="/contacts">Контакты</Link></li>
           </ul>
         </nav>
         <nav className={styles.column} aria-label="Продукты Posadmin">
@@ -46,7 +47,7 @@ export function SiteFooter({ page = "home" }: { page?: "home" | "about" }) {
       </div>
       <div className={styles.bottom}>
         <p>© 2026 Posadmin</p>
-        <Link className={styles.locations} href={page === "about" ? "#contact" : "/#contact"}>Люберцы <span aria-hidden="true">·</span> Новороссийск</Link>
+        <Link className={styles.locations} href="/contacts">Люберцы <span aria-hidden="true">·</span> Новороссийск</Link>
       </div>
       </div>
     </footer>

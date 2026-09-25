@@ -20,12 +20,13 @@ import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-moti
 
 const links = [
   { href: "/#about", label: "О нас" },
+  { href: "/services", label: "Услуги" },
   { href: "/#pricing", label: "Прайс" },
   { href: "/#products", label: "Продукты" },
 ] as const;
 
 const itemClass =
-  "relative z-10 hidden h-12 w-[90px] shrink-0 items-center justify-center rounded-[8px] focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[var(--accent-focus)] md:flex";
+  "relative z-10 hidden h-12 w-[80px] shrink-0 items-center justify-center rounded-[8px] focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[var(--accent-focus)] md:flex";
 
 const waveEase = [0.33, 1, 0.68, 1] as const;
 const openEase = [0.22, 1, 0.36, 1] as const;
@@ -59,20 +60,23 @@ function NavArrow() {
   );
 }
 
-export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
+export function SiteHeader({ page = "home" }: { page?: "home" | "about" | "services" | "contacts" | "other" }) {
   const activeSlide = useParallaxActiveSlide();
   const [priceActive, setPriceActive] = useState(false);
   const [productsActive, setProductsActive] = useState(false);
-  const [contactActive, setContactActive] = useState(false);
+  const [contactActive, setContactActive] = useState(page === "contacts");
+  const servicesActive = page === "services" && !contactActive;
+  const contactHref = page === "about" ? "#contact" : page === "home" ? "/#contact" : "/contacts";
   const aboutActive =
     !contactActive &&
     (page === "about" ||
-      (activeSlide > 0 && !priceActive && !productsActive));
-  const [surface, setSurface] = useState<"light" | "dark">("dark");
+      (page === "home" && activeSlide > 0 && !priceActive && !productsActive));
+  const [surface, setSurface] = useState<"light" | "dark">(page === "home" || page === "about" ? "dark" : "light");
   const reduced = useHydratedReducedMotion();
   const navRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
   const aboutRef = useRef<HTMLAnchorElement>(null);
+  const servicesRef = useRef<HTMLAnchorElement>(null);
   const priceRef = useRef<HTMLAnchorElement>(null);
   const productsRef = useRef<HTMLAnchorElement>(null);
   const contactRef = useRef<HTMLAnchorElement>(null);
@@ -160,10 +164,12 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
           ? priceRef.current
           : aboutActive
             ? aboutRef.current
-            : logoRef.current;
+            : servicesActive
+              ? servicesRef.current
+              : logoRef.current;
     const visibleActive = active?.offsetWidth ? active : logoRef.current;
     if (visibleActive) placeCapsule(visibleActive, visibleActive === contactRef.current);
-  }, [aboutActive, contactActive, placeCapsule, priceActive, productsActive]);
+  }, [aboutActive, contactActive, placeCapsule, priceActive, productsActive, servicesActive]);
 
   useEffect(() => {
     const syncActiveSection = () => {
@@ -176,7 +182,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
         const bounds = section.getBoundingClientRect();
         return bounds.top <= activationLine && bounds.bottom >= activationLine;
       };
-      const contacts = intersectsActivationLine("contact");
+      const contacts = page === "contacts" || intersectsActivationLine("contact");
       setContactActive(contacts);
       setPriceActive(page === "home" && !contacts && (intersectsActivationLine("pricing") || intersectsActivationLine("it-pricing")));
       setProductsActive(page === "home" && !contacts && intersectsActivationLine("products"));
@@ -236,6 +242,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
       data-surface={surface}
       data-page={page}
     >
+      <noscript><style>{`.site-header .site-nav { visibility: visible !important; opacity: 1 !important; clip-path: none !important; transform: none !important; } .site-header .site-nav span { opacity: 1 !important; transform: none !important; }`}</style></noscript>
       <div className="mx-auto flex h-full w-full max-w-[1440px] items-center justify-center px-4 md:px-10 xl:px-[120px]">
         <motion.nav
           ref={navRef}
@@ -284,6 +291,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
                 : item.href;
             const active =
               (item.href === "/#about" && aboutActive) ||
+              (item.href === "/services" && servicesActive) ||
               (item.href === "/#pricing" && priceActive) ||
               (item.href === "/#products" && productsActive);
 
@@ -297,7 +305,9 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
                       ? priceRef
                       : item.href === "/#products"
                         ? productsRef
-                        : undefined
+                        : item.href === "/services"
+                          ? servicesRef
+                          : undefined
                 }
                 href={href}
                 className={itemClass}
@@ -316,7 +326,7 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
           })}
           <Link
             ref={contactRef}
-            href={page === "about" ? "#contact" : "/#contact"}
+            href={contactHref}
             className="relative z-10 hidden h-12 shrink-0 items-center gap-2.5 rounded-[8px] pr-5 pl-4 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[var(--accent-focus)] min-[400px]:flex"
             aria-current={contactActive ? "page" : undefined}
             onMouseEnter={(event) => placeCapsule(event.currentTarget, true)}
@@ -342,11 +352,12 @@ export function SiteHeader({ page = "home" }: { page?: "home" | "about" }) {
             {links.map((item) => {
               const active =
                 (item.href === "/#about" && aboutActive) ||
+                (item.href === "/services" && servicesActive) ||
                 (item.href === "/#pricing" && priceActive) ||
                 (item.href === "/#products" && productsActive);
               return <Link key={item.href} href={page === "about" && item.href === "/#about" ? "/about" : item.href} aria-current={active ? "page" : undefined} className="flex min-h-12 items-center justify-between rounded-lg px-4 text-[14px] hover:bg-[rgb(245_245_237_/_0.12)] focus-visible:outline-2 focus-visible:outline-[var(--milk)]">{item.label}<span aria-hidden="true">↗</span></Link>;
             })}
-            <Link href={page === "about" ? "#contact" : "/#contact"} aria-current={contactActive ? "page" : undefined} className="flex min-h-12 items-center justify-between rounded-lg px-4 text-[14px] hover:bg-[rgb(245_245_237_/_0.12)] focus-visible:outline-2 focus-visible:outline-[var(--milk)]">Контакты<span aria-hidden="true">↗</span></Link>
+            <Link href={contactHref} aria-current={contactActive ? "page" : undefined} className="flex min-h-12 items-center justify-between rounded-lg px-4 text-[14px] hover:bg-[rgb(245_245_237_/_0.12)] focus-visible:outline-2 focus-visible:outline-[var(--milk)]">Контакты<span aria-hidden="true">↗</span></Link>
           </nav>
         </details>
       </div>

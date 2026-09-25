@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import { BackToTop } from "@/components/back-to-top";
+import { JsonLd } from "@/components/json-ld";
+import {
+  buildPageMetadata,
+  organizationJsonLd,
+  SITE_DESCRIPTION,
+  SITE_URL,
+  websiteJsonLd,
+} from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({
@@ -16,8 +24,28 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "posadmin",
-  description: "Автоматизация ресторанов под ключ",
+  ...buildPageMetadata({
+    title: "Автоматизация ресторанов и поддержка r_keeper",
+    description: SITE_DESCRIPTION,
+    path: "/",
+  }),
+  metadataBase: new URL(SITE_URL),
+  applicationName: "Posadmin",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    yandex: process.env.YANDEX_SITE_VERIFICATION || undefined,
+  },
 };
 
 export default function RootLayout({
@@ -28,6 +56,10 @@ export default function RootLayout({
   return (
     <html lang="ru" data-scroll-behavior="smooth" className={`${inter.variable} ${montserrat.variable}`}>
       <body className="min-h-full antialiased">
+        <JsonLd data={{
+          "@context": "https://schema.org",
+          "@graph": [organizationJsonLd, websiteJsonLd],
+        }} />
         {children}
         <BackToTop />
       </body>

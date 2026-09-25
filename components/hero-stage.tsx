@@ -33,7 +33,7 @@ export function GlowLayer() {
     <div className="hero-glow-board pointer-events-none absolute inset-0">
       <div className="hero-glow-figma">
         <img
-          src="/figma-hero/vector-165.png?v=3"
+          src="/figma-hero/vector-165.webp"
           alt=""
           className="hero-glow absolute top-[503.11px] left-[-41.66px] h-[364.974px] w-[423.197px]"
         />
@@ -43,7 +43,7 @@ export function GlowLayer() {
           className="hero-glow absolute top-[-220.64px] left-[738.32px] h-[646.419px] w-[930.898px]"
         />
         <img
-          src="/figma-hero/ellipse-353.png?v=3"
+          src="/figma-hero/ellipse-353.webp"
           alt=""
           className="hero-glow absolute top-[-43.68px] left-[913.97px] h-[777.9px] w-[802.5px]"
         />
@@ -101,6 +101,9 @@ export function HeroStage() {
 
   return (
     <div ref={stageRef} className="hero-stage pointer-events-none absolute inset-0" data-compact={compact} data-short={short}>
+      <noscript>
+        <style>{`.hero-stage [data-hero-word] { opacity: 1 !important; transform: none !important; }`}</style>
+      </noscript>
       <CircuitLines side="left" delay={0.12} reduced={reduced} />
       <CircuitLines side="right" delay={0.28} reduced={reduced} />
 
@@ -161,7 +164,8 @@ export function HeroStage() {
               ref={titleBoxRef}
               className="relative z-20 flex flex-col items-center text-center font-[family-name:var(--font-inter)] text-[40px] font-medium leading-[1.08] tracking-[0.3px] whitespace-nowrap sm:text-[52px] lg:text-[64px] lg:tracking-[1.28px]"
             >
-              <span className="text-[var(--milk)]">
+              <span className="sr-only">Автоматизация ресторанов, баров и кафе</span>
+              <span className="text-[var(--milk)]" aria-hidden="true">
                 <WaveWords
                   text="Автоматизация"
                   base={0.92}
@@ -169,7 +173,7 @@ export function HeroStage() {
                   reduced={reduced}
                 />
               </span>
-              <span className="text-[var(--milk)]/80">
+              <span className="text-[var(--milk)]/80" aria-hidden="true">
                 <FlipWords
                   base={1.08}
                   duration={1.15}

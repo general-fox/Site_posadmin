@@ -35,6 +35,7 @@ export function WaveWords({
           className="inline-block -mb-[0.16em] overflow-hidden pb-[0.16em] align-bottom"
         >
           <motion.span
+            data-hero-word=""
             className="inline-block"
             initial={reduced ? false : { y: "115%", opacity: 0 }}
             animate={{ y: "0%", opacity: 1 }}

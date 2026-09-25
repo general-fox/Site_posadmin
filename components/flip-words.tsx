@@ -79,6 +79,7 @@ export function FlipWords({
         <AnimatePresence mode="wait">
           <motion.span
             key={word}
+            data-hero-word=""
             className="absolute inset-0 flex items-center justify-center whitespace-nowrap"
             initial={{ y: "115%", opacity: 0 }}
             animate={{ y: "0%", opacity: 1 }}

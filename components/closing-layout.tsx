@@ -116,7 +116,7 @@ export function ClosingLayout({ children, page = "home" }: { children: ReactNode
     <div ref={underlayRef} className={`${styles.underlay} ${page === "home" ? styles.productUnderlay : ""}`} data-closing-underlay>{children}</div>
     <div className={`${styles.ending} ${page === "about" ? styles.aboutEnding : ""}`} data-header-surface="dark">
       <ContactsSection flushTop />
-      <SiteFooter page={page} />
+        <SiteFooter />
     </div>
   </div>;
 }
