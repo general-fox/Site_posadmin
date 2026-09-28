@@ -62,6 +62,10 @@
   transition: none;
 }
 
+@media (max-width: 900px) {
+  :global(body:has([data-calculation-bar])) .button { display: none; }
+}
+
 @media (max-width: 767px) {
   .button {
     right: max(16px, env(safe-area-inset-right));

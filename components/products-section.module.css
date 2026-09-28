@@ -1,6 +1,6 @@
 .section { padding-block: calc(var(--section-space) / 2); }
 .productGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--grid-gap); }
-.productCard { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--card-radius); padding: 32px 32px 0; overflow: hidden; min-width: 0; }
+.productCard { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--card-radius); padding: 32px 32px 0; overflow: hidden; min-width: 0; scroll-margin-top: 100px; }
 .bookingCard { background: var(--surface); }
 .loyaltyCard { background: var(--surface-apricot); border-color: var(--accent-border); }
 .cardTop { display: flex; align-items: center; justify-content: space-between; gap: 14px; }

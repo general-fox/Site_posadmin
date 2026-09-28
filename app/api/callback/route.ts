@@ -2,6 +2,9 @@ import { randomInt } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
+import { getCalculationSummary } from "@/lib/calculation-request";
+import { validateCallbackSchedule } from "@/lib/callback-schedule";
+import { getPricingSnapshot } from "@/lib/pricing-store";
 
 export const runtime = "nodejs";
 
@@ -16,6 +19,8 @@ type CallbackRequest = {
   phone?: unknown;
   time?: unknown;
   website?: unknown;
+  calculation?: unknown;
+  pricingRevision?: unknown;
 };
 
 function escapeHtml(value: string) {
@@ -95,47 +100,6 @@ function isRateLimited(ip: string) {
   return recent.length > RATE_LIMIT_MAX_REQUESTS;
 }
 
-function isValidDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return false;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-
-  return (
-    parsed.getUTCFullYear() === year &&
-    parsed.getUTCMonth() === month - 1 &&
-    parsed.getUTCDate() === day
-  );
-}
-
-function isValidTime(value: string) {
-  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
-}
-
-function getCurrentMoscowDateTime() {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      hour: "2-digit",
-      hourCycle: "h23",
-      minute: "2-digit",
-      month: "2-digit",
-      timeZone: "Europe/Moscow",
-      year: "numeric",
-    })
-      .formatToParts(new Date())
-      .map(({ type, value }) => [type, value]),
-  );
-
-  return {
-    date: `${parts.year}-${parts.month}-${parts.day}`,
-    time: `${parts.hour}:${parts.minute}`,
-  };
-}
-
 export async function POST(request: Request) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     request.headers.get("x-real-ip") ||
@@ -150,7 +114,9 @@ export async function POST(request: Request) {
 
   let body: CallbackRequest;
   try {
-    body = (await request.json()) as CallbackRequest;
+    const value: unknown = await request.json();
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid body");
+    body = value as CallbackRequest;
   } catch {
     return NextResponse.json({ error: "Некорректные данные." }, { status: 400 });
   }
@@ -167,6 +133,18 @@ export async function POST(request: Request) {
   const consent = body.personalDataConsent === true;
   const date = typeof body.date === "string" ? body.date : "";
   const time = typeof body.time === "string" ? body.time : "";
+  let calculation = null;
+  if (body.calculation !== undefined) {
+    try {
+      const snapshot = getPricingSnapshot();
+      if ((body.pricingRevision ?? 0) !== snapshot.revision) {
+        return NextResponse.json({ error: "Цены обновились. Проверьте новый расчёт и отправьте заявку ещё раз.", snapshot }, { status: 409 });
+      }
+      calculation = getCalculationSummary(body.calculation, snapshot.config);
+    } catch {
+      return NextResponse.json({ error: "Не удалось проверить актуальные цены. Попробуйте позже." }, { status: 503 });
+    }
+  }
 
   if (!phone) {
     return NextResponse.json(
@@ -182,21 +160,18 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!contactSoon && (!isValidDate(date) || !isValidTime(time))) {
+  if (body.calculation !== undefined && !calculation) {
     return NextResponse.json(
-      { error: "Выберите удобные дату и время." },
+      { error: "Не удалось проверить расчёт. Закройте форму и выберите услуги заново." },
       { status: 400 },
     );
   }
 
   if (!contactSoon) {
-    const current = getCurrentMoscowDateTime();
-    if (
-      date < current.date ||
-      (date === current.date && time < current.time)
-    ) {
+    const scheduleError = validateCallbackSchedule(date, time);
+    if (scheduleError) {
       return NextResponse.json(
-        { error: "Выберите дату и время не раньше текущих." },
+        { error: scheduleError },
         { status: 400 },
       );
     }
@@ -216,13 +191,20 @@ export async function POST(request: Request) {
     100,
   )}`;
   const preferredTime = contactSoon
-    ? "В ближайшее рабочее время"
-    : `${date}, ${time}`;
+    ? "В ближайшее рабочее время: будни, 10:00–19:00 МСК"
+    : `${date}, ${time} МСК`;
+  const calculationText = calculation
+    ? `\n\n<b>Расчёт: ${escapeHtml(calculation.productName)}</b>\n` +
+      `<b>Рабочих мест:</b> ${calculation.workplaceCount}\n` +
+      (calculation.locationLabel ? `<b>Город / регион:</b> ${escapeHtml(calculation.locationLabel)}\n` : "") +
+      calculation.modules.map((module) => `• ${escapeHtml(module.name)} — ${module.monthlyPrice.toLocaleString("ru-RU")} ₽/мес.`).join("\n") +
+      `\n<b>Итого:</b> ${calculation.monthlyTotal.toLocaleString("ru-RU")} ₽/мес.`
+    : "";
   const message =
     `🌐 <b>Новая заявка с сайта #${requestId}</b>\n\n` +
     `<b>Телефон:</b> ${escapeHtml(phone)}\n` +
     `<b>Когда связаться:</b> ${escapeHtml(preferredTime)}\n` +
-    "<b>Источник:</b> форма обратного звонка на posadmin.ru";
+    "<b>Источник:</b> форма обратного звонка на posadmin.ru" + calculationText;
 
   try {
     const telegramResponse = await fetch(
@@ -240,10 +222,10 @@ export async function POST(request: Request) {
       },
     );
 
-    if (!telegramResponse.ok) {
-      const result = (await telegramResponse.json().catch(() => null)) as
-        | { description?: string }
-        | null;
+    const result = (await telegramResponse.json().catch(() => null)) as
+      | { description?: string; ok?: boolean }
+      | null;
+    if (!telegramResponse.ok || !result?.ok) {
       console.error(
         "Telegram callback delivery failed:",
         result?.description || telegramResponse.status,

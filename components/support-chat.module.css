@@ -12,6 +12,8 @@
 .status i { width: 5px; height: 5px; border-radius: 50%; background: var(--text-olive); }
 .conversation { display: flex; flex: 1; min-height: 0; flex-direction: column; justify-content: end; gap: 12px; padding: 18px 12px; opacity: 1; transform: translateY(0); transition: opacity .4s ease, transform .4s ease; }
 .conversation[data-leaving="true"] { opacity: 0; transform: translateY(-6px); }
+.messageStage { display: contents; }
+.messageMeasure { display: none; }
 .messages { position: relative; display: flex; flex-shrink: 0; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .message { display: flow-root; max-width: 90%; width: fit-content; padding: 10px 12px; border: 1px solid var(--border-soft); border-radius: 9px; transform-origin: bottom right; font-size: 14px; line-height: 1.45; letter-spacing: .06px; }
 .message p { display: inline; font: inherit; }
@@ -33,5 +35,9 @@
 @keyframes typing { 0%,60%,100% { transform: translateY(0); opacity: .35; } 30% { transform: translateY(-3px); opacity: 1; } }
 @media (min-width: 1051px) and (max-height: 800px) { .root { padding: 16px; gap: 12px; } .intro h3 { font-size: 22px; } .header { padding: 10px 11px; } .conversation { padding-block: 12px; gap: 10px; } .messages { gap: 8px; } .message { padding-block: 8px; } }
 @media (max-width: 1050px) { .root { min-height: 458px; } .window { min-height: 380px; } .conversation { padding-block: 20px; gap: 16px; } .messages { gap: 12px; } .message { max-width: min(90%,360px); } }
-@media (max-width: 380px) { .root { padding: 16px; } .window { min-height: 440px; } .header { display: grid; grid-template-columns: 34px 1fr; gap: 4px 9px; } .avatar { grid-row: span 2; } .status { grid-column: 2; justify-content: start; margin-left: 0; } }
+/* Reserve the largest complete conversation at the current text width. Unlike
+   a fixed height, this stays stable between messages without clipping at 320px
+   or when the visitor increases the text size. */
+@media (max-width: 767px) { .root { height: auto; min-height: 0; padding: 18px; } .window { min-height: 320px; } .conversation { min-height: 256px; padding-block: 16px; gap: 12px; } .messages { gap: 10px; } .messageStage { display: grid; flex-shrink: 0; } .messageStage > * { grid-area: 1 / 1; align-self: end; min-width: 0; } .messageMeasure { display: grid; visibility: hidden; pointer-events: none; } .messageMeasure > * { grid-area: 1 / 1; align-self: end; min-width: 0; } }
+@media (max-width: 380px) { .root { padding: 16px; } .header { display: grid; grid-template-columns: 34px 1fr; gap: 4px 9px; } .avatar { grid-row: span 2; } .status { grid-column: 2; justify-content: start; margin-left: 0; } }
 @media (prefers-reduced-motion: reduce) { .conversation, .resolved { transition: none; } .typing > span { animation: none; } }

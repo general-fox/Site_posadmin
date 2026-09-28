@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getPricingSnapshot } from "@/lib/pricing-store";
 import {
   calculateItAdministrationPricing,
   isItAdministrationModuleId,
@@ -18,6 +19,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type ItAdministrationPdfRequest = {
+  pricingRevision?: unknown;
   product?: unknown;
   workplaceCount?: unknown;
   selectedModules?: unknown;
@@ -74,9 +76,14 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ItAdministrationPdfRequest;
     const { workplaceCount, selectedModules } = parseRequest(body);
+    const snapshot = getPricingSnapshot();
+    if ((body.pricingRevision ?? 0) !== snapshot.revision) {
+      return NextResponse.json({ message: "Цены обновились. Проверьте новый расчёт.", snapshot }, { status: 409 });
+    }
     const calculation = calculateItAdministrationPricing(
       workplaceCount,
       selectedModules,
+      snapshot.config,
     );
     const generatedAt = new Date();
     const calculationNumber = createCalculationNumber(generatedAt);

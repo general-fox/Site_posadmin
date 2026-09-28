@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { HeroDust } from "@/components/hero-dust";
 import { CircuitLines } from "@/components/circuit-lines";
@@ -62,47 +62,49 @@ export function HeroStage() {
   const reduced = useHydratedReducedMotion();
   const stageRef = useRef<HTMLDivElement>(null);
   const titleBoxRef = useRef<HTMLHeadingElement>(null);
-  const [titleSize, setTitleSize] = useState({ w: 460, h: 148, containerWidth: 1440, containerHeight: 720 });
-  const [titleDone, setTitleDone] = useState(false);
-  const compact = titleSize.containerWidth <= 900 || titleSize.containerHeight <= 520;
-  const short = titleSize.containerWidth > 480 && titleSize.containerHeight <= 520;
-
-  // Safety net in case the title animation never reports completion.
-  useEffect(() => {
-    if (reduced) {
-      setTitleDone(true);
-      return;
-    }
-    const timer = setTimeout(() => setTitleDone(true), 3400);
-    return () => clearTimeout(timer);
-  }, [reduced]);
+  const [titleSize, setTitleSize] = useState({ w: 460, h: 148, actionsHeight: 48, containerWidth: 1440, compact: false, short: false, mobile: false });
+  const { compact, short, mobile } = titleSize;
 
   useLayoutEffect(() => {
     const el = titleBoxRef.current;
     const stage = stageRef.current;
     if (!el || !stage) return;
+    const actions = stage.querySelector<HTMLElement>(".hero-actions");
     const measure = () => {
+      const layout = getComputedStyle(stage);
       // Capsule offsets use layout pixels, independent of the hero's parallax.
+      // CSS owns the responsive layout before hydration; JS only measures the
+      // settled geometry for the decorative capsule trajectories.
       const next = {
         w: el.offsetWidth,
         h: el.offsetHeight,
+        actionsHeight: actions?.offsetHeight ?? 48,
         containerWidth: stage.clientWidth,
-        containerHeight: stage.clientHeight,
+        compact: layout.getPropertyValue("--hero-compact").trim() === "1",
+        short: layout.getPropertyValue("--hero-short").trim() === "1",
+        mobile: layout.getPropertyValue("--hero-mobile").trim() === "1",
       };
       setTitleSize((current) => current.w === next.w && current.h === next.h &&
-        current.containerWidth === next.containerWidth && current.containerHeight === next.containerHeight ? current : next);
+        current.actionsHeight === next.actionsHeight &&
+        current.containerWidth === next.containerWidth && current.compact === next.compact &&
+        current.short === next.short && current.mobile === next.mobile ? current : next);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     ro.observe(stage);
-    return () => ro.disconnect();
+    if (actions) ro.observe(actions);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   return (
-    <div ref={stageRef} className="hero-stage pointer-events-none absolute inset-0" data-compact={compact} data-short={short}>
+    <div ref={stageRef} className="hero-stage pointer-events-none absolute inset-0" data-compact={compact} data-short={short} data-mobile={mobile}>
       <noscript>
-        <style>{`.hero-stage [data-hero-word] { opacity: 1 !important; transform: none !important; }`}</style>
+        <style>{`.hero-stage [data-hero-word], .hero-actions, .hero-dealer { opacity: 1 !important; transform: none !important; }`}</style>
       </noscript>
       <CircuitLines side="left" delay={0.12} reduced={reduced} />
       <CircuitLines side="right" delay={0.28} reduced={reduced} />
@@ -140,10 +142,10 @@ export function HeroStage() {
         </motion.div>
         <p className="font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[20px] tracking-[0.1px] text-[var(--milk)] sm:text-[18px] sm:leading-normal sm:tracking-[0.2px] sm:whitespace-nowrap">
           <WaveWords
-            text="Единая команда для всего контура автоматизации"
-            base={0.52}
-            stagger={0.075}
-            duration={0.9}
+            text="r_keeper, кассы и IT-поддержка 24/7 — одна команда."
+            base={0.2}
+            stagger={0.025}
+            duration={0.55}
             reduced={reduced}
           />
         </p>
@@ -156,9 +158,11 @@ export function HeroStage() {
               reduced={reduced}
               width={titleSize.w}
               height={titleSize.h}
+              actionsHeight={titleSize.actionsHeight}
               containerWidth={titleSize.containerWidth}
               compact={compact}
               short={short}
+              mobile={mobile}
             />
             <h1
               ref={titleBoxRef}
@@ -178,13 +182,12 @@ export function HeroStage() {
                   base={1.08}
                   duration={1.15}
                   reduced={reduced}
-                  onFirstComplete={() => setTitleDone(true)}
                 />
               </span>
             </h1>
           </div>
 
-          <HeroActions ready={titleDone} reduced={reduced} />
+          <HeroActions reduced={reduced} />
         </div>
       </div>
     </div>

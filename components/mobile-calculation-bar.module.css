@@ -1,0 +1,14 @@
+.bar { position: fixed; z-index: 45; inset: auto 12px calc(12px + env(safe-area-inset-bottom)); display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 600px; margin-inline: auto; padding: 10px 12px 10px 16px; border: 1px solid var(--border-strong); border-radius: 12px; color: var(--ink); background: var(--surface); box-shadow: 0 8px 32px #322f2b14; }
+.amount { min-width: 0; }
+.amount > span { display: block; color: var(--text-body); font-size: 11px; line-height: 1.4; }
+.amount p { font-size: 20px; font-weight: 500; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.amount p span { color: var(--text-body); font-size: 12px; font-weight: 400; white-space: nowrap; }
+.amount p.empty { max-width: 190px; font-size: 14px; line-height: 1.5; }
+.link { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; min-height: 44px; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--surface-selected); font-size: 13px; font-weight: 500; }
+.link:hover { border-color: var(--text-olive); }
+.link:focus-visible { outline: 2px solid var(--text-olive); outline-offset: 3px; }
+:global(body:has(dialog[open])) .bar,
+:global(body:has([role="combobox"][aria-expanded="true"])) .bar,
+:global(body:has(input:focus, textarea:focus, select:focus)) .bar { display: none; }
+@media (min-width: 901px) { .bar { display: none; } }
+@media (max-width: 359px) { .bar { inset-inline: 8px; gap: 8px; padding-inline: 12px; } .link { gap: 4px; padding-inline: 8px; font-size: 12px; } .amount p { font-size: 18px; } }

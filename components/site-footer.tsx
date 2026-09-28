@@ -6,6 +6,7 @@ import styles from "./site-footer.module.css";
 import { ArrowRight } from "./marketing-ui";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { HeroDust } from "./hero-dust";
+import { HOME_NAVIGATION } from "@/lib/site-navigation";
 
 export function SiteFooter() {
   return (
@@ -21,20 +22,16 @@ export function SiteFooter() {
           <p className={styles.caption}>Автоматизация, сопровождение<br />и развитие ресторанного бизнеса.</p>
         </div>
         <nav className={styles.column} aria-label="Разделы внизу страницы">
-          <h2>Компания</h2>
+          <h2>Разделы сайта</h2>
           <ul>
-            <li><Link href="/about">О нас</Link></li>
-            <li><Link href="/services">Услуги</Link></li>
-            <li><Link href="/#pricing">Прайс</Link></li>
-            <li><Link href="/#products">Продукты</Link></li>
-            <li><Link href="/contacts">Контакты</Link></li>
+            {HOME_NAVIGATION.map((item) => <li key={item.id}><Link href={item.href}>{item.label}</Link></li>)}
           </ul>
         </nav>
         <nav className={styles.column} aria-label="Продукты Posadmin">
           <h2>Наши продукты</h2>
           <ul>
-            <li><a className={styles.productLink} href="https://rezebra.ru/" target="_blank" rel="noopener noreferrer" aria-label="ReZebra — сайт продукта, откроется в новой вкладке">ReZebra<ArrowRight diagonal /></a><p className={styles.productNote}>Бронирование столов</p></li>
-            <li><Link href="/#products">FlexBonusb</Link><p className={styles.productNote}>Лояльность гостей</p></li>
+            <li><Link href="/#rezebra">ReZebra</Link><p className={styles.productNote}>Бронирование столов</p></li>
+            <li><Link href="/#flexbonusb">FlexBonusb</Link><p className={styles.productNote}>Лояльность гостей</p></li>
           </ul>
         </nav>
         <div className={`${styles.column} ${styles.contact}`}>

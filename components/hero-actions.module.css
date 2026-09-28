@@ -1,0 +1,14 @@
+.actions { max-width: 100%; }
+.actions > :is(a, button) { white-space: nowrap; }
+.actions:focus-within { opacity: 1 !important; transform: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .actions { opacity: 1 !important; transform: none !important; }
+}
+@media (max-width: 600px) {
+  .actions.actions { flex-direction: column; width: min(100%, 300px); gap: 10px; }
+  .actions.actions > :is(a, button) { width: 100%; padding-inline: 16px; font-size: 14px; }
+}
+@media (max-height: 520px) and (min-width: 481px) {
+  .actions.actions { flex-direction: row; width: auto; }
+  .actions.actions > :is(a, button) { width: auto; padding-inline: 14px; font-size: 13px; }
+}

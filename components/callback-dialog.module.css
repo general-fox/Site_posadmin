@@ -23,6 +23,7 @@
 }
 .close { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; background: transparent; color: var(--text-body); cursor: pointer; transition: background .2s, color .2s; }
 .close:hover { background: var(--surface-muted); color: var(--ink); }
+.close:disabled { opacity: .5; cursor: wait; }
 .eyebrow { padding-right: 32px; }
 .title { margin-top: 20px; max-width: 440px; font-size: 32px; font-weight: 500; line-height: 1.16; letter-spacing: -.3px; text-wrap: balance; }
 .description { margin-top: 12px; color: var(--text-body); font-size: 15px; line-height: 1.6; }
@@ -30,7 +31,7 @@
 .label { display: block; margin-bottom: 9px; padding: 0; font-size: 13px; font-weight: 500; line-height: 1.4; color: var(--ink); }
 .fieldControl { display: block; width: 100%; min-width: 0; height: 52px; padding: 13px 14px; border: 1px solid var(--border-strong); border-radius: 8px; outline: none; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; line-height: 24px; color-scheme: light; transition: border-color .2s, background .2s; }
 .fieldControl:hover { border-color: var(--text-muted); }
-.dialog :is(button, input):focus-visible { outline: 2px solid var(--action-focus); outline-offset: 3px; }
+.dialog :is(button, input, select, summary):focus-visible { outline: 2px solid var(--action-focus); outline-offset: 3px; }
 /* Isolate inputs from the surrounding marketing section's focus outline.
    The single 2px border is the focus indicator; padding keeps text in place. */
 .dialog .fieldControl:focus,
@@ -46,6 +47,18 @@
 .scheduleHint { margin-top: 10px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
 .schedule { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-top: 18px; }
 .schedule > label { min-width: 0; }
+.scheduleError { grid-column: 1 / -1; margin: 0; padding: 10px 12px; border-left: 2px solid var(--accent-border); background: var(--accent-soft); color: var(--accent-text); font-size: 13px; line-height: 1.5; }
+.fieldControl:disabled { background: var(--surface-muted); color: var(--text-body); cursor: not-allowed; }
+.calculation { margin-top: 20px; padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft); }
+.calculationHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; font-size: 14px; font-weight: 500; line-height: 1.4; }
+.calculationTotal { white-space: nowrap; font-size: 18px; letter-spacing: -.3px; }
+.calculationTotal span { margin-left: 4px; color: var(--text-body); font-size: 12px; font-weight: 400; letter-spacing: 0; }
+.calculationMeta { margin-top: 6px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
+.calculationDetails { margin-top: 8px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
+.calculationDetails summary { min-height: 44px; display: list-item; width: fit-content; padding: 12px 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+.calculationDetails ul { margin: 8px 0 0; padding: 0; list-style: none; }
+.calculationDetails li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-block: 6px; border-top: 1px solid var(--border); }
+.calculationDetails li > :last-child { flex-shrink: 0; white-space: nowrap; }
 .consent { display: flex; align-items: flex-start; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); cursor: pointer; font-size: 13px; line-height: 1.5; color: var(--text-body); }
 .consent input { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; accent-color: var(--action); cursor: pointer; }
 .submit { width: 100%; min-height: 50px; margin-top: 20px; justify-content: space-between; font-size: 15px; }

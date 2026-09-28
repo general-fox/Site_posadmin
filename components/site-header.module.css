@@ -1,0 +1,37 @@
+.header { position: fixed; top: 0; left: 0; z-index: 50; width: 100%; height: 80px; pointer-events: none; }
+.headerInner { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 100%; padding: 0 24px; }
+.nav { position: relative; display: flex; align-items: center; flex-shrink: 0; gap: 2px; height: 48px; border-radius: 12px; pointer-events: auto; }
+.chip { position: absolute; inset: 3px auto 3px 3px; z-index: 0; border-radius: 8px; pointer-events: none; }
+.logo { position: relative; z-index: 1; display: flex; height: 48px; align-items: center; justify-content: center; padding: 0 25px; border-radius: 8px; flex-shrink: 0; }
+.logo svg { display: block; width: 94.795px; height: 17.43px; }
+.navItem { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 15px; border: 0; border-radius: 8px; background: none; color: inherit; cursor: pointer; white-space: nowrap; }
+.navItem:focus-visible, .mobileTrigger:focus-visible, .mobileItem:focus-visible { outline: 2px solid var(--milk); outline-offset: -4px; }
+.header svg:not(:global(.site-logo-mark)) { flex-shrink: 0; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+.mobileMenu[hidden] { display: none; }
+.mobileItem, .mobileTrigger { font-family: var(--font-inter), Inter, sans-serif; font-weight: var(--control-font-weight); letter-spacing: var(--control-letter-spacing); }
+.mobileTrigger, .mobileMenu { display: none; }
+.noScriptLinks { display: none; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 12px; background: #282520; color: var(--milk); font-size: 12px; pointer-events: auto; }
+
+@keyframes menu-appear { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 767px) {
+  .header { height: 72px; }
+  .headerInner { padding: 0 16px; }
+  .logo { padding: 0 24px; }
+  .desktopLink { display: none; }
+  .mobileTrigger { display: flex; align-items: center; justify-content: center; gap: 12px; height: 48px; min-width: 102px; border: 0; border-radius: 10px; padding: 0 16px; color: var(--milk); font-size: 13px; cursor: pointer; pointer-events: auto; }
+  .menuIcon { position: relative; display: block; width: 13px; height: 12px; }
+  .menuIcon > span { position: absolute; left: 0; width: 13px; height: 1px; background: currentColor; transition: transform 200ms ease, top 200ms ease; }
+  .menuIcon > span:first-child { top: 3px; }
+  .menuIcon > span:last-child { top: 8px; }
+  .menuIcon[data-open="true"] > span:first-child { top: 6px; transform: rotate(45deg); }
+  .menuIcon[data-open="true"] > span:last-child { top: 6px; transform: rotate(-45deg); }
+  .mobileMenu { display: grid; position: absolute; top: 72px; right: 16px; left: 16px; max-width: 540px; max-height: calc(100dvh - 88px); margin: 0 auto; padding: 10px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgb(245 245 237 / .25) transparent; border: 1px solid rgb(245 245 237 / .15); border-radius: 14px; background: rgb(37 34 29 / .97); box-shadow: 0 16px 40px rgb(25 23 20 / .2); pointer-events: auto; animation: menu-appear 220ms cubic-bezier(.22, 1, .36, 1); }
+  .mobileItem { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 52px; padding: 12px 14px; border: 0; border-radius: 8px; background: none; color: var(--milk); font-size: 14px; line-height: 1.5; text-align: left; cursor: pointer; }
+  .mobileItem[aria-current], .mobileItem:hover { background: rgb(245 245 237 / .07); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileMenu { animation: none; }
+  .header *, .header *::before, .header *::after { transition-duration: 0s !important; }
+}

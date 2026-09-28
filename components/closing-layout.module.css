@@ -3,5 +3,6 @@
 /* Let the complete product demo rise into view before the closing panel arrives. */
 .productUnderlay { padding-bottom: clamp(120px, 22svh, 240px); }
 .ending { position: relative; z-index: 1; display: flow-root; margin-top: calc(var(--section-space) / 2); border-radius: 20px; background: var(--dark-background); }
-.aboutEnding { margin-top: 0; }
+.flushEnding { margin-top: 0; }
+.footerEnding { padding-top: clamp(20px, 3vw, 40px); }
 @media (prefers-reduced-motion: reduce) { .underlay { position: relative; top: auto; } .productUnderlay { padding-bottom: 0; } }

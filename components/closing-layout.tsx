@@ -29,7 +29,15 @@ function anchorTop(target: HTMLElement) {
     - (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0));
 }
 
-export function ClosingLayout({ children, page = "home" }: { children: ReactNode; page?: "home" | "about" }) {
+export function ClosingLayout({
+  children,
+  page = "home",
+  ending,
+}: {
+  children: ReactNode;
+  page?: "home" | "about" | "services" | "contacts" | "other";
+  ending?: ReactNode;
+}) {
   const underlayRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const underlay = underlayRef.current;
@@ -76,13 +84,20 @@ export function ClosingLayout({ children, page = "home" }: { children: ReactNode
     const revealFocusedControl = (event: FocusEvent) => {
       const target = event.target;
       if (!(target instanceof HTMLElement) || target.closest("dialog") ||
-        !target.matches("a[href], button, input, textarea, select")) return;
+        !target.matches("a[href], button, input, textarea, select, summary")) return;
       cancelAnimationFrame(focusFrame);
       // Run after native focus scrolling: it does not account for sticky panels.
       focusFrame = requestAnimationFrame(() => {
       if (document.activeElement !== target) return;
       const underlay = target.closest<HTMLElement>("[data-closing-underlay]");
-      if (!underlay?.parentElement) return;
+      if (!underlay?.parentElement) {
+        // The ending remains in ordinary flow; only the fixed header can cover
+        // one of its controls after native keyboard focus scrolling.
+        if (target.closest("[data-closing-ending]") && target.getBoundingClientRect().top < 80) {
+          window.scrollTo({ top: Math.max(0, window.scrollY + target.getBoundingClientRect().top - 100), behavior: "instant" });
+        }
+        return;
+      }
       const ending = underlay.nextElementSibling?.getBoundingClientRect();
       const bounds = target.getBoundingClientRect();
       const coveredByEnding = ending && ending.top < Math.min(window.innerHeight, bounds.bottom)
@@ -93,10 +108,15 @@ export function ClosingLayout({ children, page = "home" }: { children: ReactNode
       const outsideStickyView = hero && (bounds.top < 80 || bounds.bottom > window.innerHeight);
       // Native focus scrolling cannot see which sticky layer covers a control.
       // Reveal it in logical flow, including Shift+Tab back out of contacts.
-      if (coveredByEnding || behindCurtain || outsideStickyView) window.scrollTo({
-        top: Math.max(0, anchorTop(target) - Math.min(180, window.innerHeight * .25)),
-        behavior: "instant",
-      });
+      if (coveredByEnding || behindCurtain || outsideStickyView) {
+        const logicalTop = anchorTop(target) - Math.min(180, window.innerHeight * .25);
+        // A nested sticky sidebar may still be pinned after logical positioning.
+        // Keep the ending below the viewport when revealing a covered control.
+        const beforeEnding = coveredByEnding && ending
+          ? window.scrollY + ending.top - window.innerHeight
+          : Infinity;
+        window.scrollTo({ top: Math.max(0, Math.min(logicalTop, beforeEnding)), behavior: "instant" });
+      }
       });
     };
     const frame = requestAnimationFrame(alignHash);
@@ -114,9 +134,8 @@ export function ClosingLayout({ children, page = "home" }: { children: ReactNode
 
   return <div className={styles.stack}>
     <div ref={underlayRef} className={`${styles.underlay} ${page === "home" ? styles.productUnderlay : ""}`} data-closing-underlay>{children}</div>
-    <div className={`${styles.ending} ${page === "about" ? styles.aboutEnding : ""}`} data-header-surface="dark">
-      <ContactsSection flushTop />
-        <SiteFooter />
+    <div className={`${styles.ending} ${page !== "home" ? styles.flushEnding : ""} ${page === "services" || page === "other" ? styles.footerEnding : ""}`} data-closing-ending data-header-surface="dark">
+      {ending ?? <><ContactsSection flushTop /><SiteFooter /></>}
     </div>
   </div>;
 }

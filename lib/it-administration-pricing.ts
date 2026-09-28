@@ -1,3 +1,5 @@
+import { DEFAULT_PRICING, getSchedulePrice, type PricingConfig } from "@/lib/pricing-config";
+
 export const IT_ADMINISTRATION_PRODUCT_ID = "it_administration" as const;
 export const IT_ADMINISTRATION_MODULE_ID = "system-administration" as const;
 
@@ -41,10 +43,11 @@ export const IT_ADMINISTRATION_TARIFF = {
   },
 } as const;
 
-export function getItAdministrationModulePrice(workplaceCount: number) {
-  if (workplaceCount <= 3) return 3_000 + workplaceCount * 2_000;
-  if (workplaceCount <= 6) return 6_000 + workplaceCount * 1_000;
-  return 12_000 + (workplaceCount - 6) * 500;
+export function getItAdministrationModulePrice(
+  workplaceCount: number,
+  pricing: PricingConfig = DEFAULT_PRICING,
+) {
+  return getSchedulePrice(workplaceCount, pricing.itAdministration);
 }
 
 export function isItAdministrationModuleId(
@@ -56,8 +59,9 @@ export function isItAdministrationModuleId(
 export function calculateItAdministrationPricing(
   workplaceCount: number,
   selectedModuleIds: ItAdministrationModuleId[],
+  pricing: PricingConfig = DEFAULT_PRICING,
 ): ItAdministrationCalculation {
-  const monthlyPrice = getItAdministrationModulePrice(workplaceCount);
+  const monthlyPrice = getItAdministrationModulePrice(workplaceCount, pricing);
   const selected = selectedModuleIds.includes(IT_ADMINISTRATION_MODULE_ID);
   const selectedModules = selected
     ? [

@@ -94,6 +94,15 @@ export function SupportChat() {
         </div>
 
         <div className={styles.conversation} key={reducedMotion ? "static" : timeline.conversation} data-leaving={step === 6} aria-live="off">
+          <div className={styles.messageStage}>
+          <div className={styles.messageMeasure} aria-hidden="true">
+            {CONVERSATIONS.map((conversation, conversationIndex) => <ol className={styles.messages} key={conversationIndex}>
+              {conversation.map((message) => <li key={message.text} className={[styles.message, message.from === "you" ? styles.outgoing : styles.incoming].join(" ")}>
+                <p>{message.text}</p>
+                <span className={styles.timestamp}>{message.time}{message.from === "you" && <svg width="15" height="10" viewBox="0 0 18 12" fill="none" />}</span>
+              </li>)}
+            </ol>)}
+          </div>
           <motion.ol layout={!reducedMotion} className={styles.messages} aria-label="Анимация переписки с технической поддержкой">
             <AnimatePresence initial={false} mode="popLayout">
               {messages.slice(0, visibleCount).map((message, index) => (
@@ -123,6 +132,7 @@ export function SupportChat() {
               ><span /><span /><span /></motion.li>}
             </AnimatePresence>
           </motion.ol>
+          </div>
           <div className={styles.resultSlot}>
             <span className={styles.resolved} data-visible={step >= 5} aria-hidden={step < 5}><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m4 8 2.5 2.5L12 5" /><circle cx="8" cy="8" r="6.5" /></svg>Задача решена</span>
           </div>

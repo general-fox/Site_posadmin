@@ -2,12 +2,15 @@ import {
   isOnsiteSupportAvailable,
   type OnsiteSupportLocation,
 } from "@/lib/onsite-support";
+import { DEFAULT_PRICING, getSchedulePrice, type PricingConfig } from "@/lib/pricing-config";
 
 export const RKEEPER_PRODUCT_ID = "r_keeper" as const;
 
 export type RkeeperAdditionalModuleId =
   | "menu-and-dictionaries"
   | "onsite-hardware-support";
+
+export type RkeeperModuleId = "remote-technical-support" | RkeeperAdditionalModuleId;
 
 export type RkeeperModule = {
   id: string;
@@ -87,9 +90,17 @@ export const RKEEPER_TARIFF = {
   >;
 };
 
-export function getRkeeperModulePrice(workplaceCount: number) {
-  if (workplaceCount <= 6) return 3_000 + workplaceCount * 1_000;
-  return 9_500 + (workplaceCount - 6) * 500;
+export function getRkeeperModulePrice(
+  workplaceCount: number,
+  pricing: PricingConfig = DEFAULT_PRICING,
+  moduleId: RkeeperModuleId = "remote-technical-support",
+) {
+  const schedule = moduleId === "menu-and-dictionaries"
+    ? pricing.rkeeper.menu
+    : moduleId === "onsite-hardware-support"
+      ? pricing.rkeeper.onsite
+      : pricing.rkeeper.base;
+  return getSchedulePrice(workplaceCount, schedule);
 }
 
 export function isRkeeperAdditionalModuleId(
@@ -104,8 +115,9 @@ export function calculateRkeeperPricing(
   workplaceCount: number,
   selectedAdditionalModuleIds: RkeeperAdditionalModuleId[],
   location?: OnsiteSupportLocation,
+  pricing: PricingConfig = DEFAULT_PRICING,
 ): RkeeperCalculation {
-  const modulePrice = getRkeeperModulePrice(workplaceCount);
+  const modulePrice = getRkeeperModulePrice(workplaceCount, pricing);
   const selectedIdSet = new Set(selectedAdditionalModuleIds);
   const additionalModules = RKEEPER_TARIFF.additionalModules
     .filter(
@@ -117,7 +129,7 @@ export function calculateRkeeperPricing(
     .map((module) => ({
       ...module,
       features: [...module.features],
-      monthlyPrice: modulePrice,
+      monthlyPrice: getRkeeperModulePrice(workplaceCount, pricing, module.id),
     }));
 
   return {
@@ -129,6 +141,6 @@ export function calculateRkeeperPricing(
       monthlyPrice: modulePrice,
     },
     additionalModules,
-    monthlyTotal: modulePrice * (1 + additionalModules.length),
+    monthlyTotal: additionalModules.reduce((total, module) => total + module.monthlyPrice, modulePrice),
   };
 }

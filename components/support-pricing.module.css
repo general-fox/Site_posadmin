@@ -50,12 +50,15 @@
 .details ul { display: grid; gap: 12px; padding-top: 12px; line-height: 1.65; color: var(--text-body); }
 .details li { display: flex; gap: 10px; }
 .details li span { color: var(--text-olive); }
-.summary { position: sticky; top: 104px; min-width: 0; margin: 12px; padding: 28px; background: var(--surface-muted); border-radius: var(--control-radius); }
+.summary { position: sticky; top: 104px; min-width: 0; margin: 12px; padding: 28px; background: var(--surface-muted); border-radius: var(--control-radius); scroll-margin-top: 104px; }
+.summary:focus { outline: none; }
+.summary:focus-visible { outline: 2px solid var(--text-olive); outline-offset: 4px; }
 .summaryTop > p { font-size: 20px; font-weight: 500; line-height: 1.35; }
 .liveDot { display: flex; align-items: center; gap: 8px; font-size: var(--font-label); line-height: 1.5; color: var(--text-body); margin-top: 10px; }
 .liveDot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--text-olive); }
 .total { font-size: clamp(40px, 4vw, 48px); font-weight: 500; letter-spacing: -.3px; line-height: 1.1; margin-top: 28px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .total span { font-size: 28px; font-weight: 400; }
+.emptyTotal { font-size: 24px; font-weight: 500; line-height: 1.35; margin-top: 28px; }
 .period { color: var(--text-body); font-size: var(--font-small); line-height: 1.55; margin-top: 10px; }
 .summaryItems { display: grid; gap: 16px; margin: 24px 0; padding: 24px 0; border-block: 1px solid var(--border); font-size: var(--font-small); color: var(--text-body); line-height: 1.6; }
 .summaryItems > div { display: flex; justify-content: space-between; gap: 16px; }
@@ -70,7 +73,7 @@
 .help > button { flex-shrink: 0; }
 @media (max-width: 1120px) { .calculator { grid-template-columns: minmax(0, 1fr) 340px; } .configuration { padding: 24px; } .summary { padding: 24px; } .moduleIcon { display: none; } .module { padding: 20px; } .countRow { flex-wrap: wrap; gap: 16px; } }
 @media (max-width: 900px) { .calculator { grid-template-columns: 1fr; } .countRow { flex-wrap: nowrap; } .summary { position: static; margin: 0 24px 24px; } .moduleIcon { display: grid; } .help { align-items: start; flex-direction: column; gap: 16px; } }
-@media (max-width: 767px) { .section .itHeading { font-size: clamp(23px, 6.5vw, 32px); } .configuration { padding: 24px 20px; } .configHeading h3 { font-size: 20px; } .countRow { flex-wrap: wrap; } .module { padding: 20px; } .moduleIcon { display: none; } .summary { margin: 0 12px 12px; } }
-@media (max-width: 440px) { .configuration { padding: 24px 16px; } .moduleTop { flex-wrap: wrap; gap: 12px; } .moduleTitle { flex-basis: 100%; } .module { padding: 16px; } .toggle { min-width: 118px; } .included { order: -1; } .configHeading { gap: 10px; } .summary { padding: 24px 20px; } .help > div { gap: 12px; } }
+@media (max-width: 767px) { .section .itHeading { font-size: clamp(23px, 6.5vw, 32px); } .calculator { border: 0; background: transparent; gap: 20px; } .configuration { padding: 0; } .configHeading h3 { font-size: 20px; } .countRow { flex-wrap: wrap; padding-block: 20px; } .modules { gap: 12px; } .module { padding: 20px; } .moduleIcon { display: none; } .summary { margin: 0; } .locationField { margin-top: 16px; padding-top: 16px; } .moduleHint { margin-top: 12px; } .details { margin-top: 12px; } }
+@media (max-width: 440px) { .moduleTop { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; } .moduleTitle { display: contents; } .moduleTitle h4 { grid-column: 1 / -1; max-width: none; } .moduleTitle p { margin-top: 0; font-size: 17px; } .moduleTitle p span { font-size: 12px; } .module { padding: 16px; } .toggle, .included { grid-column: 2; grid-row: 2; } .toggle { min-width: 112px; } .included { order: initial; } .configHeading { gap: 10px; } .summary { padding: 24px 20px; } .help > div { gap: 12px; } }
 @media (forced-colors: active) { .stepper:has(input:focus) { outline: 2px solid Highlight; outline-offset: 2px; } }
 @media (prefers-reduced-motion: reduce) { .stepper, .stepper button, .module, .toggle, .details summary span { transition: none; } }

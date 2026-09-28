@@ -250,16 +250,18 @@ export function useScrollReveal<T extends HTMLElement>({
 
 export function SectionReveal({
   children,
+  id,
   className,
   delay = 0,
   distance = 16,
   rows = false,
 }: {
   children: ReactNode;
+  id?: string;
   className?: string;
 } & ScrollRevealOptions) {
   const ref = useScrollReveal<HTMLDivElement>({ delay, distance, rows });
-  return <div ref={ref} className={className} data-scroll-reveal="">{children}</div>;
+  return <div ref={ref} id={id} className={className} data-scroll-reveal="">{children}</div>;
 }
 
 export function ArrowRight({ diagonal = false }: { diagonal?: boolean }) {

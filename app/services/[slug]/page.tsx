@@ -7,6 +7,10 @@ import { buildPageMetadata, serviceJsonLd } from "@/lib/seo";
 import { getServiceBySlug, SERVICES } from "@/lib/services";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import styles from "@/components/service-pages.module.css";
+import { getPricingSnapshot } from "@/lib/pricing-store";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 // Known services are generated at build time; unknown slugs use notFound()
@@ -23,20 +27,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ServicePage({ params }: Props) {
-  const service = getServiceBySlug((await params).slug);
+  const pricing = getPricingSnapshot().config;
+  const service = getServiceBySlug((await params).slug, pricing);
   if (!service) notFound();
-  const related = service.relatedSlugs.map(getServiceBySlug).filter((item) => item !== undefined);
+  const related = service.relatedSlugs.map((slug) => getServiceBySlug(slug, pricing)).filter((item) => item !== undefined);
 
   return <ServicePageFrame>
     <JsonLd data={serviceJsonLd(service)} />
     <div className={styles.shell}>
-      <header className={styles.intro}>
+      <header className={styles.intro} data-scroll-reveal="">
         <Breadcrumbs items={[{ name: "Главная", path: "/" }, { name: "Услуги", path: "/services" }, { name: service.navTitle, path: `/services/${service.slug}` }]} />
         <p className={styles.eyebrow}>Команда Posadmin</p>
         <h1 className={styles.title}>{service.title}</h1>
         <p className={styles.lead}>{service.intro}</p>
         <div className={styles.actions}>
-          <Link className={styles.button} href="/contacts">Обсудить задачу <ServiceArrow /></Link>
+          <Link className={styles.button} href={service.pricing?.href ?? "/contacts"}>{service.pricing ? "Рассчитать сопровождение" : "Обсудить задачу"} <ServiceArrow /></Link>
           <a className={styles.textLink} href={SITE_CONTACTS.phoneHref}>{SITE_CONTACTS.phone}</a>
         </div>
       </header>

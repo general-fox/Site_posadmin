@@ -2,15 +2,26 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
+import { ClosingLayout } from "./closing-layout";
+import { SectionReveal } from "./marketing-ui";
 import { JsonLd } from "./json-ld";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import styles from "./service-pages.module.css";
 
-export function ServicePageFrame({ children, page = "services" }: { children: ReactNode; page?: "services" | "contacts" | "other" }) {
+export function ServicePageFrame({
+  children,
+  page = "services",
+  closing,
+}: {
+  children: ReactNode;
+  page?: "services" | "contacts" | "other";
+  closing?: ReactNode;
+}) {
   return <div className={styles.page} data-header-surface="light">
     <SiteHeader page={page} />
-    <main>{children}</main>
-    <SiteFooter />
+    <ClosingLayout page={page} ending={<>{closing}<SiteFooter /></>}>
+      <main><SectionReveal distance={14}>{children}</SectionReveal></main>
+    </ClosingLayout>
   </div>;
 }
 

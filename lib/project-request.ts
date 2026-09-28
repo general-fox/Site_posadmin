@@ -67,10 +67,10 @@ export function validateProjectRequest(value: unknown): ProjectRequestValidation
     return { ok: false, error: "Укажите, запускаете ли вы новый проект или уже работаете.", field: "projectStage" };
   }
 
-  const task = typeof body.task === "string" ? body.task.trim() : "";
-  if (!task) {
-    return { ok: false, error: "Расскажите, с чем мы можем помочь.", field: "task" };
+  if (body.task !== undefined && typeof body.task !== "string") {
+    return { ok: false, error: "Описание задачи должно быть текстом.", field: "task" };
   }
+  const task = typeof body.task === "string" ? body.task.trim() : "";
   if (task.length > PROJECT_TASK_MAX_LENGTH) {
     return { ok: false, error: `Описание должно содержать не больше ${PROJECT_TASK_MAX_LENGTH} символов.`, field: "task" };
   }
@@ -125,9 +125,9 @@ export function buildProjectRequestMessage(data: ProjectRequest, requestId: stri
     `<b>Проект:</b> ${stage}`,
     "",
     "<b>Задача клиента:</b>",
-    escapeHtml(data.task),
+    data.task ? escapeHtml(data.task) : "Не указана — уточнить при связи.",
     "",
     `<b>Как связаться:</b> ${contactLabel} — ${escapeHtml(data.contact)}`,
-    "<b>Источник:</b> форма «Запустить проект» на posadmin.ru",
+    "<b>Источник:</b> форма обсуждения проекта на posadmin.ru",
   ].join("\n");
 }

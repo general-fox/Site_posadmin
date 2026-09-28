@@ -13,6 +13,7 @@ import {
   isCalculationPdfRateLimited,
 } from "@/lib/calculation-pdf-api";
 import { createRkeeperPdf } from "@/lib/rkeeper-pdf";
+import { getPricingSnapshot } from "@/lib/pricing-store";
 import {
   isOnsiteSupportAvailable,
   isOnsiteSupportLocation,
@@ -22,6 +23,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type RkeeperPdfRequest = {
+  pricingRevision?: unknown;
   product?: unknown;
   workplaceCount?: unknown;
   selectedAdditionalModules?: unknown;
@@ -94,10 +96,15 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RkeeperPdfRequest;
     const { workplaceCount, selectedModules, location } = parseRequest(body);
+    const snapshot = getPricingSnapshot();
+    if ((body.pricingRevision ?? 0) !== snapshot.revision) {
+      return NextResponse.json({ message: "Цены обновились. Проверьте новый расчёт.", snapshot }, { status: 409 });
+    }
     const calculation = calculateRkeeperPricing(
       workplaceCount,
       selectedModules,
       location,
+      snapshot.config,
     );
     const generatedAt = new Date();
     const calculationNumber = createCalculationNumber(generatedAt);

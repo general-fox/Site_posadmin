@@ -21,8 +21,8 @@ const TAGS = [
   { label: "ккт", dx: 358, dy: -26, rot: 11, delay: 0.02 },
 ] as const;
 
-// Compact labels live in their own band above the heading, including the burst origin.
-const MOBILE_ARC: Record<typeof TAGS[number]["label"], { dx: number; dy: number; rot: number }> = {
+// Tablets keep a separate band above the heading.
+const COMPACT_ARC: Record<typeof TAGS[number]["label"], { dx: number; dy: number; rot: number }> = {
   "егаис": { dx: -97, dy: -2, rot: 9 },
   "бронирование": { dx: -21, dy: -46, rot: -6 },
   "1С": { dx: -109, dy: -48, rot: -14 },
@@ -34,7 +34,7 @@ const MOBILE_ARC: Record<typeof TAGS[number]["label"], { dx: number; dy: number;
   "ккт": { dx: 108, dy: 45, rot: -13 },
 };
 
-const LANDSCAPE_ARC: typeof MOBILE_ARC = {
+const LANDSCAPE_ARC: typeof COMPACT_ARC = {
   "егаис": { dx: -169, dy: 24, rot: 10 },
   "бронирование": { dx: -123, dy: -24, rot: 5 },
   "1С": { dx: -206, dy: -24, rot: -12 },
@@ -44,6 +44,20 @@ const LANDSCAPE_ARC: typeof MOBILE_ARC = {
   "лояльность": { dx: 101, dy: -22, rot: 8 },
   "меркурий": { dx: 68, dy: 23, rot: 9 },
   "ккт": { dx: 169, dy: 25, rot: -13 },
+};
+
+// Mobile offsets frame the heading and buttons. Negative gaps start at the
+// heading's top; positive gaps start below the measured action group.
+const MOBILE_ARC: Record<typeof TAGS[number]["label"], { dx: number; gap: number; rot: number }> = {
+  "1С": { dx: -108, gap: -76, rot: -10 },
+  "бронирование": { dx: -8, gap: -76, rot: -6 },
+  "чз": { dx: 107, gap: -76, rot: 8 },
+  "r_keeper": { dx: -60, gap: -32, rot: -6 },
+  "лояльность": { dx: 65, gap: -32, rot: 6 },
+  "егаис": { dx: -91, gap: 32, rot: -8 },
+  "техподдержка": { dx: 26, gap: 32, rot: 5 },
+  "меркурий": { dx: -48, gap: 76, rot: -6 },
+  "ккт": { dx: 80, gap: 76, rot: 9 },
 };
 
 const burstSpring = {
@@ -57,16 +71,20 @@ export function HeroCapsules({
   reduced,
   width,
   height,
+  actionsHeight,
   containerWidth,
   compact,
   short,
+  mobile,
 }: {
   reduced: boolean | null;
   width: number;
   height: number;
+  actionsHeight: number;
   containerWidth: number;
   compact: boolean;
   short: boolean;
+  mobile: boolean;
 }) {
   const parallaxEntry = useParallaxEntry();
   const stageW = Math.max(280, width || BASE_W);
@@ -74,26 +92,36 @@ export function HeroCapsules({
   const sx = Math.min(stageW / BASE_W, Math.max(0, containerWidth / 2 - 76) / 358);
   const sy = stageH / BASE_H;
   const compactScale = Math.min(480, Math.max(0, containerWidth - 40)) / (short ? 480 : 280);
+  const mobileScale = Math.min(1.25, Math.max(0, containerWidth - 40) / 280);
 
   const tags = useMemo(
     () =>
       TAGS.map((t) => {
-        const mobile = compact ? (short ? LANDSCAPE_ARC : MOBILE_ARC)[t.label] : undefined;
+        if (mobile) {
+          const position = MOBILE_ARC[t.label];
+          return {
+            ...t,
+            dx: Math.round(position.dx * mobileScale),
+            dy: Math.round(Math.sign(position.gap) * height / 2 + position.gap + (position.gap > 0 ? actionsHeight + 24 : 0)),
+            rot: position.rot,
+          };
+        }
+        const position = compact ? (short ? LANDSCAPE_ARC : COMPACT_ARC)[t.label] : undefined;
         return {
           ...t,
-          dx: Math.round(mobile ? mobile.dx * compactScale : t.dx * sx),
-          dy: Math.round(mobile ? mobile.dy : t.dy * sy),
-          rot: mobile ? mobile.rot : t.rot,
+          dx: Math.round(position ? position.dx * compactScale : t.dx * sx),
+          dy: Math.round(position ? position.dy : t.dy * sy),
+          rot: position ? position.rot : t.rot,
         };
       }),
-    [sx, sy, compact, compactScale, short],
+    [sx, sy, compact, compactScale, short, mobile, mobileScale, height, actionsHeight],
   );
 
   return (
     <div className="hero-capsules pointer-events-none absolute inset-0 overflow-visible" data-compact={compact}>
       {tags.map((tag) => (
         <motion.span
-          key={`${tag.label}-${compact}-${short}-${parallaxEntry}`}
+          key={`${tag.label}-${compact}-${short}-${mobile}-${parallaxEntry}`}
           className="hero-fall-tag absolute top-1/2 left-1/2 z-[5] select-none"
           transformTemplate={({ x, y, scale, rotate }) =>
             `translateX(-50%) translateY(-50%) translateX(${x}) translateY(${y}) scale(${scale}) rotate(${rotate})`

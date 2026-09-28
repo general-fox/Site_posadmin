@@ -72,7 +72,7 @@
 }
 
 @media (max-width: 767px) {
-  :root { --page-gutter: 20px; --section-space: 104px; --section-gap: 32px; --grid-gap: 16px; }
+  :root { --page-gutter: 20px; --section-space: 88px; --section-gap: 28px; --grid-gap: 16px; }
 }
 
 html,
@@ -124,6 +124,7 @@ body {
 }
 
 @media (max-width: 480px) { .hero-surface { min-height: 600px; } }
+@media (min-width: 481px) and (max-width: 600px) and (min-height: 601px) { .hero-surface { min-height: 640px; } }
 @media (min-width: 481px) and (max-height: 600px) { .hero-surface { min-height: 380px; } }
 
 .page-scroll-hero-surface::after {
@@ -378,6 +379,12 @@ a.hero-glass-btn:hover {
 .clients-inner h2 > span:last-child { display: block; }
 .clients-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--grid-gap); }
 .clients-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.clients-link-hint { margin: -12px 0 16px; color: #bcb6ad; font-size: 12px; line-height: 1.6; }
+.client-external-arrow { position: absolute; top: 12px; right: 12px; color: var(--text-muted); z-index: 1; }
+.clients-next-step { display: flex; align-items: center; justify-content: space-between; gap: 12px 28px; flex-wrap: wrap; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgb(245 245 237 / .14); font-size: 14px; line-height: 1.65; }
+.clients-next-step p { color: #c9c5bd; }
+.clients-next-step a { display: inline-flex; align-items: center; gap: 16px; min-height: 44px; text-decoration: underline; text-decoration-color: rgb(227 143 69 / .5); text-underline-offset: 6px; }
+.clients-next-step a:focus-visible { outline: 2px solid var(--accent-border); outline-offset: 4px; }
 .client-logo-card {
   position: relative;
   isolation: isolate;
@@ -391,28 +398,12 @@ a.hero-glass-btn:hover {
   background: var(--milk);
   color: var(--ink);
   text-decoration: none;
-}
-.client-logo-card::after {
-  --client-glow-x: var(--client-pointer-x, 50%);
-  --client-glow-y: var(--client-pointer-y, 50%);
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  background: radial-gradient(circle clamp(140px, 15vw, 220px) at var(--client-glow-x) var(--client-glow-y), rgb(var(--accent-rgb) / .22) 0%, rgb(var(--accent-rgb) / .08) 36%, rgb(var(--accent-rgb) / .02) 58%, rgb(var(--accent-rgb) / 0) 78%);
-  opacity: 0;
-  transition: opacity 260ms ease;
-  pointer-events: none;
+  transition: background-color 260ms ease;
 }
 .client-logo-card:focus-visible {
+  background: var(--surface-muted);
   outline: 2px solid var(--accent-border);
   outline-offset: 4px;
-}
-.client-logo-card:focus-visible::after {
-  --client-glow-x: 50%;
-  --client-glow-y: 50%;
-  opacity: 1;
 }
 .client-logo-mark {
   position: relative;
@@ -422,14 +413,12 @@ a.hero-glass-btn:hover {
 }
 .client-logo-mark img { object-fit: contain; }
 @media (hover: hover) and (pointer: fine) {
-  .client-logo-card[data-pointer-inside="true"]::after {
-    opacity: 1;
+  .client-logo-card:hover {
+    background: var(--surface-muted);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .client-logo-card::after {
-    --client-glow-x: 50%;
-    --client-glow-y: 50%;
+  .client-logo-card {
     transition: none;
   }
 }
@@ -444,6 +433,7 @@ a.hero-glass-btn:hover {
 .clients-stat-caption { color: var(--text-body); font-size: var(--font-small); line-height: 1.6; font-weight: 400; white-space: normal; }
 @media (max-width: 1050px) {
   .clients-layout { grid-template-columns: 1fr; }
+  .clients-next-step { align-items: flex-start; flex-direction: column; gap: 4px; }
   .clients-stats-card { min-height: 180px; grid-template-columns: 1fr 1fr; grid-template-rows: auto; gap: 28px; }
   .clients-stat-block-top { border-bottom: none; border-right: 1px solid var(--border-strong); padding-bottom: 0; padding-right: 28px; }
   .clients-stat-block-bottom { padding-top: 0; }
@@ -454,6 +444,9 @@ a.hero-glass-btn:hover {
 }
 @media (max-width: 639px) {
   .clients-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .client-logo-card { aspect-ratio: 1.35; }
+  .client-logo-mark { height: 54%; }
+  .clients-next-step { gap: 4px; font-size: 13px; }
   .clients-stats-card { padding: 22px 18px; gap: 18px; min-height: 150px; }
   .clients-stat-block-top { padding-right: 18px; }
   .clients-stat-value { font-size: clamp(19px, 5.4vw, 28px); }
@@ -489,22 +482,27 @@ a.hero-glass-btn:hover {
   -webkit-user-select: none;
 }
 
-.hero-capsules[data-compact="true"] .hero-fall-tag {
+.hero-stage { --hero-compact: 0; --hero-short: 0; --hero-mobile: 0; }
+.hero-tagline { transform: translateX(-50%); }
+
+/* Resolve layout in CSS on the first paint, before JS measures the capsules.
+   The height breakpoint includes the 80px reserved for the fixed header. */
+@media (max-width: 900px), (max-height: 600px) {
+.hero-capsules .hero-fall-tag {
   height: 28px;
   padding-inline: 10px;
   font-size: 11px;
 }
 
-.hero-stage[data-compact="true"] {
+.hero-stage {
+  --hero-compact: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 16px 20px 20px;
 }
 
-.hero-tagline { transform: translateX(-50%); }
-
-.hero-stage[data-compact="true"] .hero-tagline {
+.hero-stage .hero-tagline {
   position: relative;
   inset: auto;
   order: 0;
@@ -513,14 +511,14 @@ a.hero-glass-btn:hover {
   transform: none;
 }
 
-.hero-stage[data-compact="true"] .hero-tagline p {
+.hero-stage .hero-tagline p {
   max-width: 560px;
   font-size: clamp(13px, 2.3vw, 17px);
   line-height: 20px;
   white-space: normal;
 }
 
-.hero-stage[data-compact="true"] .hero-content {
+.hero-stage .hero-content {
   position: relative;
   inset: auto;
   order: 1;
@@ -529,11 +527,11 @@ a.hero-glass-btn:hover {
   padding: 0;
 }
 
-.hero-stage[data-compact="true"] .hero-copy {
+.hero-stage .hero-copy {
   width: min(100%, 560px);
 }
 
-.hero-stage[data-compact="true"] .hero-title-group {
+.hero-stage .hero-title-group {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -541,7 +539,7 @@ a.hero-glass-btn:hover {
   margin-bottom: 24px;
 }
 
-.hero-capsules[data-compact="true"] {
+.hero-stage .hero-capsules {
   position: relative;
   inset: auto;
   flex-shrink: 0;
@@ -552,58 +550,98 @@ a.hero-glass-btn:hover {
   overflow: clip;
 }
 
-.hero-stage[data-compact="true"] h1 {
+.hero-stage h1 {
   max-width: 100%;
   font-size: clamp(28px, 9.5vw, 52px);
   line-height: 1.1;
   letter-spacing: 0;
 }
 
-.hero-stage[data-compact="true"] .hero-dealer {
+.hero-stage .hero-dealer {
   position: relative;
   inset: auto;
   order: 2;
   align-self: center;
   flex-shrink: 0;
 }
+}
 
 /* Two staggered rows preserve all nine labels and the 48px actions in landscape. */
-.hero-stage[data-short="true"] {
+@media (min-width: 481px) and (max-height: 600px) {
+.hero-stage {
+  --hero-short: 1;
   gap: 4px;
   padding: 6px 20px 8px;
 }
 
-.hero-stage[data-short="true"] .hero-tagline p {
+.hero-stage .hero-tagline p {
   font-size: 12px;
   line-height: 16px;
 }
 
-.hero-stage[data-short="true"] .hero-lightning {
+.hero-stage .hero-lightning {
   width: 20px;
   height: 20px;
 }
 
-.hero-stage[data-short="true"] .hero-capsules {
+.hero-stage .hero-capsules {
   height: 104px;
   margin-bottom: 4px;
 }
 
-.hero-stage[data-short="true"] .hero-title-group {
+.hero-stage .hero-title-group {
   margin-bottom: 8px;
 }
 
-.hero-stage[data-short="true"] h1 {
+.hero-stage h1 {
   font-size: 32px;
   line-height: 1.06;
 }
 
-.hero-stage[data-short="true"] .hero-dealer {
+.hero-stage .hero-dealer {
   padding-block: 5px;
 }
 
-.hero-stage[data-short="true"] .hero-dealer p {
+.hero-stage .hero-dealer p {
   font-size: 9px;
   line-height: 12px;
+}
+}
+
+/* Mobile labels frame the heading and actions as one unit: five above the
+   heading, four below the buttons. The burst still starts at the heading. */
+@media (max-width: 480px), (min-width: 481px) and (max-width: 639px) and (min-height: 601px) {
+.hero-stage { --hero-mobile: 1; }
+
+.hero-stage .hero-copy {
+  padding-bottom: 96px;
+}
+
+.hero-stage .hero-title-group {
+  padding-top: 94px;
+  padding-bottom: 0;
+  margin-bottom: 24px;
+}
+
+.hero-stage .hero-capsules {
+  position: absolute;
+  inset: 94px 0 0;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+}
+
+.hero-stage .hero-fall-tag {
+  height: 32px;
+  padding-inline: 11px;
+  font-size: 12px;
+}
+
+.hero-stage .hero-actions {
+  position: relative;
+  z-index: 20;
+}
 }
 
 .hero-project-link {

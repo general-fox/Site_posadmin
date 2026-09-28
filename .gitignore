@@ -48,4 +48,5 @@ next-env.d.ts
 /tmp/
 /work/
 /output/
+/private-data/
 /public/brand/logo-concepts/

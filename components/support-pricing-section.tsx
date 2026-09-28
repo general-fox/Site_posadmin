@@ -1,17 +1,21 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { CallbackDialog } from "./callback-dialog";
 import { CitySelect } from "./city-select";
+import { MobileCalculationBar } from "./mobile-calculation-bar";
 import { ArrowRight, SectionReveal, useScrollReveal } from "./marketing-ui";
 import { SectionAtmosphere } from "./section-atmosphere";
-import { calculateRkeeperPricing, RKEEPER_PRODUCT_ID, RKEEPER_TARIFF, type RkeeperAdditionalModuleId } from "@/lib/rkeeper-pricing";
+import { calculateRkeeperPricing, getRkeeperModulePrice, RKEEPER_PRODUCT_ID, RKEEPER_TARIFF, type RkeeperAdditionalModuleId } from "@/lib/rkeeper-pricing";
 import { calculateItAdministrationPricing, getItAdministrationModulePrice, IT_ADMINISTRATION_MODULE_ID, IT_ADMINISTRATION_PRODUCT_ID, IT_ADMINISTRATION_TARIFF } from "@/lib/it-administration-pricing";
 import { isOnsiteSupportAvailable, type OnsiteSupportLocation } from "@/lib/onsite-support";
+import type { CalculationSelection } from "@/lib/calculation-request";
+import { usePricing } from "./pricing-provider";
+import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
 import ui from "./marketing.module.css";
 import styles from "./support-pricing.module.css";
 
-type PdfStatus = "idle" | "loading" | "success" | "error";
+type PdfStatus = "idle" | "loading" | "success" | "error" | "changed";
 type Service = "rkeeper" | "it";
 const money = (value: number) => new Intl.NumberFormat("ru-RU").format(value);
 
@@ -35,6 +39,10 @@ function trackCalculatorEvent(
   });
 }
 
+class PricingChangedError extends Error {
+  constructor(public snapshot: PricingSnapshot) { super("Pricing changed"); }
+}
+
 async function downloadCalculationPdf(
   endpoint: string,
   body: Record<string, unknown>,
@@ -46,6 +54,10 @@ async function downloadCalculationPdf(
     body: JSON.stringify(body),
   });
 
+  if (response.status === 409) {
+    const result = await response.json();
+    if (isPricingSnapshot(result.snapshot)) throw new PricingChangedError(result.snapshot);
+  }
   if (!response.ok) throw new Error("PDF generation failed");
 
   const pdfBlob = await response.blob();
@@ -101,6 +113,8 @@ function ModuleCard({ name, features, price, selected, required, onChange, disab
 }
 
 export function SupportPricingSection({ service = "rkeeper" }: { service?: Service }) {
+  const { snapshot, updateSnapshot } = usePricing();
+  const configurationRef = useRef<HTMLDivElement>(null);
   const summaryRevealRef = useScrollReveal<HTMLElement>({ distance: 0 });
   const locationId = useId();
   const locationHintId = useId();
@@ -111,14 +125,18 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
   const [itIncluded, setItIncluded] = useState(false);
   const [status, setStatus] = useState<PdfStatus>("idle");
   const [callbackOpen, setCallbackOpen] = useState(false);
-  const rkeeper = calculateRkeeperPricing(workplaces, modules, location || undefined);
+  const rkeeper = calculateRkeeperPricing(workplaces, modules, location || undefined, snapshot.config);
   const onsiteAvailable = isOnsiteSupportAvailable(location);
-  const it = calculateItAdministrationPricing(workplaces, itIncluded ? [IT_ADMINISTRATION_MODULE_ID] : []);
+  const it = calculateItAdministrationPricing(workplaces, itIncluded ? [IT_ADMINISTRATION_MODULE_ID] : [], snapshot.config);
   const selected = service === "rkeeper" ? [rkeeper.baseModule, ...rkeeper.additionalModules] : it.selectedModules;
   const total = service === "rkeeper" ? rkeeper.monthlyTotal : it.monthlyTotal;
   const loading = status === "loading";
   const resetFeedback = () => setStatus("idle");
   const titleId = service === "rkeeper" ? "support-pricing-title" : "it-pricing-title";
+  const summaryId = service === "rkeeper" ? "rkeeper-calculation" : "it-calculation";
+  const calculation: CalculationSelection = service === "rkeeper"
+    ? { product: RKEEPER_PRODUCT_ID, workplaceCount: workplaces, selectedAdditionalModules: modules, ...(location ? { location } : {}) }
+    : { product: IT_ADMINISTRATION_PRODUCT_ID, workplaceCount: workplaces, selectedModules: itIncluded ? [IT_ADMINISTRATION_MODULE_ID] : [] };
   const changeLocation = (next: OnsiteSupportLocation) => {
     const removeOnsite = !isOnsiteSupportAvailable(next);
     setOnsiteRemoved(removeOnsite && modules.includes("onsite-hardware-support"));
@@ -141,12 +159,17 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
     try {
       await downloadCalculationPdf(
         target === "rkeeper" ? "/api/calculators/rkeeper/pdf" : "/api/calculators/it-administration/pdf",
-        { product, workplaceCount: workplaces, ...(target === "rkeeper" ? { selectedAdditionalModules: modules, ...(location ? { location } : {}) } : { selectedModules: [IT_ADMINISTRATION_MODULE_ID] }) },
+        { product, workplaceCount: workplaces, pricingRevision: snapshot.revision, ...(target === "rkeeper" ? { selectedAdditionalModules: modules, ...(location ? { location } : {}) } : { selectedModules: [IT_ADMINISTRATION_MODULE_ID] }) },
         `posadmin-${target}-calculation.pdf`,
       );
       setStatus("success");
       trackCalculatorEvent("calculator_pdf_success", product, payload);
-    } catch {
+    } catch (error) {
+      if (error instanceof PricingChangedError) {
+        updateSnapshot(error.snapshot);
+        setStatus("changed");
+        return;
+      }
       setStatus("error");
       trackCalculatorEvent("calculator_pdf_error", product, payload);
     }
@@ -164,7 +187,7 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
       </div>
       <div>
         <div className={styles.calculator}>
-          <div className={styles.configuration}>
+          <div ref={configurationRef} className={styles.configuration}>
             <SectionReveal distance={12}>
             <div className={styles.configHeading}><h3>{service === "rkeeper" ? "Сопровождение r_keeper" : "IT-сопровождение"}</h3></div>
             <WorkplaceCount value={workplaces} service={service} disabled={loading} onChange={(value) => { setWorkplaces(value); resetFeedback(); }} />
@@ -178,7 +201,7 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
                   return <ModuleCard
                     key={module.id}
                     {...module}
-                    price={rkeeper.baseModule.monthlyPrice}
+                    price={getRkeeperModulePrice(workplaces, snapshot.config, module.id)}
                     selected={modules.includes(module.id)}
                     onChange={() => toggleModule(module.id)}
                     disabled={loading}
@@ -196,21 +219,22 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
                     </div>}
                   </ModuleCard>;
                 })}
-              </> : <ModuleCard {...IT_ADMINISTRATION_TARIFF.module} price={getItAdministrationModulePrice(workplaces)} selected={itIncluded} onChange={() => { setItIncluded((current) => !current); resetFeedback(); }} disabled={loading} />}
+              </> : <ModuleCard {...IT_ADMINISTRATION_TARIFF.module} price={getItAdministrationModulePrice(workplaces, snapshot.config)} selected={itIncluded} onChange={() => { setItIncluded((current) => !current); resetFeedback(); }} disabled={loading} />}
             </div>
           </div>
-          <aside ref={summaryRevealRef} data-scroll-reveal="" className={styles.summary} aria-label={`Итог расчёта ${service === "rkeeper" ? "r_keeper" : "IT-администрирования"}`}>
+          <aside id={summaryId} ref={summaryRevealRef} tabIndex={-1} data-scroll-reveal="" className={styles.summary} aria-label={`Итог расчёта ${service === "rkeeper" ? "r_keeper" : "IT-администрирования"}`}>
             <div className={styles.summaryTop}><p>{service === "rkeeper" ? "Ваше сопровождение r_keeper" : "Ваше IT-сопровождение"}</p><span className={styles.liveDot}>Расчёт онлайн</span></div>
-            <div aria-live="polite" aria-atomic="true"><p className={styles.total}>{money(total)} <span>₽</span></p><p className={styles.period}>в месяц · рабочих мест: {workplaces}</p></div>
+            <div aria-live="polite" aria-atomic="true">{selected.length ? <><p className={styles.total}>{money(total)} <span>₽</span></p><p className={styles.period}>в месяц · рабочих мест: {workplaces}</p></> : <><p className={styles.emptyTotal}>Выберите сопровождение</p><p className={styles.period}>Рабочих мест: {workplaces}</p></>}</div>
             <div className={styles.summaryItems}>{selected.length ? selected.map((module) => <div key={module.id}><span>{module.name}</span><strong>{money(module.monthlyPrice)} ₽</strong></div>) : <p>Добавьте IT-сопровождение, чтобы увидеть итог и сохранить расчёт.</p>}</div>
             <button className={ui.primary} type="button" onClick={() => setCallbackOpen(true)}>Обсудить подключение <ArrowRight /></button>
             <button className={ui.secondary} type="button" onClick={download} disabled={loading || !selected.length}>{loading ? "Готовим PDF…" : status === "error" ? "Повторить скачивание PDF" : "Скачать расчёт в PDF"} <span aria-hidden="true">↓</span></button>
-            <p className={styles.feedback} role="status">{status === "success" ? "Расчёт готов. Файл отправлен на скачивание." : status === "error" ? "Не удалось создать PDF. Попробуйте ещё раз." : "Состав работ и условия уточним перед подключением."}</p>
+            <p className={styles.feedback} role="status">{status === "changed" ? "Цены обновились. Проверьте новый расчёт и скачайте PDF ещё раз." : status === "success" ? "Расчёт готов. Файл отправлен на скачивание." : status === "error" ? "Не удалось создать PDF. Попробуйте ещё раз." : "Состав работ и условия уточним перед подключением."}</p>
           </aside>
         </div>
         {service === "it" && <SectionReveal className={styles.help} distance={20}><div><span aria-hidden="true">↗</span><p>Не знаете, что выбрать?<br /><span>Расскажите о задаче — поможем собрать нужный набор услуг.</span></p></div><button type="button" className={ui.textLink} onClick={() => setCallbackOpen(true)}>Помогите с выбором <ArrowRight /></button></SectionReveal>}
       </div>
     </div>
-    <CallbackDialog open={callbackOpen} onClose={() => setCallbackOpen(false)} />
+    <MobileCalculationBar configurationRef={configurationRef} summaryRef={summaryRevealRef} summaryId={summaryId} productName={service === "rkeeper" ? "r_keeper" : "IT-сопровождение"} total={total} hasSelection={selected.length > 0} dialogOpen={callbackOpen} />
+    <CallbackDialog open={callbackOpen} onClose={() => setCallbackOpen(false)} calculation={selected.length ? calculation : undefined} />
   </section>;
 }

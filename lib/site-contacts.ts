@@ -3,7 +3,7 @@ export const SITE_CONTACTS = {
   phone: "8 (800) 600-40-36",
   phoneHref: "tel:88006004036",
   telegramUrl: "https://t.me/posadmin_request_bot",
-  managerHours: "По будням с 10:00 до 19:00",
+  managerHours: "По будням с 10:00 до 19:00 МСК",
   offices: [
     {
       city: "Люберцы",

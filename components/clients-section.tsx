@@ -2,7 +2,7 @@
 
 import { ClientsStatsDots } from "@/components/clients-stats-dots";
 import Image from "next/image";
-import type { PointerEvent } from "react";
+import Link from "next/link";
 import { SectionReveal, useScrollReveal } from "./marketing-ui";
 import ui from "./marketing.module.css";
 
@@ -19,23 +19,6 @@ const CLIENTS = [
   { name: "Сыроварня", src: "/clients/sirovarnya.svg", href: "https://www.syrovarnya.com/" },
 ] as const;
 
-function updateClientGlow(event: PointerEvent<HTMLAnchorElement>) {
-  const card = event.currentTarget;
-  if (event.pointerType !== "mouse") {
-    delete card.dataset.pointerInside;
-    return;
-  }
-
-  const bounds = card.getBoundingClientRect();
-  card.style.setProperty("--client-pointer-x", `${event.clientX - bounds.left}px`);
-  card.style.setProperty("--client-pointer-y", `${event.clientY - bounds.top}px`);
-  card.dataset.pointerInside = "true";
-}
-
-function hideClientGlow(event: PointerEvent<HTMLAnchorElement>) {
-  delete event.currentTarget.dataset.pointerInside;
-}
-
 export function ClientsSection() {
   const logoGridRef = useScrollReveal<HTMLDivElement>({ distance: 12, rows: true });
   return (
@@ -46,8 +29,9 @@ export function ClientsSection() {
             <p className={ui.eyebrow}>Наши клиенты</p>
             <h2 className={ui.heading} id="clients-title">Нас выбирают<br /><span className={ui.muted}>сильные команды</span></h2>
           </SectionReveal>
-          <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>В ежедневной работе и при запуске новых проектов — помогаем командам сосредоточиться на гостях.</p></SectionReveal>
+          <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>С этими заведениями мы давно работаем на постоянной основе. Помогаем решать технические задачи, чтобы их команды могли сосредоточиться на гостях.</p></SectionReveal>
         </div>
+        <p className="clients-link-hint">Логотипы ведут на сайты заведений <span aria-hidden="true">↗</span></p>
         <div className="clients-layout" data-header-surface="light">
           <div ref={logoGridRef} className="clients-grid" data-scroll-reveal="">
             {CLIENTS.map((client) => (
@@ -58,11 +42,8 @@ export function ClientsSection() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`${client.name} — сайт клиента (откроется в новой вкладке)`}
-                onPointerEnter={updateClientGlow}
-                onPointerMove={updateClientGlow}
-                onPointerLeave={hideClientGlow}
-                onPointerCancel={hideClientGlow}
               >
+                <svg className="client-external-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12" /></svg>
                 <span className="client-logo-mark">
                   <Image
                     src={client.src}
@@ -85,6 +66,10 @@ export function ClientsSection() {
               <p className="clients-stat-caption">запущенных объектов</p>
             </div>
           </SectionReveal>
+        </div>
+        <div className="clients-next-step">
+          <p>Долгосрочное сотрудничество. Поддержка в ежедневной работе.</p>
+          <Link href="/about#approach">Как устроена работа <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6" /></svg></Link>
         </div>
       </div>
     </section>

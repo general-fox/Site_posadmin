@@ -6,7 +6,13 @@ import { ClientsSection } from "@/components/clients-section";
 import { FullPageParallax } from "@/components/full-page-parallax";
 import { SupportPricingSection } from "@/components/support-pricing-section";
 import { ProductsSection } from "@/components/products-section";
+import { ServicesSection } from "@/components/services-section";
 import { buildPageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
+import { getPricingSnapshot } from "@/lib/pricing-store";
+import { PricingProvider } from "@/components/pricing-provider";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export const metadata = buildPageMetadata({
   title: "Автоматизация ресторанов и сопровождение r_keeper",
@@ -15,8 +21,9 @@ export const metadata = buildPageMetadata({
 });
 
 export default function HomePage() {
+  const pricing = getPricingSnapshot();
   return (
-    <>
+    <PricingProvider initialSnapshot={pricing}>
     <FullPageParallax header={<SiteHeader />}>
       <div data-header-surface="dark" className="hero-surface relative flex h-svh w-full flex-col overflow-hidden bg-[var(--hero-background)]">
         <GlowLayer />
@@ -27,8 +34,9 @@ export default function HomePage() {
       <ClientsSection />
       <SupportPricingSection />
       <SupportPricingSection service="it" />
+      <ServicesSection />
       <ProductsSection />
     </FullPageParallax>
-    </>
+    </PricingProvider>
   );
 }

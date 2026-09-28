@@ -458,7 +458,7 @@ export function ProductsSection() {
         <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>Собственные продукты для ежедневной работы заведения. Управляйте бронированиями, развивайте лояльность и возвращайте гостей.</p></SectionReveal>
       </div>
       <div className={styles.productGrid}>
-        <SectionReveal className={`${styles.productCard} ${styles.bookingCard}`} distance={24}>
+        <SectionReveal id="rezebra" className={`${styles.productCard} ${styles.bookingCard}`} distance={24}>
           <div className={styles.cardTop}><span className={styles.wordmark}>ReZebra</span><span className={ui.badge}>Бронирование</span></div>
           <h3>Место для<br />каждого гостя</h3>
           <p>Брони, столы и загрузка зала в одной системе. Вся информация под рукой у вашей команды.</p>
@@ -471,7 +471,7 @@ export function ProductsSection() {
           </div>
           <div className={styles.cardBottom}><span>Залы · Бронирования · Визиты</span><a href="https://rezebra.ru/" target="_blank" rel="noreferrer" className={ui.textLink}>На сайт ReZebra <ArrowRight diagonal /></a></div>
         </SectionReveal>
-        <SectionReveal className={`${styles.productCard} ${styles.loyaltyCard}`} delay={0.1} distance={24}>
+        <SectionReveal id="flexbonusb" className={`${styles.productCard} ${styles.loyaltyCard}`} delay={0.1} distance={24}>
           <div className={styles.cardTop}><span className={styles.wordmark}>FlexBonusb<span><StarIcon /></span></span><span className={ui.badge}>Лояльность</span></div>
           <h3>Первый визит<br />Начало истории</h3>
           <p>Бонусы, скидки и сертификаты, которые дают гостям повод вернуться. Предложения — с учётом их интересов.</p>

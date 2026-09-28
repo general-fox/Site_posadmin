@@ -1,6 +1,7 @@
 import { ONSITE_SUPPORT_LOCATIONS } from "./onsite-support";
 import { getRkeeperModulePrice, RKEEPER_TARIFF } from "./rkeeper-pricing";
 import { getItAdministrationModulePrice, IT_ADMINISTRATION_TARIFF } from "./it-administration-pricing";
+import { DEFAULT_PRICING, type PricingConfig } from "./pricing-config";
 
 export type ServicePageData = {
   slug: string;
@@ -149,6 +150,12 @@ export const SERVICES: readonly ServicePageData[] = [
   },
 ];
 
-export function getServiceBySlug(slug: string) {
-  return SERVICES.find((service) => service.slug === slug);
+export function getServiceBySlug(slug: string, pricing: PricingConfig = DEFAULT_PRICING) {
+  const service = SERVICES.find((item) => item.slug === slug);
+  if (!service) return undefined;
+  let text: string | undefined;
+  if (slug === "soprovozhdenie-r-keeper") text = `От ${rubles(getRkeeperModulePrice(1, pricing))} ₽ в месяц за базовое удалённое сопровождение одного объекта с одним рабочим местом.`;
+  if (slug === "it-administrirovanie") text = `От ${rubles(getItAdministrationModulePrice(1, pricing))} ₽ в месяц за системное IT-администрирование одного объекта с одним рабочим местом.`;
+  if (slug === "vyezdnoe-soprovozhdenie") text = `Дополнительный выездной модуль — от ${rubles(getRkeeperModulePrice(1, pricing, "onsite-hardware-support"))} ₽ в месяц для одного объекта с одним рабочим местом, сверх базового удалённого сопровождения.`;
+  return text && service.pricing ? { ...service, pricing: { ...service.pricing, text } } : service;
 }

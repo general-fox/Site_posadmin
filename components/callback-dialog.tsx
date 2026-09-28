@@ -12,24 +12,23 @@ import {
 import { ArrowRight, useMarketingReducedMotion } from "./marketing-ui";
 import ui from "./marketing.module.css";
 import styles from "./callback-dialog.module.css";
+import { getCalculationSummary, type CalculationSelection } from "@/lib/calculation-request";
+import { usePricing } from "./pricing-provider";
+import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
+import {
+  CALLBACK_HOURS_LABEL,
+  getCallbackDateError,
+  getCallbackSlots,
+  getMoscowDateTime,
+  getNextCallbackSlot,
+  validateCallbackSchedule,
+} from "@/lib/callback-schedule";
 
 type CallbackDialogProps = {
   onClose: () => void;
   open: boolean;
+  calculation?: CalculationSelection;
 };
-
-function getLocalDateValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getLocalTimeValue(date: Date) {
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
 
 function formatRussianPhone(value: string) {
   const rawDigits = value.replace(/\D/g, "");
@@ -65,15 +64,18 @@ function formatRussianPhone(value: string) {
   return formatted;
 }
 
-export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
+export function CallbackDialog({ onClose, open, calculation }: CallbackDialogProps) {
+  const { snapshot, updateSnapshot } = usePricing();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
+  const submittingRef = useRef(false);
   const titleId = useId();
   const descriptionId = useId();
   const phoneHintId = useId();
+  const scheduleHintId = useId();
+  const scheduleErrorId = useId();
   const reduced = useMarketingReducedMotion();
-  const [minDate, setMinDate] = useState("");
-  const [minTime, setMinTime] = useState("");
+  const [scheduleNow, setScheduleNow] = useState<Date | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -81,6 +83,10 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
   const [submitError, setSubmitError] = useState("");
   const [contactSoon, setContactSoon] = useState(true);
   const [phone, setPhone] = useState("+7 ");
+  const summary = calculation ? getCalculationSummary(calculation, snapshot.config) : null;
+  const dateError = !contactSoon && scheduleNow ? getCallbackDateError(selectedDate, scheduleNow) : null;
+  const availableTimes = scheduleNow ? getCallbackSlots(selectedDate, scheduleNow) : [];
+  const formatPrice = (value: number) => `${value.toLocaleString("ru-RU")} ₽`;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -88,18 +94,17 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
 
     if (open && !dialog.open) {
       const now = new Date();
-      const currentDate = getLocalDateValue(now);
-      const currentTime = getLocalTimeValue(now);
+      const nextSlot = getNextCallbackSlot(now);
 
       setSubmitted(false);
       setSubmitting(false);
+      submittingRef.current = false;
       setSubmitError("");
       setContactSoon(true);
       setPhone("+7 ");
-      setMinDate(currentDate);
-      setMinTime(currentTime);
-      setSelectedDate(currentDate);
-      setSelectedTime(currentTime);
+      setScheduleNow(now);
+      setSelectedDate(nextSlot.date);
+      setSelectedTime(nextSlot.time);
       dialog.showModal();
       const frame = window.requestAnimationFrame(() => {
         phoneInputRef.current?.focus();
@@ -119,7 +124,9 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
     };
   }, [open]);
 
-  const closeDialog = () => dialogRef.current?.close();
+  const closeDialog = () => {
+    if (!submittingRef.current) dialogRef.current?.close();
+  };
 
   const handleBackdropClick = (event: MouseEvent<HTMLDialogElement>) => {
     if (event.target === event.currentTarget) closeDialog();
@@ -127,27 +134,29 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submittingRef.current) return;
+    if (calculation !== undefined && !summary) {
+      setSubmitError("Не удалось проверить расчёт. Закройте форму и выберите услуги заново.");
+      return;
+    }
     const formData = new FormData(event.currentTarget);
-    const date = String(formData.get("date") || "");
-    const time = String(formData.get("time") || "");
+    // Keep the submitted slot and the confirmation tied to the same state.
+    // A native select may display its first option when an expired value is removed.
+    const date = contactSoon ? "" : selectedDate;
+    const time = contactSoon ? "" : selectedTime;
 
     if (!contactSoon) {
       const now = new Date();
-      const currentDate = getLocalDateValue(now);
-      const currentTime = getLocalTimeValue(now);
-
-      setMinDate(currentDate);
-      setMinTime(currentTime);
-
-      if (
-        date < currentDate ||
-        (date === currentDate && time < currentTime)
-      ) {
-        setSubmitError("Выберите дату и время не раньше текущих.");
+      setScheduleNow(now);
+      const scheduleError = validateCallbackSchedule(date, time, now);
+      if (scheduleError) {
+        if (!getCallbackSlots(date, now).includes(time)) setSelectedTime("");
+        setSubmitError(scheduleError);
         return;
       }
     }
 
+    submittingRef.current = true;
     setSubmitting(true);
     setSubmitError("");
 
@@ -161,14 +170,17 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
           phone,
           time,
           website: formData.get("website") || "",
+          ...(summary ? { calculation: summary.selection, pricingRevision: snapshot.revision } : {}),
         }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
+        signal: AbortSignal.timeout(15_000),
       });
       const result = (await response.json().catch(() => null)) as
-        | { error?: string; ok?: boolean }
+        | { error?: string; ok?: boolean; snapshot?: PricingSnapshot }
         | null;
 
+      if (response.status === 409 && isPricingSnapshot(result?.snapshot)) updateSnapshot(result.snapshot);
       if (!response.ok || !result?.ok) {
         throw new Error(result?.error || "Не удалось отправить заявку.");
       }
@@ -176,28 +188,26 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
       setSubmitted(true);
     } catch (error) {
       setSubmitError(
-        error instanceof Error
+        error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")
+          ? "Не удалось подтвердить отправку. Проверьте соединение и попробуйте ещё раз."
+          : error instanceof Error
           ? error.message
           : "Не удалось отправить заявку. Попробуйте ещё раз.",
       );
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
 
   const showScheduleFields = () => {
     const now = new Date();
-    const currentDate = getLocalDateValue(now);
-    const currentTime = getLocalTimeValue(now);
-
-    setMinDate(currentDate);
-    setMinTime(currentTime);
+    setScheduleNow(now);
     // Switching modes should not discard a future slot the visitor chose.
-    if (!selectedDate || selectedDate < currentDate) {
-      setSelectedDate(currentDate);
-      setSelectedTime(currentTime);
-    } else if (selectedDate === currentDate && selectedTime < currentTime) {
-      setSelectedTime(currentTime);
+    if (validateCallbackSchedule(selectedDate, selectedTime, now)) {
+      const nextSlot = getNextCallbackSlot(now);
+      setSelectedDate(nextSlot.date);
+      setSelectedTime(nextSlot.time);
     }
     setContactSoon(false);
   };
@@ -226,6 +236,7 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
           <button
             aria-label="Закрыть окно"
             className={styles.close}
+            disabled={submitting}
             onClick={closeDialog}
             type="button"
           >
@@ -245,8 +256,9 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
               <h2 className={styles.title} id={titleId}>Заявка принята</h2>
               <p className={styles.description} id={descriptionId}>
                 {contactSoon
-                  ? "Менеджер свяжется с вами в ближайшее время."
-                  : "Менеджер свяжется с вами в выбранные дату и время."}
+                  ? "Менеджер свяжется с вами в ближайшее рабочее время: по будням с 10:00 до 19:00 МСК."
+                  : `Передали менеджеру удобное время звонка: ${new Date(`${selectedDate}T12:00:00+03:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: "Europe/Moscow" })}, ${selectedTime} МСК.`}
+                {summary ? " Ваш расчёт приложен к заявке." : ""}
               </p>
               <button
                 className={`${ui.primary} ${styles.submit}`}
@@ -257,7 +269,7 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} aria-busy={submitting}>
               <label className={styles.honeypot} aria-hidden="true">
                 Не заполняйте это поле
                 <input
@@ -269,11 +281,27 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
               </label>
               <p className={`${ui.eyebrow} ${styles.eyebrow}`}>Связь с менеджером</p>
               <h2 className={styles.title} id={titleId}>
-                Когда вам удобно поговорить?
+                {summary ? "Обсудим ваш расчёт" : "Когда вам удобно поговорить?"}
               </h2>
               <p className={styles.description} id={descriptionId}>
-                Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу.
+                {summary ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
               </p>
+
+              {summary ? (
+                <section className={styles.calculation} aria-label="Выбранное сопровождение">
+                  <div className={styles.calculationHeading}>
+                    <p>{summary.productName}</p>
+                    <p className={styles.calculationTotal}>{formatPrice(summary.monthlyTotal)}<span>/мес.</span></p>
+                  </div>
+                  <p className={styles.calculationMeta}>Рабочих мест: {summary.workplaceCount}{summary.locationLabel ? ` · ${summary.locationLabel}` : ""}</p>
+                  <details className={styles.calculationDetails}>
+                    <summary>Состав услуг</summary>
+                    <ul>{summary.modules.map((module) => (
+                      <li key={module.name}><span>{module.name}</span><span>{formatPrice(module.monthlyPrice)}/мес.</span></li>
+                    ))}</ul>
+                  </details>
+                </section>
+              ) : null}
 
               <label className={styles.phoneField}>
                 <span className={styles.label}>Номер телефона</span>
@@ -281,6 +309,7 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                   aria-describedby={phoneHintId}
                   autoComplete="tel"
                   className={styles.fieldControl}
+                  disabled={submitting}
                   inputMode="tel"
                   maxLength={18}
                   name="phone"
@@ -305,7 +334,7 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                 </span>
               </label>
 
-              <fieldset className={styles.timing}>
+              <fieldset className={styles.timing} disabled={submitting}>
                 <legend className={styles.label}>Когда позвонить</legend>
                 <div className={styles.choices}>
                   <label className={styles.choice}>
@@ -329,8 +358,8 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                     <span>Выбрать дату</span>
                   </label>
                 </div>
-                <p className={styles.scheduleHint}>
-                  {contactSoon ? "Менеджер на связи в будни с 10:00 до 19:00." : "Укажите удобные для вас дату и время звонка."}
+                <p className={styles.scheduleHint} id={scheduleHintId}>
+                  {CALLBACK_HOURS_LABEL}. {!contactSoon ? "Выберите удобное время звонка." : "Заявку можно оставить в любое время."}
                 </p>
               </fieldset>
 
@@ -345,23 +374,19 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                       <span className={styles.label}>Удобная дата</span>
                       <input
                         className={styles.fieldControl}
-                        min={minDate}
+                        aria-describedby={`${scheduleHintId}${dateError ? ` ${scheduleErrorId}` : ""}`}
+                        aria-invalid={Boolean(dateError)}
+                        disabled={submitting}
+                        min={scheduleNow ? getMoscowDateTime(scheduleNow).date : undefined}
                         name="date"
                         onChange={(event) => {
                           const nextDate = event.currentTarget.value;
                           const now = new Date();
-                          const currentDate = getLocalDateValue(now);
-                          const currentTime = getLocalTimeValue(now);
-
-                          setMinDate(currentDate);
-                          setMinTime(currentTime);
+                          setScheduleNow(now);
                           setSelectedDate(nextDate);
-                          if (
-                            nextDate === currentDate &&
-                            selectedTime < currentTime
-                          ) {
-                            setSelectedTime(currentTime);
-                          }
+                          const slots = getCallbackSlots(nextDate, now);
+                          if (!slots.includes(selectedTime)) setSelectedTime(slots[0] || "");
+                          setSubmitError("");
                         }}
                         required
                         type="date"
@@ -369,38 +394,33 @@ export function CallbackDialog({ onClose, open }: CallbackDialogProps) {
                       />
                     </label>
                     <label>
-                      <span className={styles.label}>Удобное время</span>
-                      <input
+                      <span className={styles.label}>Время по Москве</span>
+                      <select
                         className={styles.fieldControl}
-                        min={selectedDate === minDate ? minTime : undefined}
+                        aria-describedby={scheduleHintId}
+                        disabled={submitting || availableTimes.length === 0}
                         name="time"
-                        onChange={(event) =>
-                          setSelectedTime(event.currentTarget.value)
-                        }
+                        onChange={(event) => { setSelectedTime(event.currentTarget.value); setSubmitError(""); }}
                         onFocus={() => {
                           const now = new Date();
-                          const currentDate = getLocalDateValue(now);
-                          const currentTime = getLocalTimeValue(now);
-
-                          setMinDate(currentDate);
-                          setMinTime(currentTime);
-                          if (
-                            selectedDate === currentDate &&
-                            selectedTime < currentTime
-                          ) {
-                            setSelectedTime(currentTime);
-                          }
+                          setScheduleNow(now);
+                          const slots = getCallbackSlots(selectedDate, now);
+                          if (!slots.includes(selectedTime)) setSelectedTime(slots[0] || "");
                         }}
                         required
-                        type="time"
                         value={selectedTime}
-                      />
+                      >
+                        <option value="">{availableTimes.length === 0 ? "Нет доступного времени" : "Выберите время"}</option>
+                        {availableTimes.map((time) => <option key={time} value={time}>{time}</option>)}
+                      </select>
                     </label>
+                    {dateError ? <p className={styles.scheduleError} id={scheduleErrorId} role="status">{dateError}</p> : null}
                   </motion.div>
                 ) : null}
               <label className={styles.consent}>
                 <input
                   name="personalDataConsent"
+                  disabled={submitting}
                   required
                   type="checkbox"
                 />

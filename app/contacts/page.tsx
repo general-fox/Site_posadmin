@@ -14,7 +14,7 @@ export const metadata = buildPageMetadata({
 });
 
 export default function ContactsPage() {
-  return <ServicePageFrame page="contacts">
+  return <ServicePageFrame page="contacts" closing={<ContactsSection flushTop />}>
     <JsonLd data={{ "@context": "https://schema.org", "@graph": [
       { "@type": "ContactPage", "@id": `${SITE_URL}/contacts#page`, url: `${SITE_URL}/contacts`, name: "Контакты Posadmin", inLanguage: "ru-RU", about: { "@id": `${SITE_URL}/#organization` }, isPartOf: { "@id": `${SITE_URL}/#website` } },
       ...SITE_CONTACTS.offices.map((office, index) => ({
@@ -29,7 +29,7 @@ export default function ContactsPage() {
       })),
     ] }} />
     <div className={styles.shell}>
-      <header className={styles.intro}>
+      <header className={styles.intro} data-scroll-reveal="">
         <Breadcrumbs items={[{ name: "Главная", path: "/" }, { name: "Контакты", path: "/contacts" }]} />
         <p className={styles.eyebrow}>На связи с вашим заведением</p>
         <h1 className={styles.title}>Контакты Posadmin</h1>
@@ -45,6 +45,5 @@ export default function ContactsPage() {
         <Link className={styles.textLink} href="/services/vyezdnoe-soprovozhdenie">Состав и условия выездного модуля <ServiceArrow /></Link>
       </section>
     </div>
-    <ContactsSection />
   </ServicePageFrame>;
 }
