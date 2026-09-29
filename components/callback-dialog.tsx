@@ -14,6 +14,7 @@ import ui from "./marketing.module.css";
 import styles from "./callback-dialog.module.css";
 import { getCalculationSummary, type CalculationSelection } from "@/lib/calculation-request";
 import { usePricing } from "./pricing-provider";
+import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
 import {
   CALLBACK_HOURS_LABEL,
@@ -134,6 +135,7 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (IS_REVIEW_DEMO) { setSubmitError(DEMO_FORM_NOTICE); return; }
     if (submittingRef.current) return;
     if (calculation !== undefined && !summary) {
       setSubmitError("Не удалось проверить расчёт. Закройте форму и выберите услуги заново.");
@@ -284,7 +286,7 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
                 {summary ? "Обсудим ваш расчёт" : "Когда вам удобно поговорить?"}
               </h2>
               <p className={styles.description} id={descriptionId}>
-                {summary ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
+                {IS_REVIEW_DEMO ? "Демонстрация формы: данные не отправляются. Для проверки можно использовать вымышленный номер." : summary ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
               </p>
 
               {summary ? (

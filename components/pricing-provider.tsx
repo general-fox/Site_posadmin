@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DEFAULT_PRICING } from "@/lib/pricing-config";
+import { IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
 
 const initial: PricingSnapshot = { config: DEFAULT_PRICING, revision: 0, updatedAt: null };
@@ -13,6 +14,7 @@ export function PricingProvider({ initialSnapshot, children }: { initialSnapshot
     if (isPricingSnapshot(next)) setSnapshot((current) => next.revision > current.revision ? next : current);
   }, []);
   useEffect(() => {
+    if (IS_REVIEW_DEMO) return;
     const controller = new AbortController();
     const refresh = async () => {
       if (document.visibilityState !== "visible") return;

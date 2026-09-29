@@ -7,6 +7,7 @@ import { ArrowRight, useMarketingReducedMotion } from "./marketing-ui";
 import shared from "./callback-dialog.module.css";
 import styles from "./project-dialog.module.css";
 import ui from "./marketing.module.css";
+import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
 
 const stageNames = { new: "Открытие заведения", existing: "Действующее заведение" };
 type ProjectStep = 0 | 1;
@@ -91,6 +92,7 @@ export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; 
       showError(`Сократите описание до ${PROJECT_TASK_MAX_LENGTH} символов.`, "task"); return;
     }
     if (step === 0) { goToStep(1); return; }
+    if (IS_REVIEW_DEMO) { showError(DEMO_FORM_NOTICE, ""); return; }
     const contact = contactMethod === "phone" ? normalizeProjectPhone(phone) : normalizeTelegramContact(telegram);
     if (!contact) {
       showError(contactMethod === "phone"
@@ -160,7 +162,7 @@ export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; 
         {!initialStage && <div className={styles.progress} aria-hidden="true">{[0, 1].map((index) => <span key={index} data-complete={index <= step} />)}</div>}
         <motion.div key={step} initial={reduced ? false : { opacity: .5 }} animate={{ opacity: 1 }} transition={{ duration: reduced ? 0 : .18 }}>
           <h2 className={shared.title} id={titleId} ref={headingRef} tabIndex={-1}>{titles[step]}</h2>
-          <p className={shared.description} id={descriptionId}>{descriptions[step]}</p>
+          <p className={shared.description} id={descriptionId}>{IS_REVIEW_DEMO && step === 1 ? "Демонстрация формы: данные не отправляются. Для проверки можно использовать вымышленный контакт." : descriptions[step]}</p>
           {step === 0 && <fieldset className={styles.stageOptions} aria-label="Этап бизнеса" aria-describedby={errorField === "projectStage" ? errorId : undefined}>
             {(["new", "existing"] as const).map((value) => <label className={styles.stageOption} key={value}>
               <input name="projectStage" type="radio" value={value} checked={projectStage === value} onChange={() => { setProjectStage(value); clearError(); }} required />

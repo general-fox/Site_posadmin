@@ -10,6 +10,7 @@ import {
   websiteJsonLd,
 } from "@/lib/seo";
 import "./globals.css";
+import { IS_REVIEW_DEMO } from "@/lib/demo-mode";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -32,11 +33,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: "Posadmin",
   robots: {
-    index: true,
-    follow: true,
+    index: !IS_REVIEW_DEMO,
+    follow: !IS_REVIEW_DEMO,
     googleBot: {
-      index: true,
-      follow: true,
+      index: !IS_REVIEW_DEMO,
+      follow: !IS_REVIEW_DEMO,
       "max-image-preview": "large",
       "max-snippet": -1,
       "max-video-preview": -1,

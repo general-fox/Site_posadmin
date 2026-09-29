@@ -11,11 +11,12 @@ import { calculateItAdministrationPricing, getItAdministrationModulePrice, IT_AD
 import { isOnsiteSupportAvailable, type OnsiteSupportLocation } from "@/lib/onsite-support";
 import type { CalculationSelection } from "@/lib/calculation-request";
 import { usePricing } from "./pricing-provider";
+import { IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
 import ui from "./marketing.module.css";
 import styles from "./support-pricing.module.css";
 
-type PdfStatus = "idle" | "loading" | "success" | "error" | "changed";
+type PdfStatus = "idle" | "loading" | "success" | "error" | "changed" | "demo";
 type Service = "rkeeper" | "it";
 const money = (value: number) => new Intl.NumberFormat("ru-RU").format(value);
 
@@ -150,6 +151,7 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
     resetFeedback();
   };
   const download = async () => {
+    if (IS_REVIEW_DEMO) { setStatus("demo"); return; }
     if (!selected.length || loading) return;
     const target = service;
     const product = target === "rkeeper" ? RKEEPER_PRODUCT_ID : IT_ADMINISTRATION_PRODUCT_ID;
@@ -228,7 +230,7 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
             <div className={styles.summaryItems}>{selected.length ? selected.map((module) => <div key={module.id}><span>{module.name}</span><strong>{money(module.monthlyPrice)} ₽</strong></div>) : <p>Добавьте IT-сопровождение, чтобы увидеть итог и сохранить расчёт.</p>}</div>
             <button className={ui.primary} type="button" onClick={() => setCallbackOpen(true)}>Обсудить подключение <ArrowRight /></button>
             <button className={ui.secondary} type="button" onClick={download} disabled={loading || !selected.length}>{loading ? "Готовим PDF…" : status === "error" ? "Повторить скачивание PDF" : "Скачать расчёт в PDF"} <span aria-hidden="true">↓</span></button>
-            <p className={styles.feedback} role="status">{status === "changed" ? "Цены обновились. Проверьте новый расчёт и скачайте PDF ещё раз." : status === "success" ? "Расчёт готов. Файл отправлен на скачивание." : status === "error" ? "Не удалось создать PDF. Попробуйте ещё раз." : "Состав работ и условия уточним перед подключением."}</p>
+            <p className={styles.feedback} role="status">{status === "demo" ? "В демоверсии можно проверить расчёт. Скачивание PDF будет доступно после запуска сайта на хостинге." : status === "changed" ? "Цены обновились. Проверьте новый расчёт и скачайте PDF ещё раз." : status === "success" ? "Расчёт готов. Файл отправлен на скачивание." : status === "error" ? "Не удалось создать PDF. Попробуйте ещё раз." : "Состав работ и условия уточним перед подключением."}</p>
           </aside>
         </div>
         {service === "it" && <SectionReveal className={styles.help} distance={20}><div><span aria-hidden="true">↗</span><p>Не знаете, что выбрать?<br /><span>Расскажите о задаче — поможем собрать нужный набор услуг.</span></p></div><button type="button" className={ui.textLink} onClick={() => setCallbackOpen(true)}>Помогите с выбором <ArrowRight /></button></SectionReveal>}
