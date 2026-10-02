@@ -4,7 +4,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { animate, motion, useMotionTemplate, useMotionValue } from "framer-motion";
-import { useParallaxActiveSlide } from "@/components/full-page-parallax";
 import { SiteLogoMark } from "@/components/site-logo-mark";
 import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 import { HOME_NAVIGATION } from "@/lib/site-navigation";
@@ -31,7 +30,6 @@ function Arrow() {
 
 export function SiteHeader({ page = "home" }: { page?: Page }) {
   const pathname = usePathname();
-  const activeSlide = useParallaxActiveSlide();
   const reduced = useHydratedReducedMotion();
   const [surface, setSurface] = useState<"light" | "dark">(page === "home" || page === "about" ? "dark" : "light");
   const [activeSection, setActiveSection] = useState<Section | null>(null);
@@ -93,6 +91,8 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
     const header = headerRef.current;
     if (!nav || !header) return;
     let frame = 0;
+    let destination: Section | null | undefined;
+    let scrollIdleTimer: ReturnType<typeof setTimeout> | undefined;
     const sync = () => {
       frame = 0;
       const bounds = nav.getBoundingClientRect();
@@ -100,7 +100,9 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
       const background = underneath?.closest<HTMLElement>("[data-header-surface]");
       const next = background?.dataset.headerSurface === "dark" ? "dark" : "light";
       setSurface((current) => current === next ? current : next);
-      if (page !== "home") return;
+      // Keep the clicked destination selected while smooth scrolling passes
+      // through other sections. Undefined means ordinary scroll tracking.
+      if (page !== "home" || destination !== undefined) return;
       const line = window.innerHeight * 0.42;
       const hero = document.querySelector<HTMLElement>("[data-hero-curtain]");
       if (hero && hero.getBoundingClientRect().bottom > line) {
@@ -116,19 +118,61 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
       setActiveSection(current?.id ?? null);
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(sync); };
+    const finishNavigation = () => {
+      if (destination === undefined) return;
+      clearTimeout(scrollIdleTimer);
+      destination = undefined;
+      schedule();
+    };
+    const awaitScrollEnd = () => {
+      clearTimeout(scrollIdleTimer);
+      // Also release the selection if no scroll is needed or scrollend is
+      // unavailable. Each scroll event restarts this idle fallback.
+      scrollIdleTimer = setTimeout(finishNavigation, 180);
+    };
+    const selectDestination = (event: MouseEvent) => {
+      if (page !== "home" || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+      if (!link || (link.target && link.target !== "_self")) return;
+      const url = new URL(link.href, location.href);
+      if (url.origin !== location.origin || url.pathname !== location.pathname || url.search !== location.search) return;
+      const item = HOME_NAVIGATION.find(({ id }) => url.hash === `#${id}`);
+      if (url.hash && !item) return;
+      destination = item?.id ?? null;
+      setActiveSection(destination);
+      awaitScrollEnd();
+    };
+    const onScroll = () => {
+      schedule();
+      if (destination !== undefined) awaitScrollEnd();
+    };
+    const onScrollKey = (event: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) finishNavigation();
+    };
     schedule();
-    window.addEventListener("scroll", schedule, { passive: true });
+    header.addEventListener("click", selectDestination);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scrollend", finishNavigation);
+    window.addEventListener("wheel", finishNavigation, { passive: true });
+    window.addEventListener("touchstart", finishNavigation, { passive: true });
+    window.addEventListener("keydown", onScrollKey);
     window.addEventListener("resize", schedule);
     const observer = new ResizeObserver(schedule);
     observer.observe(nav);
     observer.observe(document.body);
     return () => {
       cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
+      clearTimeout(scrollIdleTimer);
+      header.removeEventListener("click", selectDestination);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scrollend", finishNavigation);
+      window.removeEventListener("wheel", finishNavigation);
+      window.removeEventListener("touchstart", finishNavigation);
+      window.removeEventListener("keydown", onScrollKey);
       window.removeEventListener("resize", schedule);
       observer.disconnect();
     };
-  }, [activeSlide, page, pathname]);
+  }, [page, pathname]);
 
   const placeCapsule = useCallback((element: HTMLElement) => {
     const nav = navRef.current;
@@ -181,7 +225,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
       <noscript><style>{`.site-header .site-nav { visibility: visible !important; opacity: 1 !important; clip-path: none !important; transform: none !important; } .site-header .site-nav span { opacity: 1 !important; transform: none !important; } .site-header [data-nav-fallback] { display: flex !important; }`}</style></noscript>
       <div className={styles.headerInner}>
         <motion.nav key={pathname} ref={navRef} className={`site-nav ${styles.nav}`} aria-label="Основное меню" {...entry} style={{ visibility: ready ? "visible" : "hidden", clipPath: opened ? "none" : clipPath }} onMouseLeave={resetCapsule} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) resetCapsule(); }}>
-          <motion.span aria-hidden="true" className={`site-nav-chip ${styles.chip}`} initial={false} animate={{ x: capsule.x, width: Math.max(0, capsule.width - 6) }} transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34, mass: 0.7 }} />
+          <span aria-hidden="true" className={`site-nav-chip ${styles.chip}`} style={{ transform: `translateX(${capsule.x}px)`, width: Math.max(0, capsule.width - 6) }} />
           <Link ref={logoRef} href="/" aria-label="posadmin, на главную" className={styles.logo} onMouseEnter={(event) => placeCapsule(event.currentTarget)} onFocus={(event) => placeCapsule(event.currentTarget)}>
             <SiteLogoMark className="site-logo-mark" />
           </Link>

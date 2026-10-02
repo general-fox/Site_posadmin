@@ -12,22 +12,6 @@ import { HeroActions } from "@/components/hero-actions";
 
 const waveEase = [0.33, 1, 0.68, 1] as const;
 
-function LightningIcon() {
-  return (
-    <div className="hero-lightning relative size-6 shrink-0" aria-hidden="true">
-      <div className="absolute top-[2px] left-[5px] h-5 w-[14px]">
-        <div className="absolute inset-[-21.74%_-30.41%]">
-          <img
-            src="/figma-hero/lightning.svg"
-            alt=""
-            className="block size-full max-w-none"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function GlowLayer() {
   return (
     <div className="hero-glow-board pointer-events-none absolute inset-0">
@@ -127,29 +111,6 @@ export function HeroStage() {
           Официальный дилер r_keeper
         </p>
       </motion.div>
-
-      <div className="hero-tagline absolute top-[88px] left-1/2 z-[2] flex w-[calc(100%-32px)] items-center justify-center gap-2 text-center sm:top-[102px] sm:w-auto sm:gap-2.5">
-        <motion.div
-          initial={reduced ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={
-            reduced
-              ? { duration: 0 }
-              : { delay: 0.46, duration: 0.8, ease: waveEase }
-          }
-        >
-          <LightningIcon />
-        </motion.div>
-        <p className="font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[20px] tracking-[0.1px] text-[var(--milk)] sm:text-[18px] sm:leading-normal sm:tracking-[0.2px] sm:whitespace-nowrap">
-          <WaveWords
-            text="r_keeper, кассы и IT-поддержка 24/7 — одна команда."
-            base={0.2}
-            stagger={0.025}
-            duration={0.55}
-            reduced={reduced}
-          />
-        </p>
-      </div>
 
       <div className="hero-content absolute inset-0 z-[2] flex flex-col items-center justify-center px-6 pt-20">
         <div className="hero-copy flex w-max max-w-full flex-col items-center">

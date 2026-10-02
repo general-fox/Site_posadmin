@@ -230,10 +230,6 @@ a {
   font-optical-sizing: auto;
 }
 
-.hero-lightning {
-  animation: var(--accent-pulse);
-}
-
 @keyframes accent-pulse {
   0%, 100% {
     filter: drop-shadow(0 0 1px rgb(var(--accent-rgb) / .1));
@@ -380,7 +376,7 @@ a.hero-glass-btn:hover {
 .clients-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--grid-gap); }
 .clients-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .clients-link-hint { margin: -12px 0 16px; color: #bcb6ad; font-size: 12px; line-height: 1.6; }
-.client-external-arrow { position: absolute; top: 12px; right: 12px; color: var(--text-muted); z-index: 1; }
+.client-external-arrow { position: absolute; top: 12px; right: 12px; color: var(--text-muted); z-index: 1; opacity: 0; pointer-events: none; transition: opacity 160ms ease; }
 .clients-next-step { display: flex; align-items: center; justify-content: space-between; gap: 12px 28px; flex-wrap: wrap; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgb(245 245 237 / .14); font-size: 14px; line-height: 1.65; }
 .clients-next-step p { color: #c9c5bd; }
 .clients-next-step a { display: inline-flex; align-items: center; gap: 16px; min-height: 44px; text-decoration: underline; text-decoration-color: rgb(227 143 69 / .5); text-underline-offset: 6px; }
@@ -405,6 +401,7 @@ a.hero-glass-btn:hover {
   outline: 2px solid var(--accent-border);
   outline-offset: 4px;
 }
+.client-logo-card:focus-visible .client-external-arrow { opacity: 1; }
 .client-logo-mark {
   position: relative;
   z-index: 1;
@@ -416,9 +413,10 @@ a.hero-glass-btn:hover {
   .client-logo-card:hover {
     background: var(--surface-muted);
   }
+  .client-logo-card:hover .client-external-arrow { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .client-logo-card {
+  .client-logo-card, .client-external-arrow {
     transition: none;
   }
 }
@@ -482,8 +480,11 @@ a.hero-glass-btn:hover {
   -webkit-user-select: none;
 }
 
-.hero-stage { --hero-compact: 0; --hero-short: 0; --hero-mobile: 0; }
-.hero-tagline { transform: translateX(-50%); }
+.hero-stage { --hero-compact: 0; --hero-short: 0; --hero-mobile: 0; --hero-content-lift: clamp(0px, calc((100svh - 600px) / 5), 24px); }
+.hero-stage .hero-copy { translate: 0 calc(-1 * var(--hero-content-lift)); }
+@media (min-width: 901px) and (min-height: 601px) {
+  .hero-stage .hero-capsules { translate: 0 -16px; }
+}
 
 /* Resolve layout in CSS on the first paint, before JS measures the capsules.
    The height breakpoint includes the 80px reserved for the fixed header. */
@@ -500,22 +501,6 @@ a.hero-glass-btn:hover {
   flex-direction: column;
   gap: 12px;
   padding: 16px 20px 20px;
-}
-
-.hero-stage .hero-tagline {
-  position: relative;
-  inset: auto;
-  order: 0;
-  flex-shrink: 0;
-  width: 100%;
-  transform: none;
-}
-
-.hero-stage .hero-tagline p {
-  max-width: 560px;
-  font-size: clamp(13px, 2.3vw, 17px);
-  line-height: 20px;
-  white-space: normal;
 }
 
 .hero-stage .hero-content {
@@ -572,16 +557,6 @@ a.hero-glass-btn:hover {
   --hero-short: 1;
   gap: 4px;
   padding: 6px 20px 8px;
-}
-
-.hero-stage .hero-tagline p {
-  font-size: 12px;
-  line-height: 16px;
-}
-
-.hero-stage .hero-lightning {
-  width: 20px;
-  height: 20px;
 }
 
 .hero-stage .hero-capsules {
@@ -649,29 +624,29 @@ a.hero-glass-btn:hover {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  min-height: 48px;
-  padding: 13px 22px;
-  border: 1px solid var(--hero-pill-border);
+  min-height: 52px;
+  padding: 14px 24px;
+  border: 1px solid rgb(var(--accent-rgb));
   border-radius: var(--control-radius);
-  background: var(--hero-pill-background);
-  -webkit-backdrop-filter: blur(8.55px);
-  backdrop-filter: blur(8.55px);
-  color: var(--milk);
+  background: rgb(var(--accent-rgb));
+  color: var(--action-ink);
   font-family: var(--font-inter), Inter, sans-serif;
   font-size: var(--font-body);
-  font-weight: var(--control-font-weight);
+  font-weight: 600;
   line-height: 1.4;
-  box-shadow: 0 10px 18px rgb(0 0 0 / 0.12);
-  transition: background-color .2s ease, border-color .2s ease;
+  box-shadow: 0 8px 24px rgb(var(--accent-rgb) / .22);
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
 
 .hero-project-link:hover {
-  background: rgb(245 245 237 / 0.22);
-  border-color: rgb(245 245 237 / 0.28);
+  background: color-mix(in srgb, rgb(var(--accent-rgb)) 85%, var(--milk));
+  border-color: color-mix(in srgb, rgb(var(--accent-rgb)) 85%, var(--milk));
+  box-shadow: 0 10px 28px rgb(var(--accent-rgb) / .32);
 }
 
 .hero-project-link:active {
-  background: rgb(245 245 237 / 0.18);
+  background: color-mix(in srgb, rgb(var(--accent-rgb)) 90%, var(--action-ink));
+  box-shadow: 0 4px 12px rgb(var(--accent-rgb) / .18);
 }
 
 .hero-project-link:focus-visible {
@@ -683,25 +658,24 @@ a.hero-glass-btn:hover {
 .hero-project-link { cursor: pointer; }
 .hero-callback-link {
   display: inline-flex; align-items: center; justify-content: center;
-  min-height: 48px; padding: 13px 22px;
-  border: 1px solid rgb(245 245 237 / .18); border-radius: var(--control-radius);
-  background: linear-gradient(145deg, rgb(245 245 237 / .08), transparent 65%), rgb(37 34 29 / .84);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: inset 0 1px 0 rgb(245 245 237 / .08), 0 8px 20px rgb(0 0 0 / .12);
-  color: var(--milk); cursor: pointer;
+  min-height: 52px; padding: 14px 24px;
+  border: 1px solid rgb(var(--accent-rgb) / .8); border-radius: var(--control-radius);
+  background: color-mix(in srgb, rgb(var(--accent-rgb)) 18%, var(--hero-background));
+  box-shadow: inset 0 1px 0 rgb(var(--accent-rgb) / .12), 0 8px 20px rgb(0 0 0 / .12);
+  color: var(--accent-border); cursor: pointer;
   font-family: var(--font-inter), sans-serif; font-size: var(--font-body);
-  font-weight: var(--control-font-weight); line-height: 1.4;
+  font-weight: 600; line-height: 1.4;
   letter-spacing: var(--control-letter-spacing);
   transition: background .2s, border-color .2s;
 }
-.hero-callback-link:hover { background-color: rgb(55 51 44 / .94); border-color: rgb(245 245 237 / .36); }
+.hero-callback-link:hover { background: color-mix(in srgb, rgb(var(--accent-rgb)) 28%, var(--hero-background)); border-color: rgb(var(--accent-rgb)); }
+.hero-callback-link:active { background: color-mix(in srgb, rgb(var(--accent-rgb)) 35%, var(--hero-background)); }
 .hero-callback-link:focus-visible { outline: 2px solid var(--milk); outline-offset: 4px; }
 @media (max-width: 480px) {
   .hero-actions { flex-direction: column; gap: 10px; width: min(100%, 280px); }
   .hero-actions > button { width: 100%; }
 }
-@media (prefers-reduced-motion: reduce) { .hero-callback-link { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-project-link, .hero-callback-link { transition: none; } }
 
 .circuit-movers {
   mix-blend-mode: screen;
@@ -809,7 +783,6 @@ a.hero-glass-btn:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-lightning { animation: none; }
   .hero-reveal-stage::after { display: none; }
   .hero-curtain { position: relative; inset: auto; }
   .hero-reveal-underlay { position: relative; min-height: 0; }

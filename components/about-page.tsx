@@ -67,7 +67,7 @@ export function AboutPage() {
       <div className={styles.content}>
       <AboutHero onContact={() => setCallbackOpen(true)} />
       <SectionReveal className={styles.stats} distance={20}>
-        {[["15+", "лет автоматизируем бизнес"], ["1 000+", "запущенных объектов"], ["до 15 мин", "первичная реакция"]].map(([value, label]) => <div key={value}><strong>{value}</strong><span>{label}</span></div>)}
+        {[["15+", "лет автоматизируем бизнес"], ["1 000+", "запущенных объектов"], ["до 10 мин", "первичная реакция"]].map(([value, label]) => <div key={value}><strong>{value}</strong><span>{label}</span></div>)}
       </SectionReveal>
       <section id="expertise" className={styles.section} aria-labelledby="about-services-title">
         <div className={ui.sectionHeader}><SectionReveal distance={22}><p className={ui.eyebrow}>Чем мы занимаемся</p><h2 className={ui.heading} id="about-services-title">От первого запуска<br /><span className={ui.muted}>до новых возможностей</span></h2></SectionReveal><SectionReveal distance={20} delay={0.12}><p className={ui.lead}>Программное обеспечение, оборудование, кассы, ГИС и интеграции. Все направления объединены в одну команду с вашим персональным менеджером.</p></SectionReveal></div>

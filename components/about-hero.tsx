@@ -8,15 +8,14 @@ import ui from "./marketing.module.css";
 import styles from "./about-hero.module.css";
 
 export function AboutHero({ onContact }: { onContact: () => void }) {
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [lastHoveredCard, setLastHoveredCard] = useState(1);
   const [focusedCard, setFocusedCard] = useState<number | null>(null);
-  const activeCard = focusedCard ?? hoveredCard ?? 1;
+  const activeCard = focusedCard ?? lastHoveredCard;
 
   function highlightCard(event: PointerEvent<HTMLDivElement>) {
     if (event.pointerType === "touch" || !window.matchMedia(
       "(min-width: 768px) and (hover: hover) and (pointer: fine)",
     ).matches) {
-      setHoveredCard(null);
       return;
     }
 
@@ -25,7 +24,7 @@ export function AboutHero({ onContact }: { onContact: () => void }) {
     const index = Math.min(2, Math.max(0, Math.floor(
       (event.clientX - bounds.left) / bounds.width * 3,
     )));
-    setHoveredCard(index);
+    setLastHoveredCard(index);
   }
 
   return (
@@ -51,8 +50,6 @@ export function AboutHero({ onContact }: { onContact: () => void }) {
           data-active-card={activeCard}
           onPointerEnter={highlightCard}
           onPointerMove={highlightCard}
-          onPointerLeave={() => setHoveredCard(null)}
-          onPointerCancel={() => setHoveredCard(null)}
           onFocusCapture={(event) => {
             const index = Array.from(event.currentTarget.children).findIndex(
               (card) => card.contains(event.target),

@@ -14,8 +14,10 @@
 .brand > svg { width: 90px; height: auto; color: var(--ink); }
 .brand > span { padding-left: 16px; border-left: 1px solid var(--border-strong); }
 .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; gap: 16px; padding: 0 8px 26px; }
-.column { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 16px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: var(--card-radius); transform: translateY(26px) scale(.94); transform-origin: center top; transition: transform 340ms cubic-bezier(.22, 1, .36, 1), background-color 240ms ease, border-color 240ms ease, box-shadow 240ms ease; }
-.active { z-index: 1; transform: translateY(0) scale(1.04); background: var(--accent-soft); border-color: var(--accent-border); box-shadow: 0 20px 44px rgb(50 47 43 / .045); }
+.column { position: relative; isolation: isolate; display: flex; flex-direction: column; min-width: 0; padding: 16px; border: 1px solid transparent; border-radius: var(--card-radius); }
+/* Scale only the decorative surface so text keeps its position and sharpness. */
+.column::before { content: ""; position: absolute; z-index: -1; inset: -1px; pointer-events: none; border: 1px solid var(--border); border-radius: inherit; background: var(--surface-muted); transform: scale(1); transform-origin: center top; transition: transform 240ms ease, background-color 240ms ease, border-color 240ms ease, box-shadow 240ms ease; }
+.active::before { transform: scale(1.01); background: var(--accent-soft); border-color: var(--accent-border); box-shadow: 0 8px 20px rgb(50 47 43 / .04); }
 .columnHeader { display: flex; align-items: center; gap: 9px; padding: 0 2px 16px; font-size: 14px; color: var(--text-body); }
 .statusDot { width: 7px; height: 7px; border: 1px solid var(--text-muted); border-radius: 50%; }
 .statusDot { transition: background-color 240ms ease, border-color 240ms ease; }
@@ -70,7 +72,8 @@
   .workspaceHeader { justify-content: center; padding-bottom: 16px; }
   .workspaceNote { display: none; }
   .board { grid-template-columns: 1fr; max-width: 480px; margin-inline: auto; gap: 16px; padding: 0; }
-  .column { padding: 16px; transform: none; }
+  .column { padding: 16px; }
+  .column::before { transform: none; }
   .task { padding: 20px; }
   .task h2 { font-size: 21px; }
   .task p br { display: none; }
@@ -78,6 +81,6 @@
   .checklist { grid-template-columns: 1fr; gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .column, .statusDot, .checklist li > span, .teamAvatars i, .ready, .supportDot { transition: none; }
+  .column::before, .statusDot, .checklist li > span, .teamAvatars i, .ready, .supportDot { transition: none; }
   .active .statusDot { animation: none; }
 }
