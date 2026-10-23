@@ -268,7 +268,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
             </Link>
           ))}
         </motion.nav>
-        <a className={styles.phone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
+        <a className={`site-header-glass ${styles.phone}`} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
           <PhoneIcon /><span className={styles.phoneNumber}>{SITE_CONTACTS.phone}</span>
         </a>
         <motion.button key={`mobile-${pathname}`} ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} type="button" aria-expanded={mobileOpen} aria-controls="mobile-site-navigation" {...entry} style={{ visibility: ready ? "visible" : "hidden" }} onClick={() => setMobileOpen((current) => !current)}>
