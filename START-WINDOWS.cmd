@@ -1,6 +1,7 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0" || goto invalid_path
+if not exist "package.json" goto invalid_path
 title POSADMIN - local website
 
 where node >nul 2>&1
@@ -34,5 +35,12 @@ exit /b 1
 echo.
 echo The website could not start. See the error above and README.md.
 echo Check your internet connection and whether port 3000 is already in use.
+pause
+exit /b 1
+
+:invalid_path
+echo.
+echo Extract the entire archive into a local folder, then run this file again.
+echo The project folder could not be opened. No dependencies were installed.
 pause
 exit /b 1
