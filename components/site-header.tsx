@@ -44,6 +44,12 @@ function Arrow() {
   );
 }
 
+function PhoneIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.79a2 2 0 0 1-.45 2.11L8.09 9.89a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.89.33 1.83.56 2.79.69A2 2 0 0 1 22 16.92Z" />
+  </svg>;
+}
+
 export function SiteHeader({ page = "home" }: { page?: Page }) {
   const pathname = usePathname();
   const reduced = useHydratedReducedMotion();
@@ -263,13 +269,18 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
           ))}
         </motion.nav>
         <a className={styles.phone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
-          {SITE_CONTACTS.phone}
+          <PhoneIcon /><span className={styles.phoneNumber}>{SITE_CONTACTS.phone}</span>
         </a>
         <motion.button key={`mobile-${pathname}`} ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} type="button" aria-expanded={mobileOpen} aria-controls="mobile-site-navigation" {...entry} style={{ visibility: ready ? "visible" : "hidden" }} onClick={() => setMobileOpen((current) => !current)}>
-          <span className={styles.mobileTriggerLabel}>{mobileOpen ? "Закрыть" : "Меню"}</span><span aria-hidden="true" className={styles.menuIcon} data-open={mobileOpen}><span /><span /></span>
+          <span>{mobileOpen ? "Закрыть" : "Меню"}</span><span aria-hidden="true" className={styles.menuIcon} data-open={mobileOpen}><span /><span /></span>
         </motion.button>
         <nav id="mobile-site-navigation" aria-label="Мобильное меню" className={`site-mobile-menu ${styles.mobileMenu}`} hidden={!mobileOpen} data-lenis-prevent>
           {HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href} className={styles.mobileItem} aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
+          <div className={styles.mobileContact}>
+            <a className={styles.mobilePhone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
+              <PhoneIcon /><span><small>Позвонить нам</small><span>{SITE_CONTACTS.phone}</span></span>
+            </a>
+          </div>
         </nav>
         <div data-nav-fallback className={styles.noScriptLinks}>{HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</div>
       </div>

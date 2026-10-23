@@ -81,6 +81,36 @@ function StarIcon() {
   </svg>;
 }
 
+function ControlPreview() {
+  return <figure className={styles.controlPreview} aria-label="Пример уведомления Fox Control">
+    <div className={styles.controlRoute} aria-hidden="true">
+      <span>Касса</span><ArrowRight /><span>Fox Control</span><ArrowRight /><span>Telegram</span>
+    </div>
+    <div className={styles.controlEvent}>
+      <div className={styles.controlEventHeader}>
+        <span className={styles.controlSignal}><span aria-hidden="true" />Сигнал по операции</span>
+        <span>19:42</span>
+      </div>
+      <div className={styles.controlOperation}>
+        <div><span>Чек № 1042</span><p>Удаление позиции</p></div>
+        <strong>1 250 ₽</strong>
+      </div>
+      <dl className={styles.controlDetails}>
+        <div><dt>Объект</dt><dd>Ресторан 01</dd></div>
+        <div><dt>Сотрудник</dt><dd>Кассир 07</dd></div>
+        <div><dt>Время</dt><dd>19:42</dd></div>
+      </dl>
+      <div className={styles.controlNotification}>
+        <span className={styles.controlTelegram} aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="m21 3-6.5 18-4-7.5L3 9.5 21 3Z" /><path d="m10.5 13.5 5-5" /></svg>
+        </span>
+        <div><p>Детали — в Telegram</p><span>Понятно, где, когда и что произошло</span></div>
+      </div>
+    </div>
+    <figcaption>Пример события · данные условные</figcaption>
+  </figure>;
+}
+
 function TabIcon({ src }: { src: string }) {
   return <span
     aria-hidden="true"
@@ -454,8 +484,8 @@ export function ProductsSection() {
     <SectionAtmosphere />
     <div className={ui.shell}>
       <div className={ui.sectionHeader}>
-        <SectionReveal distance={22}><p className={ui.eyebrow}>Сделано в Posadmin</p><h2 className={ui.heading} id="products-title">Больше внимания<br /><span className={ui.muted}>вашим гостям</span></h2></SectionReveal>
-        <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>Собственные продукты для ежедневной работы заведения. Управляйте бронированиями, развивайте лояльность и возвращайте гостей.</p></SectionReveal>
+        <SectionReveal distance={22}><p className={ui.eyebrow}>Продукты для вашего заведения</p><h2 className={ui.heading} id="products-title">Больше внимания<br /><span className={ui.muted}>вашим гостям</span></h2></SectionReveal>
+        <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>Решения для ежедневной работы заведения. Управляйте бронированиями, развивайте лояльность и держите важные операции под контролем.</p></SectionReveal>
       </div>
       <div className={styles.productGrid}>
         <SectionReveal id="rezebra" className={`${styles.productCard} ${styles.bookingCard}`} distance={24}>
@@ -480,6 +510,22 @@ export function ProductsSection() {
             <div className={styles.bonusToast}><span><StarIcon /></span><div>+350 бонусов<small>За новый визит</small></div></div>
           </div>
           <div className={styles.cardBottom}><span>Бонусы · Скидки · Сертификаты</span><button type="button" className={ui.textLink} onClick={() => setCallbackOpen(true)}>Узнать о подключении <ArrowRight /></button></div>
+        </SectionReveal>
+        <SectionReveal id="foxcontrol" className={`${styles.productCard} ${styles.controlCard}`} distance={24}>
+          <div className={styles.cardTop}><span className={styles.wordmark}>Fox Control</span><span className={ui.badge}>Контроль операций</span></div>
+          <div className={styles.controlBody}>
+            <div className={styles.controlCopy}>
+              <h3>Важные операции<br />под контролем</h3>
+              <p>Удаления, скидки и переносы — с сотрудником, временем и суммой. Fox Control помогает увидеть, что происходит на кассе, и разобраться в деталях.</p>
+              <ul className={styles.controlFeatures}>
+                <li>Уведомления в Telegram по вашим правилам</li>
+                <li>Отчёты по итогам смены</li>
+                <li>Для одного ресторана и целой сети</li>
+              </ul>
+            </div>
+            <ControlPreview />
+          </div>
+          <div className={`${styles.cardBottom} ${styles.controlBottom}`}><span>Работает с r_keeper и iiko</span><a href="https://foxcontrol.ru/" target="_blank" rel="noopener noreferrer" className={ui.textLink} aria-label="На сайт Fox Control, откроется в новой вкладке">На сайт Fox Control <ArrowRight diagonal /></a></div>
         </SectionReveal>
       </div>
       <div className={styles.space}>

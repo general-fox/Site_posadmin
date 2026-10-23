@@ -9,4 +9,5 @@ export const HOME_NAVIGATION = [
 export const PRODUCT_NAVIGATION = [
   { href: "/#rezebra", label: "ReZebra", description: "Бронирование столов" },
   { href: "/#flexbonusb", label: "FlexBonusb", description: "Лояльность гостей" },
+  { href: "/#foxcontrol", label: "Fox Control", description: "Контроль операций" },
 ] as const;

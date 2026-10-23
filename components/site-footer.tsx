@@ -6,7 +6,7 @@ import styles from "./site-footer.module.css";
 import { ArrowRight } from "./marketing-ui";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { HeroDust } from "./hero-dust";
-import { HOME_NAVIGATION } from "@/lib/site-navigation";
+import { HOME_NAVIGATION, PRODUCT_NAVIGATION } from "@/lib/site-navigation";
 
 export function SiteFooter() {
   return (
@@ -30,8 +30,7 @@ export function SiteFooter() {
         <nav className={styles.column} aria-label="Продукты Posadmin">
           <h2>Наши продукты</h2>
           <ul>
-            <li><Link href="/#rezebra">ReZebra</Link><p className={styles.productNote}>Бронирование столов</p></li>
-            <li><Link href="/#flexbonusb">FlexBonusb</Link><p className={styles.productNote}>Лояльность гостей</p></li>
+            {PRODUCT_NAVIGATION.map((product) => <li key={product.href}><Link href={product.href}>{product.label}</Link><p className={styles.productNote}>{product.description}</p></li>)}
           </ul>
         </nav>
         <div className={`${styles.column} ${styles.contact}`}>
