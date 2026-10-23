@@ -42,7 +42,7 @@ export default function ContactsPage() {
       <section className={styles.contactNote} aria-labelledby="onsite-geography">
         <h2 id="onsite-geography">Где доступно выездное сопровождение</h2>
         <p>{ONSITE_SUPPORT_LOCATIONS.map(({ name }) => name).join(", ")}.</p>
-        <Link className={styles.textLink} href="/services/vyezdnoe-soprovozhdenie">Состав и условия выездного модуля <ServiceArrow /></Link>
+        <Link className={styles.textLink} href="/#pricing">Тарифы и выездное сопровождение <ServiceArrow /></Link>
       </section>
     </div>
   </ServicePageFrame>;

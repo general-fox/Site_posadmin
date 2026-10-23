@@ -6,9 +6,10 @@ import { CitySelect } from "./city-select";
 import { MobileCalculationBar } from "./mobile-calculation-bar";
 import { ArrowRight, SectionReveal, useScrollReveal } from "./marketing-ui";
 import { SectionAtmosphere } from "./section-atmosphere";
+import { useDisclosureCentering } from "./use-disclosure-centering";
 import { calculateRkeeperPricing, getRkeeperModulePrice, RKEEPER_PRODUCT_ID, RKEEPER_TARIFF, type RkeeperAdditionalModuleId } from "@/lib/rkeeper-pricing";
 import { calculateItAdministrationPricing, getItAdministrationModulePrice, IT_ADMINISTRATION_MODULE_ID, IT_ADMINISTRATION_PRODUCT_ID, IT_ADMINISTRATION_TARIFF } from "@/lib/it-administration-pricing";
-import { isOnsiteSupportAvailable, type OnsiteSupportLocation } from "@/lib/onsite-support";
+import { isOnsiteSupportAvailable, ONSITE_SUPPORT_BY_REQUEST_MESSAGE, type OnsiteSupportLocation } from "@/lib/onsite-support";
 import type { CalculationSelection } from "@/lib/calculation-request";
 import { usePricing } from "./pricing-provider";
 import { IS_REVIEW_DEMO } from "@/lib/demo-mode";
@@ -101,7 +102,8 @@ function WorkplaceCount({ value, onChange, disabled, service }: { value: number;
 
 function ModuleCard({ name, features, price, selected, required, onChange, disabled, unavailable = false, unavailableLabel, descriptionId, children }: { name: string; features: readonly string[]; price: number; selected: boolean; required?: boolean; onChange?: () => void; disabled: boolean; unavailable?: boolean; unavailableLabel?: string; descriptionId?: string; children?: ReactNode }) {
   const revealRef = useScrollReveal<HTMLElement>({ distance: 12 });
-  return <article ref={revealRef} data-scroll-reveal="" className={`${styles.module} ${selected ? styles.selected : ""}`}>
+  const disclosureCentering = useDisclosureCentering();
+  return <article ref={revealRef} data-scroll-reveal="" data-disclosure-panel="" className={`${styles.module} ${selected ? styles.selected : ""}`}>
     <div className={styles.moduleTop}>
       <span className={styles.moduleIcon} aria-hidden="true">{required ? "↗" : <svg width="16" height="16" viewBox="0 0 16 16" fill="none" focusable="false"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>}</span>
       <div className={styles.moduleTitle}><h4>{name}</h4><p>{money(price)} ₽ <span>/ месяц</span></p></div>
@@ -109,7 +111,7 @@ function ModuleCard({ name, features, price, selected, required, onChange, disab
     </div>
     {children}
     <p className={styles.moduleHint}>{features.slice(0, 2).join(" · ")}</p>
-    <details className={styles.details}><summary>Что входит <span aria-hidden="true">+</span></summary><ul>{features.map((feature) => <li key={feature}><span aria-hidden="true">✓</span>{feature}</li>)}</ul></details>
+    <details {...disclosureCentering} className={styles.details}><summary>Что входит <span aria-hidden="true">+</span></summary><ul>{features.map((feature) => <li key={feature}><span aria-hidden="true">✓</span>{feature}</li>)}</ul></details>
   </article>;
 }
 
@@ -182,8 +184,8 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
     <div className={ui.shell}>
       <div className={ui.sectionHeader}>
         <SectionReveal distance={22}>
-          <p className={ui.eyebrow}>{service === "rkeeper" ? "Прайс · r_keeper" : "Прайс · IT-сопровождение"}</p>
-          <h2 className={`${ui.heading} ${service === "it" ? styles.itHeading : ""}`} id={titleId}>{service === "rkeeper" ? <>Ваша команда<br /><span className={ui.muted}>Ваш набор услуг</span></> : <>IT-администрирование<br /><span className={ui.muted}>Для вашей команды</span></>}</h2>
+          <p className={ui.eyebrow}>{service === "rkeeper" ? "Тарифы · r_keeper" : "Тарифы · IT-сопровождение"}</p>
+          <h2 className={`${ui.heading} ${service === "it" ? styles.itHeading : ""}`} id={titleId}>{service === "rkeeper" ? <>Сопровождение r_keeper<br /><span className={ui.muted}>Под ваши задачи</span></> : <>IT-администрирование<br /><span className={ui.muted}>Для вашей команды</span></>}</h2>
         </SectionReveal>
         <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>{service === "rkeeper" ? "Сопровождение r_keeper для вашего ресторана. Укажите количество касс и станций официантов, добавьте нужные модули и сохраните расчёт в PDF." : "Поддержка компьютеров сотрудников, сетей и IT-инфраструктуры. Укажите количество рабочих мест, добавьте сопровождение и сохраните расчёт в PDF."}</p></SectionReveal>
       </div>
@@ -208,7 +210,7 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
                     onChange={() => toggleModule(module.id)}
                     disabled={loading}
                     unavailable={onsite && !onsiteAvailable}
-                    unavailableLabel={onsite && location === "other" ? "Недоступно" : undefined}
+                    unavailableLabel={onsite && location === "other" ? "По запросу" : undefined}
                     descriptionId={onsite ? locationHintId : undefined}
                   >
                     {onsite && <div className={styles.locationField}>
@@ -216,7 +218,7 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
                       <CitySelect id={locationId} descriptionId={locationHintId} value={location} disabled={loading} onChange={changeLocation} />
                       <p id={locationHintId} className={styles.locationHint} data-available={onsiteAvailable} data-prompt={!location} role="status" aria-atomic="true">
                         {!location && <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12.5 6.5c0 3-4.5 7-4.5 7s-4.5-4-4.5-7a4.5 4.5 0 0 1 9 0Z" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="6.5" r="1.5" stroke="currentColor" strokeWidth="1.3" /></svg>}
-                        <span>{!location ? "Выберите город, чтобы добавить выезд." : onsiteAvailable ? modules.includes(module.id) ? "Выездное сопровождение добавлено." : "Выезд доступен — можно добавить в расчёт." : onsiteRemoved ? "Здесь выезд недоступен — услуга убрана из расчёта." : "Здесь выезд недоступен. Удалённая поддержка доступна."}</span>
+                        <span>{!location ? "Выберите город, чтобы добавить выезд." : onsiteAvailable ? modules.includes(module.id) ? "Выездное сопровождение добавлено." : "Выезд доступен — можно добавить в расчёт." : <>{ONSITE_SUPPORT_BY_REQUEST_MESSAGE}{onsiteRemoved && " Выездной модуль убран из онлайн-расчёта."}</>}</span>
                       </p>
                     </div>}
                   </ModuleCard>;
@@ -233,7 +235,7 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
             <p className={styles.feedback} role="status">{status === "demo" ? "В демоверсии можно проверить расчёт. Скачивание PDF будет доступно после запуска сайта на хостинге." : status === "changed" ? "Цены обновились. Проверьте новый расчёт и скачайте PDF ещё раз." : status === "success" ? "Расчёт готов. Файл отправлен на скачивание." : status === "error" ? "Не удалось создать PDF. Попробуйте ещё раз." : "Состав работ и условия уточним перед подключением."}</p>
           </aside>
         </div>
-        {service === "it" && <SectionReveal className={styles.help} distance={20}><div><span aria-hidden="true">↗</span><p>Не знаете, что выбрать?<br /><span>Расскажите о задаче — поможем собрать нужный набор услуг.</span></p></div><button type="button" className={ui.textLink} onClick={() => setCallbackOpen(true)}>Помогите с выбором <ArrowRight /></button></SectionReveal>}
+        {service === "it" && <SectionReveal className={styles.help} distance={20}><div><span aria-hidden="true">↗</span><p>Не знаете, что выбрать?<br /><span>Расскажите о задаче — поможем подобрать состав сопровождения.</span></p></div><button type="button" className={ui.textLink} onClick={() => setCallbackOpen(true)}>Помогите с выбором <ArrowRight /></button></SectionReveal>}
       </div>
     </div>
     <MobileCalculationBar configurationRef={configurationRef} summaryRef={summaryRevealRef} summaryId={summaryId} productName={service === "rkeeper" ? "r_keeper" : "IT-сопровождение"} total={total} hasSelection={selected.length > 0} dialogOpen={callbackOpen} />

@@ -4,7 +4,7 @@ import { SITE_CONTACTS } from "@/lib/site-contacts";
 export const SITE_URL = "https://posadmin.ru";
 export const SITE_NAME = "Posadmin";
 export const SITE_DESCRIPTION =
-  "Автоматизация ресторанов, кафе и баров: внедрение и сопровождение r_keeper, IT-администрирование и техническая поддержка. Вся команда в одном чате.";
+  "Запуск и автоматизация ресторанов, кафе и других предприятий HoReCa с нуля. r_keeper, оборудование, сеть и интеграции. Сопровождение по тарифам и расчёт запуска с менеджером.";
 
 const socialImage = {
   url: `${SITE_URL}/opengraph-image`,
@@ -98,26 +98,5 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
       name: item.name,
       item: new URL(item.path, SITE_URL).toString(),
     })),
-  };
-}
-
-export function serviceJsonLd({
-  slug,
-  title,
-  description,
-}: {
-  slug: string;
-  title: string;
-  description: string;
-}) {
-  const url = `${SITE_URL}/services/${slug}`;
-  return {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    "@id": `${url}#service`,
-    name: title,
-    description,
-    url,
-    provider: { "@id": `${SITE_URL}/#organization` },
   };
 }

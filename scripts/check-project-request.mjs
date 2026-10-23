@@ -48,8 +48,9 @@ function load(relativePath) {
 
 const {
   PROJECT_TASK_MAX_LENGTH, PROJECT_CONTACT_MAX_LENGTH,
-  validateProjectRequest, normalizeProjectPhone, normalizeTelegramContact, buildProjectRequestMessage,
+  validateProjectRequest, normalizeProjectPhone, normalizeTelegramContact, normalizeProjectChatContact, buildProjectRequestMessage,
 } = load("lib/project-request.ts");
+const { LAUNCH_CONCEPTS, getLaunchScope, buildLaunchBrief } = load("lib/launch-concepts.ts");
 const { POST } = load("app/api/project-request/route.ts");
 const validRequest = { projectStage: "new", contactMethod: "phone", contact: "+7 (999) 123-45-67", personalDataConsent: true };
 let requestNumber = 0;
@@ -108,6 +109,43 @@ test("Telegram usernames and profile links normalize; invite links and foreign h
     assert.equal(normalizeTelegramContact(contact), null);
     rejectsField({ ...validRequest, contactMethod: "telegram", contact }, "contact");
   }
+});
+
+test("a preferred chat is carried to the manager and cannot contain control characters", () => {
+  const contact = "MAX: +7 999 123-45-67";
+  assert.equal(normalizeProjectChatContact(`  ${contact}  `), contact);
+  const data = dataFrom({ ...validRequest, contactMethod: "chat", contact });
+  assert.equal(data.contactMethod, "chat");
+  assert.match(buildProjectRequestMessage(data, "CHAT-TEST"), /Удобный чат — MAX: \+7 999 123-45-67/);
+  for (const invalid of ["", "abcd", "чат\n@user", "x".repeat(PROJECT_CONTACT_MAX_LENGTH + 1)]) {
+    rejectsField({ ...validRequest, contactMethod: "chat", contact: invalid }, "contact");
+  }
+  const escaped = dataFrom({ ...validRequest, contactMethod: "chat", contact: "чат: <test&name>" });
+  assert.match(buildProjectRequestMessage(escaped, "CHAT-TEST"), /чат: &lt;test&amp;name&gt;/);
+});
+
+test("every launch concept produces a complete brief that fits the existing request contract", () => {
+  assert.equal(new Set(LAUNCH_CONCEPTS.map(({ id }) => id)).size, LAUNCH_CONCEPTS.length);
+  for (const concept of LAUNCH_CONCEPTS) {
+    assert.equal(getLaunchScope(concept).length, 6);
+    const brief = buildLaunchBrief(concept);
+    assert.ok(brief.includes(concept.label));
+    assert.ok(brief.length < PROJECT_TASK_MAX_LENGTH - 600, "space remains for client notes");
+    const data = dataFrom({ ...validRequest, task: `${brief}\n\nОткрытие в ноябре.` });
+    const message = buildProjectRequestMessage(data, "LAUNCH-TEST");
+    assert.ok(message.includes(concept.label));
+    assert.ok(message.includes("Пусконаладка") || message.includes("пусконаладка"));
+    assert.ok(message.includes("Открытие в ноябре."));
+  }
+});
+
+test("launch requests with a preferred chat reach only the offline delivery stub", async () => {
+  const task = buildLaunchBrief(LAUNCH_CONCEPTS[1]);
+  const response = await post({ ...validRequest, contactMethod: "chat", contact: "MAX: +7 999 123-45-67", task });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).ok, true);
+  assert.match(deliveries.at(-1), /Кафе \/ кофейня/);
+  assert.match(deliveries.at(-1), /Удобный чат/);
 });
 
 test("malformed payloads, missing stage or method, and non-explicit consent fail", () => {

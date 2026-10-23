@@ -15,6 +15,7 @@ import styles from "./callback-dialog.module.css";
 import { getCalculationSummary, type CalculationSelection } from "@/lib/calculation-request";
 import { usePricing } from "./pricing-provider";
 import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
+import type { CallbackSpecialist } from "@/lib/callback-specialist";
 import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
 import {
   CALLBACK_HOURS_LABEL,
@@ -29,6 +30,7 @@ type CallbackDialogProps = {
   onClose: () => void;
   open: boolean;
   calculation?: CalculationSelection;
+  chooseSpecialist?: boolean;
 };
 
 function formatRussianPhone(value: string) {
@@ -65,10 +67,11 @@ function formatRussianPhone(value: string) {
   return formatted;
 }
 
-export function CallbackDialog({ onClose, open, calculation }: CallbackDialogProps) {
+export function CallbackDialog({ onClose, open, calculation, chooseSpecialist = false }: CallbackDialogProps) {
   const { snapshot, updateSnapshot } = usePricing();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const submittingRef = useRef(false);
   const titleId = useId();
   const descriptionId = useId();
@@ -84,6 +87,7 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
   const [submitError, setSubmitError] = useState("");
   const [contactSoon, setContactSoon] = useState(true);
   const [phone, setPhone] = useState("+7 ");
+  const [specialist, setSpecialist] = useState<CallbackSpecialist | "">(chooseSpecialist ? "" : "manager");
   const summary = calculation ? getCalculationSummary(calculation, snapshot.config) : null;
   const dateError = !contactSoon && scheduleNow ? getCallbackDateError(selectedDate, scheduleNow) : null;
   const availableTimes = scheduleNow ? getCallbackSlots(selectedDate, scheduleNow) : [];
@@ -103,18 +107,20 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
       setSubmitError("");
       setContactSoon(true);
       setPhone("+7 ");
+      setSpecialist(chooseSpecialist ? "" : "manager");
       setScheduleNow(now);
       setSelectedDate(nextSlot.date);
       setSelectedTime(nextSlot.time);
       dialog.showModal();
       const frame = window.requestAnimationFrame(() => {
-        phoneInputRef.current?.focus();
+        if (chooseSpecialist) titleRef.current?.focus({ preventScroll: true });
+        else phoneInputRef.current?.focus({ preventScroll: true });
       });
       return () => window.cancelAnimationFrame(frame);
     }
 
     if (!open && dialog.open) dialog.close();
-  }, [open]);
+  }, [open, chooseSpecialist]);
 
   useEffect(() => {
     if (!open) return;
@@ -137,6 +143,10 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
     event.preventDefault();
     if (IS_REVIEW_DEMO) { setSubmitError(DEMO_FORM_NOTICE); return; }
     if (submittingRef.current) return;
+    if (!specialist) {
+      setSubmitError("Выберите, с кем хотите поговорить.");
+      return;
+    }
     if (calculation !== undefined && !summary) {
       setSubmitError("Не удалось проверить расчёт. Закройте форму и выберите услуги заново.");
       return;
@@ -165,6 +175,7 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
     try {
       const response = await fetch("/api/callback", {
         body: JSON.stringify({
+          specialist,
           contactSoon,
           date,
           personalDataConsent:
@@ -257,7 +268,9 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
               <p className={ui.eyebrow}>Спасибо за обращение</p>
               <h2 className={styles.title} id={titleId}>Заявка принята</h2>
               <p className={styles.description} id={descriptionId}>
-                {contactSoon
+                {specialist === "technical"
+                  ? "Заявка на звонок технического специалиста принята. Мы свяжемся с вами по указанному номеру."
+                  : contactSoon
                   ? "Менеджер свяжется с вами в ближайшее рабочее время: по будням с 10:00 до 19:00 МСК."
                   : `Передали менеджеру удобное время звонка: ${new Date(`${selectedDate}T12:00:00+03:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: "Europe/Moscow" })}, ${selectedTime} МСК.`}
                 {summary ? " Ваш расчёт приложен к заявке." : ""}
@@ -281,13 +294,32 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
                   type="text"
                 />
               </label>
-              <p className={`${ui.eyebrow} ${styles.eyebrow}`}>Связь с менеджером</p>
-              <h2 className={styles.title} id={titleId}>
-                {summary ? "Обсудим ваш расчёт" : "Когда вам удобно поговорить?"}
+              <p className={`${ui.eyebrow} ${styles.eyebrow}`}>{chooseSpecialist ? "Обратный звонок" : "Связь с менеджером"}</p>
+              <h2 className={styles.title} id={titleId} ref={titleRef} tabIndex={-1}>
+                {chooseSpecialist ? "Кто вам нужен?" : summary ? "Обсудим ваш расчёт" : "Когда вам удобно поговорить?"}
               </h2>
               <p className={styles.description} id={descriptionId}>
-                {IS_REVIEW_DEMO ? "Демонстрация формы: данные не отправляются. Для проверки можно использовать вымышленный номер." : summary ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
+                {IS_REVIEW_DEMO ? "Демонстрация формы: данные не отправляются. Для проверки можно использовать вымышленный номер." : chooseSpecialist ? "Выберите специалиста и оставьте номер. Передадим запрос нужной команде." : summary ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
               </p>
+
+              {chooseSpecialist ? (
+                <fieldset className={styles.specialists} disabled={submitting}>
+                  <legend className={styles.label}>С кем хотите поговорить</legend>
+                  <div className={styles.specialistChoices}>
+                    <label className={`${styles.choice} ${styles.specialistChoice}`}>
+                      <input type="radio" name="specialist" value="manager" checked={specialist === "manager"} required onChange={() => { setSpecialist("manager"); setSubmitError(""); }} />
+                      <span><strong>Менеджер</strong><span>Проект, тарифы и подключение</span></span>
+                    </label>
+                    <label className={`${styles.choice} ${styles.specialistChoice}`}>
+                      <input type="radio" name="specialist" value="technical" checked={specialist === "technical"} required onChange={() => { setSpecialist("technical"); setSubmitError(""); }} />
+                      <span><strong>Технический специалист</strong><span>Кассы, r_keeper и IT-вопросы</span></span>
+                    </label>
+                  </div>
+                  <p className={styles.specialistHint} aria-live="polite">
+                    {specialist === "manager" ? "Менеджер перезвонит в рабочее время: по будням с 10:00 до 19:00 МСК." : specialist === "technical" ? "Передадим запрос технической команде. Специалист перезвонит по готовности." : "Заявку можно оставить в любое время."}
+                  </p>
+                </fieldset>
+              ) : null}
 
               {summary ? (
                 <section className={styles.calculation} aria-label="Выбранное сопровождение">
@@ -336,7 +368,7 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
                 </span>
               </label>
 
-              <fieldset className={styles.timing} disabled={submitting}>
+              {!chooseSpecialist ? <fieldset className={styles.timing} disabled={submitting}>
                 <legend className={styles.label}>Когда позвонить</legend>
                 <div className={styles.choices}>
                   <label className={styles.choice}>
@@ -363,7 +395,7 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
                 <p className={styles.scheduleHint} id={scheduleHintId}>
                   {CALLBACK_HOURS_LABEL}. {!contactSoon ? "Выберите удобное время звонка." : "Заявку можно оставить в любое время."}
                 </p>
-              </fieldset>
+              </fieldset> : null}
 
                 {!contactSoon ? (
                   <motion.div
@@ -444,7 +476,7 @@ export function CallbackDialog({ onClose, open, calculation }: CallbackDialogPro
                 aria-busy={submitting}
                 type="submit"
               >
-                {submitting ? "Отправляем…" : "Оставить заявку"}
+                {submitting ? "Отправляем…" : chooseSpecialist ? "Запросить звонок" : "Оставить заявку"}
                 {!submitting && <ArrowRight />}
               </button>
             </form>

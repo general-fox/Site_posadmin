@@ -397,7 +397,7 @@ function PricingEditor({ snapshot: initialSnapshot, initialHistory, preservedDra
           <dl className={styles.previewPrices}>{modules.map(({ id, tab }) => {
             return <div key={id} data-active={activeModule === id}><dt>{tab}</dt><dd>{previewCountValid ? previewPrice(id, count) : "—"}<span>/ мес.</span></dd></div>;
           })}</dl>
-          <small>Пакеты указаны отдельно. Выездное сопровождение доступно только в выбранных городах.</small>
+          <small>Пакеты указаны отдельно. В калькуляторе выездное сопровождение подключается для выбранных городов. Выезд в другие города обсуждается с менеджером отдельно.</small>
         </aside>
       </div>
       {invalidModules.filter(({ id }) => id !== activeModule).map(({ id, tab }) => <p className={styles.otherFormulaError} key={id}><span>Проверьте формулу в пакете «{tab}».</span><button type="button" className={styles.textButton} onClick={() => { setActiveModule(id); tabs.current[modules.findIndex((item) => item.id === id)]?.focus(); }}>Открыть пакет</button></p>)}

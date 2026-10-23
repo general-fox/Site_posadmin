@@ -17,6 +17,7 @@ import { getPricingSnapshot } from "@/lib/pricing-store";
 import {
   isOnsiteSupportAvailable,
   isOnsiteSupportLocation,
+  ONSITE_SUPPORT_BY_REQUEST_MESSAGE,
 } from "@/lib/onsite-support";
 
 export const runtime = "nodejs";
@@ -74,7 +75,7 @@ function parseRequest(body: RkeeperPdfRequest) {
     !isOnsiteSupportAvailable(location)
   ) {
     throw new CalculationPdfInputError(
-      "Выездное сопровождение доступно только в городах и регионах из списка",
+      ONSITE_SUPPORT_BY_REQUEST_MESSAGE,
     );
   }
 

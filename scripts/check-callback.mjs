@@ -12,6 +12,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const deliveries = [];
 const cache = new Map();
+const diagnosticLogs = [];
+const defaultTelegramEnv = { TELEGRAM_BOT_TOKEN: "offline-test-token", TELEGRAM_ADMIN_CHAT_ID: "offline-test-chat" };
+let telegramEnv = { ...defaultTelegramEnv };
+let credentialFixture;
+let credentialReadAttempts = 0;
 let deliveryFails = false;
 let pricingRevision = 0;
 function load(relativePath) {
@@ -26,18 +31,25 @@ function load(relativePath) {
     if (id === "@/lib/pricing-store") return { getPricingSnapshot: () => ({ config: load("lib/pricing-config.ts").DEFAULT_PRICING, revision: pricingRevision, updatedAt: null }) };
     if (id.startsWith("@/")) return load(`${id.slice(2)}.ts`);
     if (id === "next/server") return { NextResponse: { json: (body, init) => Response.json(body, init) } };
-    if (id === "node:fs") return { readFileSync() { throw new Error("Credential files are inaccessible in tests."); } };
+    if (id === "node:fs") return { readFileSync() {
+      credentialReadAttempts += 1;
+      if (credentialFixture !== undefined) return credentialFixture;
+      throw new Error("Real credential files are inaccessible in tests.");
+    } };
     return require(id);
   };
   const fakeFetch = async (_url, init) => {
+    if (deliveryFails === "network") throw new Error("secret-token-url-and-private-phone");
+    if (deliveryFails === "invalid-json") return new Response("not json", { status: 200 });
+    if (deliveryFails === "rejected") return Response.json({ ok: false, description: "private Telegram response" });
     if (deliveryFails) return Response.json({ description: "Test failure" }, { status: 503 });
     deliveries.push(JSON.parse(init.body));
     return Response.json({ ok: true });
   };
   new Function("require", "module", "exports", "process", "fetch", "console", code)(
     resolve, module, module.exports,
-    { env: { TELEGRAM_BOT_TOKEN: "offline-test-token", TELEGRAM_ADMIN_CHAT_ID: "offline-test-chat" }, cwd: () => root },
-    fakeFetch, { error() {} },
+    { get env() { return telegramEnv; }, cwd: () => root },
+    fakeFetch, { error(...values) { diagnosticLogs.push(values.join(" ")); } },
   );
   return module.exports;
 }
@@ -45,6 +57,7 @@ function load(relativePath) {
 const { getCalculationSummary } = load("lib/calculation-request.ts");
 const { getCallbackSlots, getMoscowDateTime, getNextCallbackSlot, validateCallbackSchedule } = load("lib/callback-schedule.ts");
 const { POST } = load("app/api/callback/route.ts");
+const { getTelegramLeadConfig } = load("lib/telegram-leads.ts");
 const selection = { product: "r_keeper", workplaceCount: 3, selectedAdditionalModules: ["onsite-hardware-support"], location: "moscow" };
 const validRequest = { phone: "+7 (999) 123-45-67", contactSoon: true, personalDataConsent: true, website: "" };
 let requestNumber = 0;
@@ -101,11 +114,102 @@ test("callback route attaches recalculated context and accepts generic callbacks
   assert.match(message, /12\s000 ₽\/мес\./);
   assert.match(message, /МСК/);
   assert.match(message, /\+79991234567/);
+  assert.match(message, /Специалист:<\/b> менеджер/);
   assert.equal((await post(validRequest)).status, 200);
   assert.doesNotMatch(deliveries.at(-1).text, /<b>Расчёт:/);
   const slot = getNextCallbackSlot();
   assert.equal((await post({ ...validRequest, contactSoon: false, ...slot })).status, 200);
   assert.match(deliveries.at(-1).text, new RegExp(`${slot.time} МСК`));
+});
+
+test("legacy routing clearly labels both specialists without adding a topic", async () => {
+  const readsBefore = credentialReadAttempts;
+  for (const specialist of [undefined, "manager", "technical"]) {
+    assert.equal((await post({ ...validRequest, specialist, date: "", time: "" })).status, 200);
+    const delivery = deliveries.at(-1);
+    assert.equal(delivery.chat_id, "offline-test-chat");
+    assert.equal(Object.hasOwn(delivery, "message_thread_id"), false);
+    assert.equal(delivery.parse_mode, "HTML");
+    if (specialist === "technical") {
+      assert.match(delivery.text, /Специалист:<\/b> технический специалист \(r_keeper\)/);
+      assert.match(delivery.text, /Перезвонить по готовности специалиста/);
+      assert.doesNotMatch(delivery.text, /10:00|19:00|в течение|минут/);
+    } else {
+      assert.match(delivery.text, /Специалист:<\/b> менеджер/);
+      assert.match(delivery.text, /10:00–19:00 МСК/);
+    }
+  }
+  assert.equal(credentialReadAttempts, readsBefore);
+});
+
+test("service-chat callbacks select only their own topic and leave project config unchanged", async () => {
+  telegramEnv = { ...defaultTelegramEnv, TELEGRAM_SERVICE_CHAT_ID: "-100000000001", TELEGRAM_MANAGER_TOPIC_ID: "101", TELEGRAM_RKEEPER_TOPIC_ID: "202" };
+  const readsBefore = credentialReadAttempts;
+  try {
+    for (const [specialist, expectedThread] of [[undefined, 101], ["manager", 101], ["technical", 202]]) {
+      assert.equal((await post({ ...validRequest, specialist })).status, 200);
+      assert.equal(deliveries.at(-1).chat_id, "-100000000001");
+      assert.equal(deliveries.at(-1).message_thread_id, expectedThread);
+    }
+    assert.deepEqual(getTelegramLeadConfig(), { token: "offline-test-token", chatId: "offline-test-chat" });
+    assert.equal(credentialReadAttempts, readsBefore);
+    delete telegramEnv.TELEGRAM_RKEEPER_TOPIC_ID;
+    assert.equal((await post({ ...validRequest, specialist: "manager" })).status, 200);
+    telegramEnv.TELEGRAM_RKEEPER_TOPIC_ID = "202";
+    delete telegramEnv.TELEGRAM_MANAGER_TOPIC_ID;
+    assert.equal((await post({ ...validRequest, specialist: "technical" })).status, 200);
+  } finally { telegramEnv = { ...defaultTelegramEnv }; }
+});
+
+test("invalid specialist values fail without sending or falling back to manager", async () => {
+  const before = deliveries.length;
+  for (const specialist of [null, "", "Manager", "operator", 1, true, [], {}]) {
+    assert.equal((await post({ ...validRequest, specialist })).status, 400);
+  }
+  assert.equal(deliveries.length, before);
+});
+
+test("missing or invalid selected topics fail closed even with another topic and legacy chat", async () => {
+  const before = deliveries.length;
+  try {
+    for (const specialist of ["manager", "technical"]) {
+      for (const invalidTopic of [undefined, "", " ", "0", "-1", "1.5", "abc", "1e3", "Infinity", "9007199254740992"]) {
+        telegramEnv = { ...defaultTelegramEnv, TELEGRAM_SERVICE_CHAT_ID: "-100000000001", TELEGRAM_MANAGER_TOPIC_ID: "101", TELEGRAM_RKEEPER_TOPIC_ID: "202" };
+        telegramEnv[specialist === "manager" ? "TELEGRAM_MANAGER_TOPIC_ID" : "TELEGRAM_RKEEPER_TOPIC_ID"] = invalidTopic;
+        assert.equal((await post({ ...validRequest, specialist })).status, 503);
+      }
+    }
+    telegramEnv = { ...defaultTelegramEnv, TELEGRAM_SERVICE_CHAT_ID: "   ", TELEGRAM_MANAGER_TOPIC_ID: "101" };
+    assert.equal((await post(validRequest)).status, 503);
+    assert.equal(deliveries.length, before);
+  } finally { telegramEnv = { ...defaultTelegramEnv }; }
+});
+
+test("legacy env aliases and an in-memory bot-env fixture preserve compatibility", async () => {
+  try {
+    telegramEnv = { BOT_TOKEN: "alias-token", ADMIN_CHAT_ID: "alias-chat", TELEGRAM_SERVICE_CHAT_ID: "" };
+    assert.equal((await post({ ...validRequest, specialist: "technical" })).status, 200);
+    assert.equal(deliveries.at(-1).chat_id, "alias-chat");
+    telegramEnv = {};
+    credentialFixture = "# Offline fixture only\nBOT_TOKEN='fixture-token'\nADMIN_CHAT_ID=fixture-chat\n";
+    assert.equal((await post(validRequest)).status, 200);
+    assert.equal(deliveries.at(-1).chat_id, "fixture-chat");
+    telegramEnv = { TELEGRAM_SERVICE_CHAT_ID: "-100000000001", TELEGRAM_RKEEPER_TOPIC_ID: "202" };
+    assert.equal((await post({ ...validRequest, specialist: "technical" })).status, 200);
+    assert.equal(deliveries.at(-1).chat_id, "-100000000001");
+    assert.equal(deliveries.at(-1).message_thread_id, 202);
+  } finally { telegramEnv = { ...defaultTelegramEnv }; credentialFixture = undefined; }
+});
+
+test("missing credentials never produce a delivery", async () => {
+  const before = deliveries.length;
+  try {
+    for (const missingConfig of [{}, { TELEGRAM_BOT_TOKEN: "offline-test-token" }, { TELEGRAM_ADMIN_CHAT_ID: "offline-test-chat" }, { TELEGRAM_SERVICE_CHAT_ID: "-100000000001", TELEGRAM_MANAGER_TOPIC_ID: "101" }]) {
+      telegramEnv = missingConfig;
+      assert.equal((await post(validRequest)).status, 503);
+    }
+    assert.equal(deliveries.length, before);
+  } finally { telegramEnv = { ...defaultTelegramEnv }; }
 });
 
 test("malformed input and tampered selections never reach delivery", async () => {
@@ -115,9 +219,13 @@ test("malformed input and tampered selections never reach delivery", async () =>
 });
 
 test("delivery failure returns a retryable error rather than a false success", async () => {
-  deliveryFails = true;
-  const response = await post(validRequest);
-  deliveryFails = false;
-  assert.equal(response.status, 502);
-  assert.match((await response.json()).error, /Не удалось отправить/);
+  try {
+    for (const failure of [true, "network", "invalid-json", "rejected"]) {
+      deliveryFails = failure;
+      const response = await post({ ...validRequest, specialist: "technical" });
+      assert.equal(response.status, 502);
+      assert.match((await response.json()).error, /Не удалось отправить/);
+    }
+    assert.doesNotMatch(diagnosticLogs.join("\n"), /secret-token|private|offline-test-token|79991234567/);
+  } finally { deliveryFails = false; }
 });

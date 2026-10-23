@@ -1,10 +1,10 @@
 import { randomInt } from "node:crypto";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { getCalculationSummary } from "@/lib/calculation-request";
 import { validateCallbackSchedule } from "@/lib/callback-schedule";
+import { parseCallbackSpecialist } from "@/lib/callback-specialist";
 import { getPricingSnapshot } from "@/lib/pricing-store";
+import { deliverTelegramLead, getTelegramCallbackConfig } from "@/lib/telegram-leads";
 
 export const runtime = "nodejs";
 
@@ -21,6 +21,7 @@ type CallbackRequest = {
   website?: unknown;
   calculation?: unknown;
   pricingRevision?: unknown;
+  specialist?: unknown;
 };
 
 function escapeHtml(value: string) {
@@ -28,44 +29,6 @@ function escapeHtml(value: string) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
-}
-
-function parseEnvFile(path: string) {
-  try {
-    return Object.fromEntries(
-      readFileSync(path, "utf8")
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith("#"))
-        .map((line) => {
-          const separator = line.indexOf("=");
-          if (separator < 1) return ["", ""];
-          const key = line.slice(0, separator).trim();
-          const value = line
-            .slice(separator + 1)
-            .trim()
-            .replace(/^['"]|['"]$/g, "");
-          return [key, value];
-        })
-        .filter(([key]) => key),
-    );
-  } catch {
-    return {};
-  }
-}
-
-function getTelegramConfig() {
-  let token = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN;
-  let chatId =
-    process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.ADMIN_CHAT_ID;
-
-  if (!token || !chatId) {
-    const localBotEnv = parseEnvFile(join(process.cwd(), "bot", ".env"));
-    token ||= localBotEnv.BOT_TOKEN;
-    chatId ||= localBotEnv.ADMIN_CHAT_ID;
-  }
-
-  return { chatId, token };
 }
 
 function normalizeRussianPhone(value: string) {
@@ -125,6 +88,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  const specialist = parseCallbackSpecialist(body.specialist);
+  if (!specialist) {
+    return NextResponse.json(
+      { error: "Выберите менеджера или технического специалиста." },
+      { status: 400 },
+    );
+  }
+
   const phone =
     typeof body.phone === "string"
       ? normalizeRussianPhone(body.phone)
@@ -177,8 +148,8 @@ export async function POST(request: Request) {
     }
   }
 
-  const { chatId, token } = getTelegramConfig();
-  if (!token || !chatId) {
+  const telegramConfig = getTelegramCallbackConfig(specialist);
+  if (!telegramConfig?.token || !telegramConfig.chatId) {
     console.error("Telegram callback configuration is missing.");
     return NextResponse.json(
       { error: "Сервис временно недоступен. Попробуйте позже." },
@@ -191,7 +162,9 @@ export async function POST(request: Request) {
     100,
   )}`;
   const preferredTime = contactSoon
-    ? "В ближайшее рабочее время: будни, 10:00–19:00 МСК"
+    ? specialist === "technical"
+      ? "Перезвонить по готовности специалиста"
+      : "В ближайшее рабочее время: будни, 10:00–19:00 МСК"
     : `${date}, ${time} МСК`;
   const calculationText = calculation
     ? `\n\n<b>Расчёт: ${escapeHtml(calculation.productName)}</b>\n` +
@@ -202,38 +175,16 @@ export async function POST(request: Request) {
     : "";
   const message =
     `🌐 <b>Новая заявка с сайта #${requestId}</b>\n\n` +
+    `<b>Специалист:</b> ${specialist === "technical" ? "технический специалист (r_keeper)" : "менеджер"}\n` +
     `<b>Телефон:</b> ${escapeHtml(phone)}\n` +
     `<b>Когда связаться:</b> ${escapeHtml(preferredTime)}\n` +
     "<b>Источник:</b> форма обратного звонка на posadmin.ru" + calculationText;
 
   try {
-    const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${token}/sendMessage`,
-      {
-        body: JSON.stringify({
-          chat_id: chatId,
-          disable_web_page_preview: true,
-          parse_mode: "HTML",
-          text: message,
-        }),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-        signal: AbortSignal.timeout(10_000),
-      },
-    );
-
-    const result = (await telegramResponse.json().catch(() => null)) as
-      | { description?: string; ok?: boolean }
-      | null;
-    if (!telegramResponse.ok || !result?.ok) {
-      console.error(
-        "Telegram callback delivery failed:",
-        result?.description || telegramResponse.status,
-      );
-      throw new Error("Telegram delivery failed");
-    }
-  } catch (error) {
-    console.error("Callback request delivery failed:", error);
+    await deliverTelegramLead({ ...telegramConfig, token: telegramConfig.token, chatId: telegramConfig.chatId }, message);
+  } catch {
+    // Do not log exception details: fetch errors may contain the bot token URL.
+    console.error("Callback request delivery failed.");
     return NextResponse.json(
       { error: "Не удалось отправить заявку. Попробуйте ещё раз." },
       { status: 502 },

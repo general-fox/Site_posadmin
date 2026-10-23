@@ -3,7 +3,7 @@ export const PROJECT_TASK_MAX_LENGTH = 1600;
 export const PROJECT_CONTACT_MAX_LENGTH = 128;
 
 export type ProjectStage = "new" | "existing";
-export type ProjectContactMethod = "phone" | "telegram";
+export type ProjectContactMethod = "phone" | "telegram" | "chat";
 
 export type ProjectRequest = {
   projectStage: ProjectStage;
@@ -49,6 +49,14 @@ export function normalizeTelegramContact(value: string): string | null {
   return /^[a-z][a-z\d_]{4,31}$/i.test(username) ? `@${username}` : null;
 }
 
+/** The manager contacts the client manually; this is not an automated chat integration. */
+export function normalizeProjectChatContact(value: string): string | null {
+  const input = value.trim();
+  return input.length >= 5 && input.length <= PROJECT_CONTACT_MAX_LENGTH && !/[\u0000-\u001f\u007f]/.test(input)
+    ? input
+    : null;
+}
+
 export function validateProjectRequest(value: unknown): ProjectRequestValidation {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return { ok: false, error: "Некорректные данные заявки." };
@@ -75,21 +83,25 @@ export function validateProjectRequest(value: unknown): ProjectRequestValidation
     return { ok: false, error: `Описание должно содержать не больше ${PROJECT_TASK_MAX_LENGTH} символов.`, field: "task" };
   }
 
-  if (body.contactMethod !== "phone" && body.contactMethod !== "telegram") {
+  if (body.contactMethod !== "phone" && body.contactMethod !== "telegram" && body.contactMethod !== "chat") {
     return { ok: false, error: "Выберите удобный способ связи.", field: "contactMethod" };
   }
 
   const contact = typeof body.contact === "string"
     ? body.contactMethod === "phone"
       ? normalizeProjectPhone(body.contact)
-      : normalizeTelegramContact(body.contact)
+      : body.contactMethod === "telegram"
+        ? normalizeTelegramContact(body.contact)
+        : normalizeProjectChatContact(body.contact)
     : null;
   if (!contact) {
     return {
       ok: false,
       error: body.contactMethod === "phone"
         ? "Проверьте номер: российский номер должен содержать 10 или 11 цифр."
-        : "Укажите имя пользователя в Telegram, например @username, или ссылку t.me/username.",
+        : body.contactMethod === "telegram"
+          ? "Укажите имя пользователя в Telegram, например @username, или ссылку t.me/username."
+          : "Укажите мессенджер и ваш контакт: номер, имя пользователя или ссылку на профиль.",
       field: "contact",
     };
   }
@@ -117,7 +129,7 @@ function escapeHtml(value: string) {
 
 export function buildProjectRequestMessage(data: ProjectRequest, requestId: string) {
   const stage = data.projectStage === "new" ? "Новый проект / открытие" : "Действующее предприятие";
-  const contactLabel = data.contactMethod === "phone" ? "Телефон" : "Telegram";
+  const contactLabel = data.contactMethod === "phone" ? "Телефон" : data.contactMethod === "telegram" ? "Telegram" : "Удобный чат";
 
   return [
     `🌐 <b>Новая заявка с сайта #${escapeHtml(requestId)}</b>`,

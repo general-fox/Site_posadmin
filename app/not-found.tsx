@@ -7,9 +7,9 @@ export default function NotFound() {
     <div className={`${styles.shell} ${styles.intro}`}>
       <p className={styles.eyebrow}>404</p>
       <h1 className={styles.title}>Этой страницы нет</h1>
-      <p className={styles.lead}>Возможно, адрес изменился. Найдите нужное направление в услугах или вернитесь на главную.</p>
+      <p className={styles.lead}>Возможно, адрес изменился. Посмотрите, как мы запускаем заведения с нуля, или вернитесь на главную.</p>
       <div className={styles.actions}>
-        <Link className={styles.button} href="/services">Все услуги <ServiceArrow /></Link>
+        <Link className={styles.button} href="/#launch">Запуск с нуля <ServiceArrow /></Link>
         <Link className={styles.textLink} href="/">На главную</Link>
       </div>
     </div>

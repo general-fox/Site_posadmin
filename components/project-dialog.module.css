@@ -1,5 +1,5 @@
 .dialog { width: min(600px, calc(100vw - 32px)); pointer-events: auto; }
-.panel { padding: 36px; }
+.panel { padding: 28px; }
 .panel h2:focus { outline: none; }
 .progressLabel { display: flex; justify-content: space-between; gap: 12px; padding-right: 36px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
 .progressLabel > span:last-child { white-space: nowrap; color: var(--text-muted); }
@@ -24,6 +24,21 @@
 .summary { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 20px; margin-top: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); font-size: 13px; line-height: 1.5; }
 .summary > span { font-weight: 500; }
 .summary button { margin-left: auto; min-height: 44px; padding: 8px 0 8px 8px; color: var(--text-body); cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.estimatePreview { margin-top: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft); }
+.estimateHeader { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+.estimateHeader p { font-size: 12px; font-weight: 500; line-height: 1.5; }
+.estimateHeader div > span { display: block; margin-top: 4px; font-size: 11px; color: var(--text-body); line-height: 1.5; }
+.estimateHeader > strong { font-size: 21px; font-weight: 500; line-height: 1.3; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.estimateNotice { margin-top: 10px; font-size: 11px; color: var(--text-body); line-height: 1.6; }
+.estimateDetails { margin-top: 8px; border-top: 1px solid var(--border); }
+.estimateDetails summary { min-height: 44px; padding-block: 12px; font-size: 12px; font-weight: 500; line-height: 1.5; cursor: pointer; }
+.estimateDetails summary > span { margin-left: 8px; font-weight: 400; font-size: 11px; color: var(--text-body); }
+.estimateDetails ul { margin: 0; padding: 0; list-style: none; }
+.estimateDetails li { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: baseline; gap: 12px; padding-block: 10px; border-top: 1px solid var(--border); font-size: 12px; line-height: 1.5; }
+.estimateDetails li strong { display: block; font-weight: 400; }
+.estimateDetails li div > span { display: block; margin-top: 3px; color: var(--text-body); font-size: 11px; }
+.estimateDetails li > span { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.estimateDetails > p { margin-top: 8px; font-size: 11px; color: var(--text-body); line-height: 1.6; }
 .optional { margin-left: 5px; color: var(--text-body); font-size: 12px; font-weight: 400; }
 .taskDisclosure { margin-top: 16px; }
 .taskDisclosure summary { display: flex; min-height: 44px; align-items: center; gap: 8px; padding-block: 8px; color: var(--ink); cursor: pointer; font-size: 13px; line-height: 1.5; list-style: none; }
@@ -34,6 +49,7 @@
 .taskDisclosure summary:focus-visible { outline: 2px solid var(--action-focus); outline-offset: 3px; border-radius: 4px; }
 .taskDisclosure .taskField { margin-top: 8px; }
 .contactMethods { margin-top: 22px; padding: 0; border: 0; min-width: 0; }
+.contactChoices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .contactField { display: block; margin-top: 20px; }
 .actions { display: flex; gap: 12px; margin-top: 28px; }
 .next { flex: 1; justify-content: space-between; }
@@ -45,6 +61,8 @@
 .dialog textarea:focus, .dialog textarea:focus-visible { border: 2px solid var(--action-focus); padding: 12px 13px; outline: none; box-shadow: none; }
 .dialog [aria-invalid="true"] { border-color: var(--action-focus); }
 @media (max-width: 480px) {
+  .contactChoices { grid-template-columns: 1fr 1fr; }
+  .contactChoices > :last-child { grid-column: 1 / -1; }
   .panel { padding: 28px 22px 24px; }
   .stageOption { padding: 18px 16px; gap: 12px; }
   .stageOption strong { font-size: 16px; }

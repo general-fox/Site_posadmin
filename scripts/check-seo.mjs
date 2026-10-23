@@ -16,7 +16,8 @@ const sitemapResponse = await get("/sitemap.xml");
 assert.equal(sitemapResponse.status, 200, "sitemap status");
 const xml = await sitemapResponse.text();
 const urls = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(([, url]) => decode(url));
-assert.equal(urls.length, 11, "11 public canonical pages");
+assert.equal(urls.length, 3, "3 public canonical pages");
+assert.ok(urls.every((url) => !new URL(url).pathname.startsWith("/services")), "retired service catalogue excluded from sitemap");
 assert.equal(new Set(urls).size, urls.length, "no duplicate sitemap URLs");
 urls.forEach((url) => assert.equal(new URL(url).origin, canonicalOrigin));
 
@@ -53,10 +54,6 @@ const pages = await Promise.all(urls.map(async (url) => {
       assert.ok(html.includes(`id="${new URL(office.url).hash.slice(1)}"`), "office anchor exists");
     }
   }
-  if (path.startsWith("/services/")) {
-    assert.ok(entities.some((value) => value["@type"] === "Service" && value.url === url), `${path}: service schema`);
-    assert.equal([...html.matchAll(/<details(?:\s|>)/g)].length, 4, `${path}: mobile menu + three FAQ answers in HTML`);
-  }
   return { path, html, title, description };
 }));
 assert.equal(new Set(pages.map(({ title }) => title)).size, pages.length, "unique titles");
@@ -69,6 +66,7 @@ for (const page of pages) {
     if (!href || /^(tel:|mailto:)/.test(href)) continue;
     const target = new URL(href, new URL(page.path, canonicalOrigin));
     if (target.origin !== canonicalOrigin) continue;
+    assert.ok(!target.pathname.startsWith("/services"), `${page.path}: no retired service links ${href}`);
     const destination = byPath.get(target.pathname);
     assert.ok(destination, `${page.path}: internal link exists ${href}`);
     incoming.add(target.pathname);
@@ -88,8 +86,23 @@ for (const path of ["/missing-seo-check", "/services/missing-seo-check"]) {
   assert.equal(response.status, 404, `${path}: real 404`);
   assert.ok(tags(await response.text(), "meta").some((tag) => tag.name === "robots" && /noindex/.test(tag.content)), `${path}: noindex`);
 }
-const queryHtml = await (await get("/services?utm_source=seo-check")).text();
-assert.equal(tags(queryHtml, "link").find((tag) => tag.rel === "canonical")?.href, `${canonicalOrigin}/services`, "tracking query canonical");
+const legacyDestinations = {
+  "/services": "/#launch",
+  "/services/avtomatizaciya-restoranov": "/#launch",
+  "/services/soprovozhdenie-r-keeper": "/#pricing",
+  "/services/it-administrirovanie": "/#it-pricing",
+  "/services/obsluzhivanie-kkt": "/#launch",
+  "/services/egais-markirovka": "/#launch",
+  "/services/vyezdnoe-soprovozhdenie": "/#pricing",
+  "/services/integracii": "/#launch",
+};
+for (const [path, destination] of Object.entries(legacyDestinations)) {
+  const response = await get(path, { redirect: "manual" });
+  assert.equal(response.status, 308, `${path}: permanent legacy redirect`);
+  assert.equal(response.headers.get("location"), destination, `${path}: relevant replacement section`);
+}
+const queryHtml = await (await get("/about?utm_source=seo-check")).text();
+assert.equal(tags(queryHtml, "link").find((tag) => tag.rel === "canonical")?.href, `${canonicalOrigin}/about`, "tracking query canonical");
 const redirect = await new Promise((resolve, reject) => {
   const transport = origin.protocol === "https:" ? https : http;
   const request = transport.get(new URL("/services?utm_source=seo-check", origin), { headers: { host: "www.posadmin.ru" } }, (response) => {

@@ -13,6 +13,9 @@ export type OnsiteSupportLocation =
   | (typeof ONSITE_SUPPORT_LOCATIONS)[number]["id"]
   | "other";
 
+export const ONSITE_SUPPORT_BY_REQUEST_MESSAGE =
+  "Сейчас в вашем городе нет выездного обслуживания. В зависимости от проекта можем организовать выезд — обсудите это с менеджером.";
+
 export function isOnsiteSupportAvailable(value: unknown): boolean {
   return ONSITE_SUPPORT_LOCATIONS.some((location) => location.id === value);
 }

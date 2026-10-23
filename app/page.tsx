@@ -6,7 +6,7 @@ import { ClientsSection } from "@/components/clients-section";
 import { FullPageParallax } from "@/components/full-page-parallax";
 import { SupportPricingSection } from "@/components/support-pricing-section";
 import { ProductsSection } from "@/components/products-section";
-import { ServicesSection } from "@/components/services-section";
+import { LaunchSection } from "@/components/launch-section";
 import { buildPageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import { getPricingSnapshot } from "@/lib/pricing-store";
 import { PricingProvider } from "@/components/pricing-provider";
@@ -34,7 +34,7 @@ export default function HomePage() {
       <ClientsSection />
       <SupportPricingSection />
       <SupportPricingSection service="it" />
-      <ServicesSection />
+      <LaunchSection />
       <ProductsSection />
     </FullPageParallax>
     </PricingProvider>

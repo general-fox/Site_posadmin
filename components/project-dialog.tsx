@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { normalizeProjectPhone, normalizeTelegramContact, PROJECT_TASK_MAX_LENGTH, PROJECT_CONTACT_MAX_LENGTH, type ProjectStage, type ProjectContactMethod } from "@/lib/project-request";
+import { normalizeProjectPhone, normalizeTelegramContact, normalizeProjectChatContact, PROJECT_TASK_MAX_LENGTH, PROJECT_CONTACT_MAX_LENGTH, type ProjectStage, type ProjectContactMethod } from "@/lib/project-request";
 import { ArrowRight, useMarketingReducedMotion } from "./marketing-ui";
 import shared from "./callback-dialog.module.css";
 import styles from "./project-dialog.module.css";
@@ -12,7 +12,19 @@ import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
 const stageNames = { new: "Открытие заведения", existing: "Действующее заведение" };
 type ProjectStep = 0 | 1;
 
-export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; onClose: () => void; initialStage?: ProjectStage }) {
+export type ProjectBrief = {
+  label: string;
+  text: string;
+  preview?: {
+    total: string;
+    scope: string;
+    items: { title: string; detail: string; amount: string }[];
+    notice: string;
+    exclusions: string;
+  };
+};
+
+export function ProjectDialog({ open, onClose, initialStage, projectBrief }: { open: boolean; onClose: () => void; initialStage?: ProjectStage; projectBrief?: ProjectBrief }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -30,11 +42,21 @@ export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; 
   const [contactMethod, setContactMethod] = useState<ProjectContactMethod>("phone");
   const [phone, setPhone] = useState("");
   const [telegram, setTelegram] = useState("");
+  const [chat, setChat] = useState("");
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
   const [errorField, setErrorField] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [requestId, setRequestId] = useState("");
+  const briefText = projectBrief && projectStage === "new" ? projectBrief.text : "";
+  const briefPreview = briefText ? projectBrief?.preview : undefined;
+  const taskLimit = PROJECT_TASK_MAX_LENGTH - (briefText ? briefText.length + 2 : 0);
+  const contactValue = contactMethod === "phone" ? phone : contactMethod === "telegram" ? telegram : chat;
+  const contactError = contactMethod === "phone"
+    ? "Проверьте номер: он должен содержать 10 цифр или 11 с первой 7 или 8."
+    : contactMethod === "telegram"
+      ? "Укажите имя пользователя в Telegram, например @username, или ссылку t.me/username."
+      : "Укажите мессенджер и ваш контакт: номер, имя пользователя или ссылку на профиль.";
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -72,7 +94,7 @@ export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; 
     onClose();
     if (requestId) {
       setStep(initialStage ? 1 : 0); setProjectStage(initialStage || ""); setTask(""); setTaskExpanded(false); setPhone("");
-      setTelegram(""); setContactMethod("phone"); setConsent(false); setRequestId("");
+      setTelegram(""); setChat(""); setContactMethod("phone"); setConsent(false); setRequestId("");
     }
     clearError();
   };
@@ -88,16 +110,14 @@ export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; 
     if (!projectStage) {
       showError("Выберите, планируете открытие или уже работаете.", "projectStage"); return;
     }
-    if (task.trim().length > PROJECT_TASK_MAX_LENGTH) {
-      showError(`Сократите описание до ${PROJECT_TASK_MAX_LENGTH} символов.`, "task"); return;
+    if (task.trim().length > taskLimit) {
+      showError(`Сократите описание до ${taskLimit} символов.`, "task"); return;
     }
     if (step === 0) { goToStep(1); return; }
     if (IS_REVIEW_DEMO) { showError(DEMO_FORM_NOTICE, ""); return; }
-    const contact = contactMethod === "phone" ? normalizeProjectPhone(phone) : normalizeTelegramContact(telegram);
+    const contact = contactMethod === "phone" ? normalizeProjectPhone(phone) : contactMethod === "telegram" ? normalizeTelegramContact(telegram) : normalizeProjectChatContact(chat);
     if (!contact) {
-      showError(contactMethod === "phone"
-        ? "Проверьте номер: он должен содержать 10 цифр или 11 с первой 7 или 8."
-        : "Укажите имя пользователя в Telegram, например @username, или ссылку t.me/username.", "contact");
+      showError(contactError, "contact");
       return;
     }
     if (!consent) { showError("Нужно ваше согласие на обработку персональных данных.", "personalDataConsent"); return; }
@@ -108,7 +128,7 @@ export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; 
       const response = await fetch("/api/project-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectStage, task: task.trim(), contactMethod, contact, personalDataConsent: consent, website }),
+        body: JSON.stringify({ projectStage, task: [briefText, task.trim()].filter(Boolean).join("\n\n"), contactMethod, contact, personalDataConsent: consent, website }),
         signal: AbortSignal.timeout(15_000),
       });
       const result = await response.json().catch(() => null) as { ok?: boolean; requestId?: string; error?: string; field?: string } | null;
@@ -129,17 +149,17 @@ export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; 
 
   const taskField = <div className={styles.taskField}>
     <label className={shared.label} htmlFor={`${titleId}-task`}>Пожелания к проекту <span className={styles.optional}>необязательно</span></label>
-    <textarea className={`${shared.fieldControl} ${styles.textarea}`} id={`${titleId}-task`} name="task" value={task} maxLength={PROJECT_TASK_MAX_LENGTH} disabled={submitting}
+    <textarea className={`${shared.fieldControl} ${styles.textarea}`} id={`${titleId}-task`} name="task" value={task} maxLength={taskLimit} disabled={submitting}
       aria-invalid={errorField === "task"} aria-describedby={`${taskHintId}${errorField === "task" ? ` ${errorId}` : ""}`}
       placeholder={projectStage === "new" ? "Например: открываем кафе. Нужны r_keeper, касса и настройка оборудования." : "Например: нужна поддержка касс и складского учёта."}
       onChange={(event) => { setTask(event.target.value); clearError(); }} />
-    <div className={styles.taskHint} id={taskHintId}><span>Остальное обсудим при связи.</span><span>{task.length}/{PROJECT_TASK_MAX_LENGTH}</span></div>
+    <div className={styles.taskHint} id={taskHintId}><span>Остальное обсудим при связи.</span><span>{task.length}/{taskLimit}</span></div>
   </div>;
 
-  const titles = ["На каком этапе ваш бизнес?", initialStage === "new" && projectStage === "new" ? "Обсудим открытие" : "Как с вами связаться?"];
+  const titles = ["На каком этапе ваш бизнес?", briefPreview ? "Уточним смету проекта" : briefText ? "Рассчитаем ваш запуск" : initialStage === "new" && projectStage === "new" ? "Обсудим открытие" : "Как с вами связаться?"];
   const descriptions = [
     "Выберите подходящий вариант. Детали можно обсудить с менеджером.",
-    "Оставьте контакт — поможем разобраться с задачами и подобрать решение.",
+    briefText ? "Менеджер уточнит детали и подготовит смету. Отправим её в удобный чат или обсудим по телефону." : "Оставьте контакт — поможем разобраться с задачами и подобрать решение.",
   ];
 
   return <dialog ref={dialogRef} className={`${shared.dialog} ${styles.dialog}`} aria-labelledby={titleId} aria-describedby={descriptionId}
@@ -172,20 +192,29 @@ export function ProjectDialog({ open, onClose, initialStage }: { open: boolean; 
           </fieldset>}
           {step === 0 && taskField}
           {step === 1 && <>
-            <div className={styles.summary}><span>{projectStage && stageNames[projectStage]}</span><button type="button" disabled={submitting} onClick={() => goToStep(0)}>Изменить</button></div>
+            <div className={styles.summary}><span>{briefText ? `${briefPreview ? "Проект" : "Запуск с нуля"} · ${projectBrief?.label}` : projectStage && stageNames[projectStage]}</span>{!projectBrief && <button type="button" disabled={submitting} onClick={() => goToStep(0)}>Изменить</button>}</div>
+            {briefPreview && <section className={styles.estimatePreview} aria-label="Предварительный расчёт проекта">
+              <div className={styles.estimateHeader}><div><p>Предварительный ориентир</p><span>{briefPreview.scope}</span></div><strong>{briefPreview.total}</strong></div>
+              <p className={styles.estimateNotice}>{briefPreview.notice}</p>
+              <details className={styles.estimateDetails}>
+                <summary>Состав проекта <span>{briefPreview.items.length} поз.</span></summary>
+                <ul>{briefPreview.items.map((item) => <li key={item.title}><div><strong>{item.title}</strong><span>{item.detail}</span></div><span>{item.amount}</span></li>)}</ul>
+                <p>{briefPreview.exclusions}</p>
+              </details>
+            </section>}
             <fieldset className={styles.contactMethods} disabled={submitting}>
               <legend className={shared.label}>Удобный способ связи</legend>
-              <div className={shared.choices}>{(["phone", "telegram"] as const).map((method) => <label className={shared.choice} key={method}>
+              <div className={`${shared.choices} ${styles.contactChoices}`}>{(["phone", "telegram", "chat"] as const).map((method) => <label className={shared.choice} key={method}>
                 <input type="radio" name="contactMethod" value={method} checked={contactMethod === method} onChange={() => { setContactMethod(method); clearError(); }} />
-                <span>{method === "phone" ? "По телефону" : "В Telegram"}</span>
+                <span>{method === "phone" ? "Звонок" : method === "telegram" ? "Telegram" : "Другой чат"}</span>
               </label>)}</div>
             </fieldset>
-            <label className={styles.contactField}><span className={shared.label}>{contactMethod === "phone" ? "Номер телефона" : "Имя пользователя в Telegram"}</span>
+            <label className={styles.contactField}><span className={shared.label}>{contactMethod === "phone" ? "Номер телефона" : contactMethod === "telegram" ? "Имя пользователя в Telegram" : "Мессенджер и ваш контакт"}</span>
               <input className={shared.fieldControl} name="contact" type={contactMethod === "phone" ? "tel" : "text"} inputMode={contactMethod === "phone" ? "tel" : "text"}
-                autoComplete={contactMethod === "phone" ? "tel" : "off"} spellCheck={false} autoCapitalize="none" value={contactMethod === "phone" ? phone : telegram} maxLength={PROJECT_CONTACT_MAX_LENGTH} required disabled={submitting}
-                placeholder={contactMethod === "phone" ? "+7 (999) 123-45-67" : "@username"} aria-invalid={errorField === "contact"} aria-describedby={`${contactHintId}${errorField === "contact" ? ` ${errorId}` : ""}`}
-                onChange={(event) => { (contactMethod === "phone" ? setPhone : setTelegram)(event.target.value); clearError(); }} />
-              <span className={shared.hint} id={contactHintId}>{contactMethod === "phone" ? "Можно начать с +7, 8 или ввести 10 цифр." : "@Имя из настроек Telegram или ссылка t.me/username."}</span>
+                autoComplete={contactMethod === "phone" ? "tel" : "off"} spellCheck={false} autoCapitalize="none" value={contactValue} maxLength={PROJECT_CONTACT_MAX_LENGTH} required disabled={submitting}
+                placeholder={contactMethod === "phone" ? "+7 (999) 123-45-67" : contactMethod === "telegram" ? "@username" : "Название чата: номер, ник или ссылка"} aria-invalid={errorField === "contact"} aria-describedby={`${contactHintId}${errorField === "contact" ? ` ${errorId}` : ""}`}
+                onChange={(event) => { (contactMethod === "phone" ? setPhone : contactMethod === "telegram" ? setTelegram : setChat)(event.target.value); clearError(); }} />
+              <span className={shared.hint} id={contactHintId}>{contactMethod === "phone" ? "Можно начать с +7, 8 или ввести 10 цифр." : contactMethod === "telegram" ? "@Имя из настроек Telegram или ссылка t.me/username." : "Напишите, где вам удобно получить расчёт и как найти вас в этом чате."}</span>
             </label>
             <details className={styles.taskDisclosure} open={taskExpanded} onToggle={(event) => setTaskExpanded(event.currentTarget.open)}>
               <summary>{task.trim() ? "Пожелания к проекту" : "Добавить пожелания"}<span>{task.trim() ? "добавлены" : "необязательно"}</span></summary>

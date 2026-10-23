@@ -6,13 +6,29 @@ import { usePathname } from "next/navigation";
 import { animate, motion, useMotionTemplate, useMotionValue } from "framer-motion";
 import { SiteLogoMark } from "@/components/site-logo-mark";
 import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
+import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { HOME_NAVIGATION } from "@/lib/site-navigation";
 import styles from "./site-header.module.css";
 
 type Page = "home" | "about" | "services" | "contacts" | "other";
 type Section = typeof HOME_NAVIGATION[number]["id"];
+type HeaderSurface = "light" | "dark";
+type HeaderSurfaceRegion = {
+  surface: HeaderSurface;
+  bounds: { left: number; right: number; top: number; bottom: number };
+};
 const waveEase = [0.33, 1, 0.68, 1] as const;
 const openEase = [0.22, 1, 0.36, 1] as const;
+
+export function resolveHeaderSurface(regions: readonly HeaderSurfaceRegion[], x: number, y: number): HeaderSurface {
+  // Marked surfaces are in document paint order: a nested panel overrides its
+  // parent, and the closing panel comes after the sticky page underneath it.
+  for (let index = regions.length - 1; index >= 0; index--) {
+    const { surface, bounds } = regions[index];
+    if (x >= bounds.left && x < bounds.right && y >= bounds.top && y < bounds.bottom) return surface;
+  }
+  return "light";
+}
 
 function reveal(delay: number, reduced: boolean) {
   return reduced
@@ -31,7 +47,7 @@ function Arrow() {
 export function SiteHeader({ page = "home" }: { page?: Page }) {
   const pathname = usePathname();
   const reduced = useHydratedReducedMotion();
-  const [surface, setSurface] = useState<"light" | "dark">(page === "home" || page === "about" ? "dark" : "light");
+  const [surface, setSurface] = useState<HeaderSurface>(page === "home" || page === "about" ? "dark" : "light");
   const [activeSection, setActiveSection] = useState<Section | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -44,7 +60,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
   const [opened, setOpened] = useState(false);
   const rightInset = useMotionValue(0);
   const clipPath = useMotionTemplate`inset(0px ${rightInset}px 0px 0px round 12px)`;
-  const currentSection = page === "home" ? activeSection : page === "contacts" ? "contact" : page === "about" || page === "services" ? page : null;
+  const currentSection = page === "home" ? activeSection : page === "contacts" ? "contact" : page === "about" ? "about" : page === "services" ? "launch" : null;
 
   const closeMenus = useCallback(() => {
     setMobileOpen(false);
@@ -81,7 +97,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
   }, [closeMenus, mobileOpen]);
 
   useEffect(() => {
-    const media = window.matchMedia("(min-width: 768px)");
+    const media = window.matchMedia("(min-width: 1024px)");
     media.addEventListener("change", closeMenus);
     return () => media.removeEventListener("change", closeMenus);
   }, [closeMenus]);
@@ -96,9 +112,13 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
     const sync = () => {
       frame = 0;
       const bounds = nav.getBoundingClientRect();
-      const underneath = document.elementsFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2).find((element) => !header.contains(element));
-      const background = underneath?.closest<HTMLElement>("[data-header-surface]");
-      const next = background?.dataset.headerSurface === "dark" ? "dark" : "light";
+      // A modal makes the rest of the page inert, and decorative hero layers
+      // may ignore pointer events. Neither changes the visible page surface,
+      // so read its explicit regions instead of hit-testing interactive nodes.
+      const regions: HeaderSurfaceRegion[] = Array.from(document.querySelectorAll<HTMLElement>("[data-header-surface]"))
+        .filter((element) => !header.contains(element) && !element.closest('dialog, [role="dialog"], [aria-modal="true"], [popover]') && element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }))
+        .map((element) => ({ surface: element.dataset.headerSurface === "dark" ? "dark" : "light", bounds: element.getBoundingClientRect() }));
+      const next = resolveHeaderSurface(regions, bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
       setSurface((current) => current === next ? current : next);
       // Keep the clicked destination selected while smooth scrolling passes
       // through other sections. Undefined means ordinary scroll tracking.
@@ -160,6 +180,10 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
     const observer = new ResizeObserver(schedule);
     observer.observe(nav);
     observer.observe(document.body);
+    // Re-measure after native dialogs enter/leave the top layer, including a
+    // close that does not change the page's dimensions or scroll position.
+    const dialogObserver = new MutationObserver(schedule);
+    dialogObserver.observe(document.body, { attributes: true, attributeFilter: ["open"], subtree: true });
     return () => {
       cancelAnimationFrame(frame);
       clearTimeout(scrollIdleTimer);
@@ -171,6 +195,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
       window.removeEventListener("keydown", onScrollKey);
       window.removeEventListener("resize", schedule);
       observer.disconnect();
+      dialogObserver.disconnect();
     };
   }, [page, pathname]);
 
@@ -237,8 +262,11 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
             </Link>
           ))}
         </motion.nav>
+        <a className={styles.phone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
+          {SITE_CONTACTS.phone}
+        </a>
         <motion.button key={`mobile-${pathname}`} ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} type="button" aria-expanded={mobileOpen} aria-controls="mobile-site-navigation" {...entry} style={{ visibility: ready ? "visible" : "hidden" }} onClick={() => setMobileOpen((current) => !current)}>
-          {mobileOpen ? "Закрыть" : "Меню"}<span aria-hidden="true" className={styles.menuIcon} data-open={mobileOpen}><span /><span /></span>
+          <span className={styles.mobileTriggerLabel}>{mobileOpen ? "Закрыть" : "Меню"}</span><span aria-hidden="true" className={styles.menuIcon} data-open={mobileOpen}><span /><span /></span>
         </motion.button>
         <nav id="mobile-site-navigation" aria-label="Мобильное меню" className={`site-mobile-menu ${styles.mobileMenu}`} hidden={!mobileOpen} data-lenis-prevent>
           {HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href} className={styles.mobileItem} aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
