@@ -6,13 +6,15 @@
 .logo svg { display: block; width: 94.795px; height: 17.43px; }
 .navItem { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 15px; border: 0; border-radius: 8px; background: none; color: inherit; cursor: pointer; white-space: nowrap; }
 .navItem:focus-visible, .mobileTrigger:focus-visible, .mobileItem:focus-visible { outline: 2px solid var(--milk); outline-offset: -4px; }
-.phone { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 10px; height: 48px; padding: 0 16px; border: 0; border-radius: 12px; color: #ffd0a6; font-family: var(--font-inter), Inter, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; letter-spacing: -.01em; white-space: nowrap; text-decoration: none; pointer-events: auto; }
-.header[data-surface="light"] .phone { color: #ffe1c4; }
+.contactActions { display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
+.phone, .telegram { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 10px; height: 48px; padding: 0 16px; border: 0; border-radius: 12px; color: #ffd0a6; font-family: var(--font-inter), Inter, sans-serif; font-size: 14px; font-weight: 500; line-height: 1; letter-spacing: -.01em; white-space: nowrap; text-decoration: none; pointer-events: auto; }
+.telegram { width: 48px; padding: 0; }
+.header[data-surface="light"] :is(.phone, .telegram) { color: #ffe1c4; }
 @media (hover: hover) and (pointer: fine) {
-  .phone:hover { color: #ffe3ca; }
+  .phone:hover, .telegram:hover { color: #ffe3ca; }
 }
-.phone:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
-.phone:active { color: #fff0e2; }
+.phone:focus-visible, .telegram:focus-visible { outline: 2px solid currentColor; outline-offset: -4px; }
+.phone:active, .telegram:active { color: #fff0e2; }
 .phoneNumber { font-variant-numeric: lining-nums tabular-nums; }
 .header svg:not(:global(.site-logo-mark)) { flex-shrink: 0; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
 .mobileMenu[hidden] { display: none; }
@@ -50,9 +52,14 @@
   .nav { margin-right: auto; }
   .logo { padding: 0 8px; }
   .logo svg { width: 82px; height: auto; }
-  .phone { width: 48px; padding: 0; border-radius: 10px; }
+  .phone, .telegram { width: 48px; padding: 0; border-radius: 10px; }
   .phoneNumber { display: none; }
   .mobileTrigger { gap: 8px; min-width: 96px; padding: 0 12px; }
+}
+
+@media (max-width: 359px) {
+  .mobileTrigger { width: 48px; min-width: 48px; padding: 0; gap: 0; }
+  .mobileTriggerLabel { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {

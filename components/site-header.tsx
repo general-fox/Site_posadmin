@@ -50,6 +50,13 @@ function PhoneIcon() {
   </svg>;
 }
 
+function TelegramIcon() {
+  return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+    <path d="m21 3-6.5 18-4-7.5L3 9.5 21 3Z" />
+    <path d="m10.5 13.5 5-5" />
+  </svg>;
+}
+
 export function SiteHeader({ page = "home" }: { page?: Page }) {
   const pathname = usePathname();
   const reduced = useHydratedReducedMotion();
@@ -268,11 +275,16 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
             </Link>
           ))}
         </motion.nav>
-        <a className={`site-header-glass ${styles.phone}`} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
-          <PhoneIcon /><span className={styles.phoneNumber}>{SITE_CONTACTS.phone}</span>
-        </a>
+        <div className={styles.contactActions}>
+          <a className={`site-header-glass ${styles.phone}`} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
+            <PhoneIcon /><span className={styles.phoneNumber}>{SITE_CONTACTS.phone}</span>
+          </a>
+          <a className={`site-header-glass ${styles.telegram}`} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" aria-label="Написать боту Posadmin в Telegram, откроется в новой вкладке" title="Telegram · @posadmin_request_bot">
+            <TelegramIcon />
+          </a>
+        </div>
         <motion.button key={`mobile-${pathname}`} ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} type="button" aria-expanded={mobileOpen} aria-controls="mobile-site-navigation" {...entry} style={{ visibility: ready ? "visible" : "hidden" }} onClick={() => setMobileOpen((current) => !current)}>
-          <span>{mobileOpen ? "Закрыть" : "Меню"}</span><span aria-hidden="true" className={styles.menuIcon} data-open={mobileOpen}><span /><span /></span>
+          <span className={styles.mobileTriggerLabel}>{mobileOpen ? "Закрыть" : "Меню"}</span><span aria-hidden="true" className={styles.menuIcon} data-open={mobileOpen}><span /><span /></span>
         </motion.button>
         <nav id="mobile-site-navigation" aria-label="Мобильное меню" className={`site-mobile-menu ${styles.mobileMenu}`} hidden={!mobileOpen} data-lenis-prevent>
           {HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href} className={styles.mobileItem} aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
