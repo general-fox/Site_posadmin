@@ -85,7 +85,7 @@ export function SpecialistsSection() {
       <div className={styles.intro}>
         <SectionReveal distance={22}>
           <p className={ui.eyebrow}>О нас · Команда Posadmin</p>
-          <h2 id="specialists-title">Команда, на которую<br /><span>можно опереться</span></h2>
+          <h2 id="specialists-title">Надёжный<br /><span>партнёр</span></h2>
         </SectionReveal>
         <SectionReveal className={styles.description} distance={18} delay={0.12}>
           <p>Автоматизируем заведения HoReCa — от первого проекта до ежедневной работы. <strong>Согласуем обязательства и ведём задачу целиком,</strong> чтобы технические вопросы не оставались между несколькими подрядчиками.</p>
