@@ -26,7 +26,9 @@ export function MobileCalculationBar({ configurationRef, summaryRef, summaryId, 
     let configurationVisible = false;
     let summaryVisible = false;
 
-    const update = () => setVisible(mobile.matches && configurationVisible && !summaryVisible);
+    const update = () => {
+      setVisible(mobile.matches && configurationVisible && !summaryVisible);
+    };
     const observe = () => {
       observer?.disconnect();
       configurationVisible = false;
@@ -55,8 +57,8 @@ export function MobileCalculationBar({ configurationRef, summaryRef, summaryId, 
 
   if (!visible || dialogOpen) return null;
 
-  // A portal keeps this control anchored to the viewport outside the animated
-  // and sticky page layers. The regular summary remains the accessible target.
+  // A portal keeps this control anchored to the viewport outside reveal layers.
+  // The regular summary remains the accessible target.
   return createPortal(<nav className={styles.bar} data-calculation-bar="" aria-label={`Быстрый переход к расчёту ${productName}`}>
     <div className={styles.amount}>
       <span>{productName}</span>

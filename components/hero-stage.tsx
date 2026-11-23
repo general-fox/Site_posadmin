@@ -1,156 +1,78 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { HeroDust } from "@/components/hero-dust";
-import { CircuitLines } from "@/components/circuit-lines";
-import { HeroCapsules } from "@/components/hero-capsules";
-import { FlipWords } from "@/components/flip-words";
-import { WaveWords } from "@/components/wave-words";
-import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
-import { HeroActions } from "@/components/hero-actions";
+import Link from "next/link";
+import type { PointerEvent } from "react";
+import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
+import { HeroActions } from "./hero-actions";
+import styles from "./hero-stage.module.css";
 
-const waveEase = [0.33, 1, 0.68, 1] as const;
+const products = [
+  ["rezebra", "ReZebra", "Бронирования, столы и загрузка зала"],
+  ["flexbonusb", "FlexBonus", "Бонусы, скидки и лояльность гостей"],
+  ["foxcontrol", "Fox Control", "Контроль кассовых операций"],
+] as const;
+const systems = ["r_keeper", "1С", "ЕГАИС", "ККТ", "Честный знак", "Меркурий", "IT-инфраструктура"];
+const ease = [0.22, 1, 0.36, 1] as const;
+const ProductLink = motion.create(Link);
 
 export function GlowLayer() {
-  return (
-    <div className="hero-glow-board pointer-events-none absolute inset-0">
-      <div className="hero-glow-figma">
-        <img
-          src="/figma-hero/vector-165.webp"
-          alt=""
-          className="hero-glow absolute top-[503.11px] left-[-41.66px] h-[364.974px] w-[423.197px]"
-        />
-        <img
-          src="/figma-hero/vector-164.png?v=3"
-          alt=""
-          className="hero-glow absolute top-[-220.64px] left-[738.32px] h-[646.419px] w-[930.898px]"
-        />
-        <img
-          src="/figma-hero/ellipse-353.webp"
-          alt=""
-          className="hero-glow absolute top-[-43.68px] left-[913.97px] h-[777.9px] w-[802.5px]"
-        />
-        <img
-          src="/figma-hero/vector-163.png?v=3"
-          alt=""
-          className="hero-glow absolute top-[-2.19px] left-[621.5px] h-[659.946px] w-[868.953px]"
-        />
-      </div>
-      <HeroDust />
-    </div>
-  );
+  return <div className="hero-glow-board pointer-events-none absolute inset-0" aria-hidden="true" />;
+}
+
+function HeroProducts({ reduced }: { reduced: boolean }) {
+  function moveGlow(event: PointerEvent<HTMLDivElement>) {
+    if (reduced || event.pointerType === "touch") return;
+    const panel = event.currentTarget;
+    const { left, top } = panel.getBoundingClientRect();
+    panel.style.setProperty("--glow-x", `${event.clientX - left}px`);
+    panel.style.setProperty("--glow-y", `${event.clientY - top}px`);
+  }
+
+  return <motion.div
+    className={styles.visual}
+    aria-label="Собственные продукты Posadmin"
+    initial={reduced ? false : { opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={reduced ? { duration: 0 } : { duration: .7, delay: .35, ease }}
+    onPointerEnter={moveGlow}
+    onPointerMove={moveGlow}
+  >
+    <noscript><style>{`.${styles.visual}, .${styles.area} { opacity: 1 !important; transform: none !important; }`}</style></noscript>
+    <div className={styles.visualHeader}><h2>Наши продукты</h2><span>Развиваем сами</span></div>
+    <div className={styles.areas}>{products.map(([id, title, description], index) =>
+      <ProductLink
+        key={id}
+        href={`/#${id}`}
+        className={styles.area}
+        initial={reduced ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduced ? { duration: 0 } : { duration: .55, delay: .45 + index * .08, ease }}
+      >
+        <div className={styles.areaHeader}><h3>{title}</h3><span className={styles.productArrow} aria-hidden="true">↗</span></div>
+        <p>{description}</p>
+      </ProductLink>
+    )}</div>
+    <div className={styles.visualBottom}><span>Одна команда для ваших систем</span><Link href="/#pricing" className={styles.visualFooter}>Техподдержка 24/7 <span aria-hidden="true">↗</span></Link></div>
+  </motion.div>;
 }
 
 export function HeroStage() {
   const reduced = useHydratedReducedMotion();
-  const stageRef = useRef<HTMLDivElement>(null);
-  const titleBoxRef = useRef<HTMLHeadingElement>(null);
-  const [titleSize, setTitleSize] = useState({ w: 460, h: 148, actionsHeight: 48, containerWidth: 1440, compact: false, short: false, mobile: false });
-  const { compact, short, mobile } = titleSize;
-
-  useLayoutEffect(() => {
-    const el = titleBoxRef.current;
-    const stage = stageRef.current;
-    if (!el || !stage) return;
-    const actions = stage.querySelector<HTMLElement>(".hero-actions");
-    const measure = () => {
-      const layout = getComputedStyle(stage);
-      // Capsule offsets use layout pixels, independent of the hero's parallax.
-      // CSS owns the responsive layout before hydration; JS only measures the
-      // settled geometry for the decorative capsule trajectories.
-      const next = {
-        w: el.offsetWidth,
-        h: el.offsetHeight,
-        actionsHeight: actions?.offsetHeight ?? 48,
-        containerWidth: stage.clientWidth,
-        compact: layout.getPropertyValue("--hero-compact").trim() === "1",
-        short: layout.getPropertyValue("--hero-short").trim() === "1",
-        mobile: layout.getPropertyValue("--hero-mobile").trim() === "1",
-      };
-      setTitleSize((current) => current.w === next.w && current.h === next.h &&
-        current.actionsHeight === next.actionsHeight &&
-        current.containerWidth === next.containerWidth && current.compact === next.compact &&
-        current.short === next.short && current.mobile === next.mobile ? current : next);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    ro.observe(stage);
-    if (actions) ro.observe(actions);
-    window.addEventListener("resize", measure);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
-
-  return (
-    <div ref={stageRef} className="hero-stage pointer-events-none absolute inset-0" data-compact={compact} data-short={short} data-mobile={mobile}>
-      <noscript>
-        <style>{`.hero-stage [data-hero-word], .hero-actions, .hero-dealer { opacity: 1 !important; transform: none !important; }`}</style>
-      </noscript>
-      <CircuitLines side="left" delay={0.12} reduced={reduced} />
-      <CircuitLines side="right" delay={0.28} reduced={reduced} />
-
-      <motion.div
-        className="hero-dealer hero-glass-btn absolute bottom-[40px] left-[35.85px] flex items-center justify-center overflow-hidden rounded-[8px] px-[14px] py-[8px]"
-        initial={reduced ? false : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={
-          reduced
-            ? { duration: 0 }
-            : {
-                delay: 0.75,
-                duration: 0.55,
-                ease: waveEase,
-              }
-        }
-      >
-        <p className="font-[family-name:var(--font-montserrat)] text-[11px] font-medium leading-normal whitespace-nowrap text-[var(--milk)]">
-          Официальный дилер r_keeper
-        </p>
-      </motion.div>
-
-      <div className="hero-content absolute inset-0 z-[2] flex flex-col items-center justify-center px-6 pt-20">
-        <div className="hero-copy flex w-max max-w-full flex-col items-center">
-          <div className="hero-title-group relative mb-8 overflow-visible">
-            <HeroCapsules
-              reduced={reduced}
-              width={titleSize.w}
-              height={titleSize.h}
-              actionsHeight={titleSize.actionsHeight}
-              containerWidth={titleSize.containerWidth}
-              compact={compact}
-              short={short}
-              mobile={mobile}
-            />
-            <h1
-              ref={titleBoxRef}
-              className="relative z-20 flex flex-col items-center text-center font-[family-name:var(--font-inter)] text-[40px] font-medium leading-[1.08] tracking-[0.3px] whitespace-nowrap sm:text-[52px] lg:text-[64px] lg:tracking-[1.28px]"
-            >
-              <span className="sr-only">Автоматизация ресторанов, баров и кафе</span>
-              <span className="text-[var(--milk)]" aria-hidden="true">
-                <WaveWords
-                  text="Автоматизация"
-                  base={0.92}
-                  duration={1.15}
-                  reduced={reduced}
-                />
-              </span>
-              <span className="text-[var(--milk)]/80" aria-hidden="true">
-                <FlipWords
-                  base={1.08}
-                  duration={1.15}
-                  reduced={reduced}
-                />
-              </span>
-            </h1>
-          </div>
-
-          <HeroActions reduced={reduced} />
-        </div>
-      </div>
+  return <div className={styles.hero}>
+    <div className={styles.copy}>
+      <motion.p className={styles.eyebrow} initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .55, delay: .1 }}>Posadmin · автоматизация HoReCa</motion.p>
+      <h1 className={styles.title}>
+        <span className={styles.line}><motion.span initial={reduced ? false : { y: "105%" }} animate={{ y: 0 }} transition={{ duration: reduced ? 0 : .85, delay: .15, ease }}>Автоматизация и поддержка ресторанов 24/7</motion.span></span>
+      </h1>
+      <motion.p className={styles.lead} initial={reduced ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .65, delay: .3, ease }}>Разрабатываем решения для вашего заведения и берём на себя технический контур — от касс до IT-инфраструктуры.</motion.p>
+      <HeroActions reduced={reduced} />
+      <ul className={styles.systems} role="list" aria-label="Направления работы">
+        {systems.map((name, i) => <motion.li key={name} initial={reduced ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .45, delay: .65 + i * .035, ease }}>{name}</motion.li>)}
+      </ul>
+      <p className={styles.dealer}>Официальный дилер r_keeper</p>
     </div>
-  );
+
+    <HeroProducts reduced={reduced} />
+  </div>;
 }

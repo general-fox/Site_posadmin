@@ -3,7 +3,7 @@ import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
 // Keep a running preview independent from production builds.
 const nextConfig = (phase: string): NextConfig => ({
-  distDir: phase === PHASE_DEVELOPMENT_SERVER ? ".next" : ".next-build",
+  distDir: phase === PHASE_DEVELOPMENT_SERVER ? (process.env.POSADMIN_PREVIEW_DIST_DIR || ".next") : ".next-build",
   async redirects() {
     return [
       {

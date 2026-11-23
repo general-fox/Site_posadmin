@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getCalculationSummary } from "@/lib/calculation-request";
+import { getProjectCalculation } from "@/lib/project-calculation";
 import { validateCallbackSchedule } from "@/lib/callback-schedule";
 import { parseCallbackSpecialist } from "@/lib/callback-specialist";
 import { getPricingSnapshot } from "@/lib/pricing-store";
@@ -20,6 +21,7 @@ type CallbackRequest = {
   time?: unknown;
   website?: unknown;
   calculation?: unknown;
+  projectEstimate?: unknown;
   pricingRevision?: unknown;
   specialist?: unknown;
 };
@@ -104,6 +106,10 @@ export async function POST(request: Request) {
   const consent = body.personalDataConsent === true;
   const date = typeof body.date === "string" ? body.date : "";
   const time = typeof body.time === "string" ? body.time : "";
+  if (body.calculation !== undefined && body.projectEstimate !== undefined) {
+    return NextResponse.json({ error: "Передайте один расчёт в заявке." }, { status: 400 });
+  }
+  const projectSummary = body.projectEstimate !== undefined ? getProjectCalculation(body.projectEstimate) : null;
   let calculation = null;
   if (body.calculation !== undefined) {
     try {
@@ -131,7 +137,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (body.calculation !== undefined && !calculation) {
+  if ((body.calculation !== undefined && !calculation) || (body.projectEstimate !== undefined && !projectSummary)) {
     return NextResponse.json(
       { error: "Не удалось проверить расчёт. Закройте форму и выберите услуги заново." },
       { status: 400 },
@@ -172,6 +178,17 @@ export async function POST(request: Request) {
       (calculation.locationLabel ? `<b>Город / регион:</b> ${escapeHtml(calculation.locationLabel)}\n` : "") +
       calculation.modules.map((module) => `• ${escapeHtml(module.name)} — ${module.monthlyPrice.toLocaleString("ru-RU")} ₽/мес.`).join("\n") +
       `\n<b>Итого:</b> ${calculation.monthlyTotal.toLocaleString("ru-RU")} ₽/мес.`
+    : projectSummary
+    ? `\n\n<b>Расчёт: запуск предприятия</b>\n` +
+      `<b>Формат:</b> ${escapeHtml(projectSummary.estimate.concept.label)}\n` +
+      `<b>Кассовых мест:</b> ${projectSummary.estimate.registers}\n` +
+      projectSummary.estimate.items.map((item) => `• ${escapeHtml(item.title)} — ${item.quantity} × ${item.price.toLocaleString("ru-RU")} ₽ = ${item.total.toLocaleString("ru-RU")} ₽`).join("\n") +
+      `\n<b>Итого:</b> ${projectSummary.estimate.total.toLocaleString("ru-RU")} ₽ (разово)` +
+      (projectSummary.estimate.capabilities.length
+        ? "\n\n<b>Дополнительные возможности — индивидуальный расчёт:</b>\n" +
+          projectSummary.estimate.capabilities.map(({ title }) => `• ${escapeHtml(title)}`).join("\n") +
+          "\nСтоимость не включена в сумму расчёта."
+        : "")
     : "";
   const message =
     `🌐 <b>Новая заявка с сайта #${requestId}</b>\n\n` +

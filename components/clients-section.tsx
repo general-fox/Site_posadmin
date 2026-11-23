@@ -3,21 +3,9 @@
 import { ClientsStatsDots } from "@/components/clients-stats-dots";
 import Image from "next/image";
 import Link from "next/link";
+import { SITE_CLIENTS } from "@/lib/site-clients";
 import { SectionReveal, useScrollReveal } from "./marketing-ui";
 import ui from "./marketing.module.css";
-
-const CLIENTS = [
-  { name: "Avrora", src: "/clients/avrora.svg", href: "https://avrora.rest/" },
-  { name: "Afina", src: "/clients/afina.svg", href: "https://afina.rest/" },
-  { name: "Loona", src: "/clients/loona.svg", href: "https://loona.rest/" },
-  { name: "Phantom", src: "/clients/phantom.svg", href: "https://phantom.rest/" },
-  { name: "Patriki", src: "/clients/patriki.svg", href: "https://patriki.rest/" },
-  { name: "Stars Coffee", src: "/clients/stars.svg", href: "https://stars-coffee.ru/" },
-  { name: "Ava", src: "/clients/ava.svg", href: "https://ava.rest/" },
-  { name: "Магадан", src: "/clients/magadan.svg", href: "https://magadanrest.ru/" },
-  { name: "Колбасный цех", src: "/clients/kc.svg", href: "https://kolbasnyy-tsekh.ru/" },
-  { name: "Сыроварня", src: "/clients/sirovarnya.svg", href: "https://www.syrovarnya.com/" },
-] as const;
 
 export function ClientsSection() {
   const logoGridRef = useScrollReveal<HTMLDivElement>({ distance: 12, rows: true });
@@ -34,7 +22,7 @@ export function ClientsSection() {
         <p className="clients-link-hint">Логотипы ведут на сайты заведений <span aria-hidden="true">↗</span></p>
         <div className="clients-layout" data-header-surface="light">
           <div ref={logoGridRef} className="clients-grid" data-scroll-reveal="">
-            {CLIENTS.map((client) => (
+            {SITE_CLIENTS.map((client) => (
               <a
                 className="client-logo-card"
                 key={client.name}

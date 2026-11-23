@@ -28,23 +28,31 @@ const { LAUNCH_CONCEPTS } = load("lib/launch-concepts.ts");
 const { PROJECT_TASK_MAX_LENGTH, validateProjectRequest } = load("lib/project-request.ts");
 const {
   PROJECT_WORKS, PROJECT_REGISTER_MIN, PROJECT_REGISTER_MAX, PROJECT_ESTIMATE_NOTICE, PROJECT_ESTIMATE_EXCLUSIONS,
+  PROJECT_CAPABILITIES, PROJECT_CAPABILITIES_NOTICE,
   getDefaultProjectSelection, calculateProjectEstimate, buildProjectEstimateBrief, formatProjectMoney, formatCashRegisters,
 } = load("lib/project-estimate.ts");
 
-test("all six concepts have distinct, valid recommended work sets and repeatable totals", () => {
-  const expected = { restaurant: 67_000, cafe: 49_000, bar: 59_000, "quick-service": 67_000, delivery: 69_000, hotel: 79_000 };
+test("all six concepts start with base work only and repeatable totals", () => {
+  const baseIds = ["design", "pos"];
   for (const concept of LAUNCH_CONCEPTS) {
     const selection = getDefaultProjectSelection(concept.id);
     const estimate = calculateProjectEstimate(selection);
     assert.equal(estimate.concept, concept);
     assert.equal(estimate.registers, 1);
-    assert.equal(estimate.total, expected[concept.id]);
-    assert.equal(new Set(selection.selectedWorkIds).size, selection.selectedWorkIds.length);
+    assert.deepEqual(selection.selectedWorkIds, baseIds);
+    assert.deepEqual(selection.selectedCapabilityIds, []);
+    assert.deepEqual(estimate.capabilities, []);
+    assert.deepEqual(estimate.items.map(({ id }) => id), baseIds);
+    assert.ok(estimate.items.every(({ required }) => required));
+    assert.equal(estimate.total, 18_000);
+    assert.deepEqual(calculateProjectEstimate(getDefaultProjectSelection(concept.id)), estimate);
     assert.equal(estimate.items.reduce((sum, item) => sum + item.total, 0), estimate.total);
+    selection.selectedWorkIds.push("kitchen");
+    assert.deepEqual(getDefaultProjectSelection(concept.id).selectedWorkIds, baseIds);
   }
   const mutated = getDefaultProjectSelection();
   mutated.selectedWorkIds.length = 0;
-  assert.ok(getDefaultProjectSelection().selectedWorkIds.length > 0);
+  assert.deepEqual(getDefaultProjectSelection().selectedWorkIds, baseIds);
 });
 
 test("optional toggles change only selected work, while base items cannot disappear", () => {
@@ -76,6 +84,36 @@ test("invalid counts, unknown concepts and unknown work cannot return misleading
   for (const selectedWorkIds of [["unknown"], null, {}, "fiscal"]) assert.throws(() => calculateProjectEstimate({ ...valid, selectedWorkIds }));
   assert.throws(() => calculateProjectEstimate({ ...valid, conceptId: "unknown" }));
   assert.throws(() => getDefaultProjectSelection("unknown"));
+});
+
+test("additional capabilities are optional requests for a separate quote, never priced work", () => {
+  const base = getDefaultProjectSelection();
+  for (let mask = 0; mask < 2 ** PROJECT_CAPABILITIES.length; mask += 1) {
+    const expected = PROJECT_CAPABILITIES.filter((_, index) => mask & (1 << index));
+    // Selection order must not change the catalogue order shown to the manager.
+    const selectedCapabilityIds = expected.map(({ id }) => id).reverse();
+    const estimate = calculateProjectEstimate({ ...base, selectedCapabilityIds });
+    assert.equal(estimate.total, 18_000);
+    assert.deepEqual(estimate.items.map(({ id }) => id), ["design", "pos"]);
+    assert.deepEqual(estimate.capabilities, expected);
+    const brief = buildProjectEstimateBrief(estimate);
+    if (expected.length) {
+      assert.ok(brief.includes(PROJECT_CAPABILITIES_NOTICE));
+      for (const { title } of expected) assert.ok(brief.includes(title));
+    } else assert.ok(!brief.includes("Дополнительные возможности:"));
+  }
+  assert.deepEqual(calculateProjectEstimate({ conceptId: "cafe", registers: 1, selectedWorkIds: [] }).capabilities, []);
+  base.selectedCapabilityIds.push("egais");
+  assert.deepEqual(getDefaultProjectSelection().selectedCapabilityIds, []);
+  const full = calculateProjectEstimate({ ...base, registers: 10, selectedWorkIds: PROJECT_WORKS.map(({ id }) => id), selectedCapabilityIds: PROJECT_CAPABILITIES.map(({ id }) => id) });
+  assert.ok(buildProjectEstimateBrief(full).length <= PROJECT_TASK_MAX_LENGTH);
+});
+
+test("unknown, duplicate and malformed additional capability selections are rejected", () => {
+  const base = getDefaultProjectSelection();
+  for (const selectedCapabilityIds of [null, "egais", {}, ["unknown"], ["egais", "egais"], [1], [{ id: "egais" }], Array(100).fill("egais")]) {
+    assert.throws(() => calculateProjectEstimate({ ...base, selectedCapabilityIds }));
+  }
 });
 
 test("Russian formatters show rubles, grouped amounts, and correct register units", () => {

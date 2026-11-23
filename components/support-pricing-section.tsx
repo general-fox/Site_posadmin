@@ -2,10 +2,10 @@
 
 import { useId, useRef, useState, type ReactNode } from "react";
 import { CallbackDialog } from "./callback-dialog";
+import { BaseBadge } from "./base-badge";
 import { CitySelect } from "./city-select";
 import { MobileCalculationBar } from "./mobile-calculation-bar";
 import { ArrowRight, SectionReveal, useScrollReveal } from "./marketing-ui";
-import { SectionAtmosphere } from "./section-atmosphere";
 import { useDisclosureCentering } from "./use-disclosure-centering";
 import { calculateRkeeperPricing, getRkeeperModulePrice, RKEEPER_PRODUCT_ID, RKEEPER_TARIFF, type RkeeperAdditionalModuleId } from "@/lib/rkeeper-pricing";
 import { calculateItAdministrationPricing, getItAdministrationModulePrice, IT_ADMINISTRATION_MODULE_ID, IT_ADMINISTRATION_PRODUCT_ID, IT_ADMINISTRATION_TARIFF } from "@/lib/it-administration-pricing";
@@ -14,6 +14,7 @@ import type { CalculationSelection } from "@/lib/calculation-request";
 import { usePricing } from "./pricing-provider";
 import { IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
+import { DEFAULT_PRICING_UPDATED_AT } from "@/lib/pricing-config";
 import ui from "./marketing.module.css";
 import styles from "./support-pricing.module.css";
 
@@ -83,6 +84,8 @@ async function downloadCalculationPdf(
 
 function WorkplaceCount({ value, onChange, disabled, service }: { value: number; onChange: (value: number) => void; disabled: boolean; service: Service }) {
   const [draft, setDraft] = useState(String(value));
+  const inputId = `workplaces-${service}`;
+  const descriptionId = `${inputId}-description`;
   const commit = (raw: string) => {
     const parsed = Number(raw);
     const normalized = Number.isFinite(parsed) ? Math.min(10_000, Math.max(1, Math.floor(parsed))) : value;
@@ -90,28 +93,56 @@ function WorkplaceCount({ value, onChange, disabled, service }: { value: number;
     onChange(normalized);
   };
   const change = (next: number) => { setDraft(String(next)); onChange(next); };
-  return <div className={styles.countRow}>
-    <div><label htmlFor={`workplaces-${service}`}>Количество рабочих мест</label><p>{service === "rkeeper" ? "Кассы и станции официантов" : "Компьютеры ваших сотрудников"}</p></div>
+  return <div className={`${styles.countRow} ${styles.workplaceRow}`}>
+    <div><label htmlFor={inputId}>Количество рабочих мест</label><p id={descriptionId}>{service === "rkeeper" ? "Кассы и станции официантов" : "Компьютеры ваших сотрудников"}</p></div>
     <div className={styles.stepper}>
       <button type="button" aria-label="Уменьшить количество рабочих мест" disabled={disabled || value <= 1} onClick={() => change(value - 1)}>−</button>
-      <input id={`workplaces-${service}`} type="number" inputMode="numeric" min={1} max={10000} step={1} value={draft} disabled={disabled} onChange={(event) => { const raw = event.target.value; setDraft(raw); const n = Number(raw); if (raw && Number.isInteger(n) && n >= 1 && n <= 10000) onChange(n); }} onBlur={() => commit(draft)} onKeyDown={(event) => { if (event.key === "Enter") { commit(draft); event.currentTarget.blur(); } }} />
+      <input id={inputId} aria-describedby={descriptionId} type="number" inputMode="numeric" min={1} max={10000} step={1} value={draft} disabled={disabled} onChange={(event) => { const raw = event.target.value; setDraft(raw); const n = Number(raw); if (raw && Number.isInteger(n) && n >= 1 && n <= 10000) onChange(n); }} onBlur={() => commit(draft)} onKeyDown={(event) => { if (event.key === "Enter") { commit(draft); event.currentTarget.blur(); } }} />
       <button type="button" aria-label="Увеличить количество рабочих мест" disabled={disabled || value >= 10000} onClick={() => change(value + 1)}>+</button>
     </div>
   </div>;
 }
 
-function ModuleCard({ name, features, price, selected, required, onChange, disabled, unavailable = false, unavailableLabel, descriptionId, children }: { name: string; features: readonly string[]; price: number; selected: boolean; required?: boolean; onChange?: () => void; disabled: boolean; unavailable?: boolean; unavailableLabel?: string; descriptionId?: string; children?: ReactNode }) {
+function ModuleCard({ name, features, price, selected, required, onChange, disabled, defaultExpanded = false, unavailable = false, unavailableLabel, descriptionId, addHint, children }: {
+  name: string;
+  features: readonly string[];
+  price: number;
+  selected: boolean;
+  required?: boolean;
+  onChange?: () => void;
+  disabled: boolean;
+  defaultExpanded?: boolean;
+  unavailable?: boolean;
+  unavailableLabel?: string;
+  descriptionId?: string;
+  addHint?: string;
+  children?: ReactNode;
+}) {
   const revealRef = useScrollReveal<HTMLElement>({ distance: 12 });
   const disclosureCentering = useDisclosureCentering();
-  return <article ref={revealRef} data-scroll-reveal="" data-disclosure-panel="" className={`${styles.module} ${selected ? styles.selected : ""}`}>
+  return <article ref={revealRef} data-scroll-reveal="" data-disclosure-panel="" className={`${styles.module} ${required || selected ? styles.selected : ""}`}>
     <div className={styles.moduleTop}>
-      <span className={styles.moduleIcon} aria-hidden="true">{required ? "↗" : <svg width="16" height="16" viewBox="0 0 16 16" fill="none" focusable="false"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>}</span>
-      <div className={styles.moduleTitle}><h4>{name}</h4><p>{money(price)} ₽ <span>/ месяц</span></p></div>
-      {required ? <span className={styles.included}>Включено</span> : <button className={styles.toggle} type="button" aria-label={`${unavailableLabel ?? (selected ? "Убрать" : "Добавить")}: ${name}`} aria-describedby={descriptionId} aria-pressed={selected} onClick={onChange} disabled={disabled || unavailable}><span aria-hidden="true">{selected ? "✓" : "+"}</span><span>{unavailableLabel ?? (selected ? "Добавлено" : "Добавить")}</span></button>}
+      <div className={styles.moduleTitle}><h3 className={styles.moduleName}>{name}</h3><p>{money(price)} ₽ <span>/ месяц</span></p></div>
+      {required ? <BaseBadge className={styles.included} /> : (
+        <div className={styles.toggleControl}>
+          <button
+            className={styles.toggle}
+            type="button"
+            aria-label={`${unavailableLabel ?? (selected ? "Убрать" : "Добавить")}: ${name}`}
+            aria-describedby={descriptionId}
+            aria-pressed={selected}
+            onClick={onChange}
+            disabled={disabled || unavailable}
+          >
+            <span aria-hidden="true">{selected ? "✓" : "+"}</span>
+            <span>{unavailableLabel ?? (selected ? "Добавлено" : "Добавить")}</span>
+          </button>
+          {addHint && <span className={styles.toggleHint} aria-hidden="true">{addHint}</span>}
+        </div>
+      )}
     </div>
     {children}
-    <p className={styles.moduleHint}>{features.slice(0, 2).join(" · ")}</p>
-    <details {...disclosureCentering} className={styles.details}><summary>Что входит <span aria-hidden="true">+</span></summary><ul>{features.map((feature) => <li key={feature}><span aria-hidden="true">✓</span>{feature}</li>)}</ul></details>
+    <details {...disclosureCentering} className={styles.details} open={defaultExpanded}><summary>Что входит <span aria-hidden="true">+</span></summary><ul>{features.map((feature) => <li key={feature}><span aria-hidden="true">✓</span>{feature}</li>)}</ul></details>
   </article>;
 }
 
@@ -137,6 +168,12 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
   const resetFeedback = () => setStatus("idle");
   const titleId = service === "rkeeper" ? "support-pricing-title" : "it-pricing-title";
   const summaryId = service === "rkeeper" ? "rkeeper-calculation" : "it-calculation";
+  const pricingUpdatedAt = snapshot.updatedAt ?? (snapshot.revision === 0 ? DEFAULT_PRICING_UPDATED_AT : null);
+  const updatedAt = pricingUpdatedAt ? new Date(pricingUpdatedAt) : null;
+  const updatedDate = updatedAt && Number.isFinite(updatedAt.getTime())
+    ? new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Moscow" }).format(updatedAt)
+    : null;
+  const pricingDate = <p className={styles.updatedAt}>{updatedDate ? <>Актуально на <time dateTime={pricingUpdatedAt ?? undefined}>{updatedDate} г.</time></> : "Актуальные цены"}</p>;
   const calculation: CalculationSelection = service === "rkeeper"
     ? { product: RKEEPER_PRODUCT_ID, workplaceCount: workplaces, selectedAdditionalModules: modules, ...(location ? { location } : {}) }
     : { product: IT_ADMINISTRATION_PRODUCT_ID, workplaceCount: workplaces, selectedModules: itIncluded ? [IT_ADMINISTRATION_MODULE_ID] : [] };
@@ -180,62 +217,76 @@ export function SupportPricingSection({ service = "rkeeper" }: { service?: Servi
   };
 
   return <section id={service === "rkeeper" ? "pricing" : "it-pricing"} className={`${ui.section} ${styles.section} section-atmosphere-host`} aria-labelledby={titleId}>
-    <SectionAtmosphere side={service === "rkeeper" ? "right" : "left"} />
     <div className={ui.shell}>
       <div className={ui.sectionHeader}>
-        <SectionReveal distance={22}>
+        <SectionReveal distance={22} className={service === "rkeeper" ? styles.fullHeading : undefined}>
           <p className={ui.eyebrow}>{service === "rkeeper" ? "Тарифы · r_keeper" : "Тарифы · IT-сопровождение"}</p>
-          <h2 className={`${ui.heading} ${service === "it" ? styles.itHeading : ""}`} id={titleId}>{service === "rkeeper" ? <>Сопровождение r_keeper<br /><span className={ui.muted}>Под ваши задачи</span></> : <>IT-администрирование<br /><span className={ui.muted}>Для вашей команды</span></>}</h2>
+          <h2 className={ui.heading} id={titleId}>{service === "rkeeper" ? "Сопровождение r_keeper" : "IT-сопровождение"}</h2>
         </SectionReveal>
-        <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>{service === "rkeeper" ? "Сопровождение r_keeper для вашего ресторана. Укажите количество касс и станций официантов, добавьте нужные модули и сохраните расчёт в PDF." : "Поддержка компьютеров сотрудников, сетей и IT-инфраструктуры. Укажите количество рабочих мест, добавьте сопровождение и сохраните расчёт в PDF."}</p></SectionReveal>
+        {service === "it" && <SectionReveal distance={12} delay={0.12}>{pricingDate}</SectionReveal>}
       </div>
       <div>
         <div className={styles.calculator}>
           <div ref={configurationRef} className={styles.configuration}>
             <SectionReveal distance={12}>
-            <div className={styles.configHeading}><h3>{service === "rkeeper" ? "Сопровождение r_keeper" : "IT-сопровождение"}</h3></div>
-            <WorkplaceCount value={workplaces} service={service} disabled={loading} onChange={(value) => { setWorkplaces(value); resetFeedback(); }} />
+              <WorkplaceCount value={workplaces} service={service} disabled={loading} onChange={(value) => { setWorkplaces(value); resetFeedback(); }} />
             </SectionReveal>
             <div className={styles.modules}>
               {service === "rkeeper" ? <>
-                <ModuleCard {...RKEEPER_TARIFF.baseModule} price={rkeeper.baseModule.monthlyPrice} selected required disabled={loading} />
-                <p className={styles.optionalLabel}>Дополнительно — только то, что нужно</p>
+                <ModuleCard {...RKEEPER_TARIFF.baseModule} price={rkeeper.baseModule.monthlyPrice} selected required defaultExpanded disabled={loading} />
                 {RKEEPER_TARIFF.additionalModules.map((module) => {
                   const onsite = module.id === "onsite-hardware-support";
+                  const isSelected = modules.includes(module.id);
                   return <ModuleCard
                     key={module.id}
                     {...module}
                     price={getRkeeperModulePrice(workplaces, snapshot.config, module.id)}
-                    selected={modules.includes(module.id)}
+                    selected={isSelected}
                     onChange={() => toggleModule(module.id)}
                     disabled={loading}
                     unavailable={onsite && !onsiteAvailable}
                     unavailableLabel={onsite && location === "other" ? "По запросу" : undefined}
                     descriptionId={onsite ? locationHintId : undefined}
+                    addHint={onsite && !location ? "Сначала выберите город." : undefined}
                   >
                     {onsite && <div className={styles.locationField}>
-                      <label htmlFor={locationId}>Город или регион заведения</label>
-                      <CitySelect id={locationId} descriptionId={locationHintId} value={location} disabled={loading} onChange={changeLocation} />
+                      <CitySelect id={locationId} label="Город или регион заведения" descriptionId={locationHintId} value={location} disabled={loading} onChange={changeLocation} />
                       <p id={locationHintId} className={styles.locationHint} data-available={onsiteAvailable} data-prompt={!location} role="status" aria-atomic="true">
-                        {!location && <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12.5 6.5c0 3-4.5 7-4.5 7s-4.5-4-4.5-7a4.5 4.5 0 0 1 9 0Z" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="6.5" r="1.5" stroke="currentColor" strokeWidth="1.3" /></svg>}
-                        <span>{!location ? "Выберите город, чтобы добавить выезд." : onsiteAvailable ? modules.includes(module.id) ? "Выездное сопровождение добавлено." : "Выезд доступен — можно добавить в расчёт." : <>{ONSITE_SUPPORT_BY_REQUEST_MESSAGE}{onsiteRemoved && " Выездной модуль убран из онлайн-расчёта."}</>}</span>
+                        {!location && <>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M12.5 6.5c0 3-4.5 7-4.5 7s-4.5-4-4.5-7a4.5 4.5 0 0 1 9 0Z" stroke="currentColor" strokeWidth="1.3" /><circle cx="8" cy="6.5" r="1.5" stroke="currentColor" strokeWidth="1.3" /></svg>
+                          <span>Выберите город, чтобы добавить выезд.</span>
+                        </>}
+                        {onsiteAvailable && isSelected && "Выездное сопровождение добавлено."}
+                        {location && !onsiteAvailable && <>{ONSITE_SUPPORT_BY_REQUEST_MESSAGE}{onsiteRemoved && " Выездной модуль убран из онлайн-расчёта."}</>}
                       </p>
                     </div>}
                   </ModuleCard>;
                 })}
-              </> : <ModuleCard {...IT_ADMINISTRATION_TARIFF.module} price={getItAdministrationModulePrice(workplaces, snapshot.config)} selected={itIncluded} onChange={() => { setItIncluded((current) => !current); resetFeedback(); }} disabled={loading} />}
+              </> : <ModuleCard {...IT_ADMINISTRATION_TARIFF.module} price={getItAdministrationModulePrice(workplaces, snapshot.config)} selected={itIncluded} onChange={() => { setItIncluded((current) => !current); resetFeedback(); }} defaultExpanded disabled={loading} />}
             </div>
           </div>
-          <aside id={summaryId} ref={summaryRevealRef} tabIndex={-1} data-scroll-reveal="" className={styles.summary} aria-label={`Итог расчёта ${service === "rkeeper" ? "r_keeper" : "IT-администрирования"}`}>
-            <div className={styles.summaryTop}><p>{service === "rkeeper" ? "Ваше сопровождение r_keeper" : "Ваше IT-сопровождение"}</p><span className={styles.liveDot}>Расчёт онлайн</span></div>
-            <div aria-live="polite" aria-atomic="true">{selected.length ? <><p className={styles.total}>{money(total)} <span>₽</span></p><p className={styles.period}>в месяц · рабочих мест: {workplaces}</p></> : <><p className={styles.emptyTotal}>Выберите сопровождение</p><p className={styles.period}>Рабочих мест: {workplaces}</p></>}</div>
-            <div className={styles.summaryItems}>{selected.length ? selected.map((module) => <div key={module.id}><span>{module.name}</span><strong>{money(module.monthlyPrice)} ₽</strong></div>) : <p>Добавьте IT-сопровождение, чтобы увидеть итог и сохранить расчёт.</p>}</div>
-            <button className={ui.primary} type="button" onClick={() => setCallbackOpen(true)}>Обсудить подключение <ArrowRight /></button>
-            <button className={ui.secondary} type="button" onClick={download} disabled={loading || !selected.length}>{loading ? "Готовим PDF…" : status === "error" ? "Повторить скачивание PDF" : "Скачать расчёт в PDF"} <span aria-hidden="true">↓</span></button>
-            <p className={styles.feedback} role="status">{status === "demo" ? "В демоверсии можно проверить расчёт. Скачивание PDF будет доступно после запуска сайта на хостинге." : status === "changed" ? "Цены обновились. Проверьте новый расчёт и скачайте PDF ещё раз." : status === "success" ? "Расчёт готов. Файл отправлен на скачивание." : status === "error" ? "Не удалось создать PDF. Попробуйте ещё раз." : "Состав работ и условия уточним перед подключением."}</p>
-          </aside>
+          <div className={styles.summaryColumn}>
+            {service === "rkeeper" && pricingDate}
+            <aside id={summaryId} ref={summaryRevealRef} tabIndex={-1} data-scroll-reveal="" className={styles.summary} aria-label={`Итог расчёта ${service === "rkeeper" ? "r_keeper" : "IT-сопровождения"}`}>
+              <div className={styles.summaryTop}><p>{service === "rkeeper" ? "Ваше сопровождение r_keeper" : "Ваше IT-сопровождение"}</p><span className={styles.liveDot}>Расчёт онлайн</span></div>
+              <div aria-live="polite" aria-atomic="true">{selected.length ? <><p className={styles.total}>{money(total)} <span>₽</span></p><p className={styles.period}>в месяц · рабочих мест: {workplaces}</p></> : <><p className={styles.emptyTotal}>Выберите сопровождение</p><p className={styles.period}>Рабочих мест: {workplaces}</p></>}</div>
+              <div className={styles.summaryItems}>
+                {selected.length ? selected.map((module) => (
+                  <div key={module.id}>
+                    <span className={styles.summaryItemName}>
+                      <span className={styles.summaryCheck} aria-hidden="true">✓</span>
+                      {module.name}
+                    </span>
+                    <strong>{money(module.monthlyPrice)} ₽</strong>
+                  </div>
+                )) : <p>Добавьте IT-сопровождение, чтобы увидеть итог и сохранить расчёт.</p>}
+              </div>
+              <button className={ui.primary} type="button" onClick={() => setCallbackOpen(true)}>Обсудить подключение <ArrowRight /></button>
+              <button className={ui.secondary} type="button" onClick={download} disabled={loading || !selected.length}>{loading ? "Готовим PDF…" : status === "error" ? "Повторить скачивание PDF" : "Скачать расчёт в PDF"} <span aria-hidden="true">↓</span></button>
+              <p className={styles.feedback} role="status">{status === "demo" ? "В демоверсии можно проверить расчёт. Скачивание PDF будет доступно после запуска сайта на хостинге." : status === "changed" ? "Цены обновились. Проверьте новый расчёт и скачайте PDF ещё раз." : status === "success" ? "Расчёт готов. Файл отправлен на скачивание." : status === "error" ? "Не удалось создать PDF. Попробуйте ещё раз." : null}</p>
+            </aside>
+          </div>
         </div>
-        {service === "it" && <SectionReveal className={styles.help} distance={20}><div><span aria-hidden="true">↗</span><p>Не знаете, что выбрать?<br /><span>Расскажите о задаче — поможем подобрать состав сопровождения.</span></p></div><button type="button" className={ui.textLink} onClick={() => setCallbackOpen(true)}>Помогите с выбором <ArrowRight /></button></SectionReveal>}
       </div>
     </div>
     <MobileCalculationBar configurationRef={configurationRef} summaryRef={summaryRevealRef} summaryId={summaryId} productName={service === "rkeeper" ? "r_keeper" : "IT-сопровождение"} total={total} hasSelection={selected.length > 0} dialogOpen={callbackOpen} />

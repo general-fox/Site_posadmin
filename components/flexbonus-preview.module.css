@@ -1,0 +1,122 @@
+.preview { display: grid; place-items: center; width: 100%; height: 100%; min-width: 0; min-height: 0; margin: 0; color: var(--ink); container-type: size; }
+.browser { display: grid; grid-template-rows: auto minmax(0, 1fr); width: min(100cqw, calc(100cqh * 1.40625)); min-width: 0; min-height: 0; aspect-ratio: 1440 / 1024; overflow: hidden; border-radius: clamp(4px, 1.7cqw, 12px); }
+.browserChrome { display: block; width: 100%; height: auto; aspect-ratio: 1440 / 56; object-fit: cover; object-position: top; pointer-events: none; user-select: none; }
+.screen { min-width: 0; min-height: 0; overflow: hidden; container-type: size; }
+.window { display: grid; grid-template-columns: 128px minmax(0, 1fr); width: 100%; height: 100%; min-height: 0; background: var(--surface-selected); }
+.sidebar { display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; padding: 14px 10px; }
+.brand { display: flex; align-items: center; }
+.logo { display: block; width: 108px; max-width: 100%; height: auto; }
+.menu { display: grid; gap: 1px; min-height: 0; }
+.menu > p { margin: 6px 6px 4px; color: var(--text-muted); font-size: 9px; line-height: 1.3; }
+.menu > span { display: flex; align-items: center; gap: 6px; min-height: 20px; padding: 3px 6px; border-radius: 6px; color: var(--text-body); font-size: 10px; line-height: 1.3; }
+.menu svg { width: 12px; height: 12px; flex-shrink: 0; }
+.menu > .current { background: var(--action); color: var(--milk); }
+.profile { display: flex; align-items: center; gap: 5px; margin-top: auto; font-size: 10px; line-height: 1.3; }
+.profile > span { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--milk); }
+.main { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; padding: 14px; }
+.topbar { display: none; }
+.header { flex-shrink: 0; min-width: 0; }
+.header h4 { margin: 0; font-size: 18px; font-weight: 500; line-height: 1.2; letter-spacing: -.4px; }
+.header p { margin-top: 3px; color: var(--text-body); font-size: 10px; line-height: 1.3; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; flex-shrink: 0; margin: 0; }
+.metrics > div { min-width: 0; padding: 8px; border-radius: 8px; background: var(--milk); }
+.metrics dt { color: var(--text-body); font-size: 10px; line-height: 1.3; }
+.compactLabel { display: none; }
+.metrics dd { margin-top: 5px; font-size: clamp(13px, 2.3cqw, 18px); font-weight: 500; letter-spacing: -.4px; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.metrics dd > span { font-size: .7em; font-weight: 400; letter-spacing: 0; }
+.analytics { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 8px; flex: 1 1 0; min-width: 0; min-height: 0; }
+.chart, .bonuses { min-width: 0; min-height: 0; padding: 12px; border-radius: 10px; background: var(--milk); }
+.chart { display: flex; flex-direction: column; }
+.panelHeading { display: flex; justify-content: space-between; align-items: start; gap: 6px; flex-shrink: 0; }
+.panelHeading h5 { margin: 0; font-size: 11px; font-weight: 500; line-height: 1.3; }
+.panelHeading > span { flex-shrink: 0; color: var(--text-body); font-size: 9px; line-height: 1.3; }
+.panelHint { margin-top: 5px; color: var(--text-body); font-size: 9px; line-height: 1.3; }
+.bars { display: flex; align-items: end; gap: 3px; flex: 1 1 0; min-height: 24px; margin-top: 10px; }
+.bars > span { flex: 1 1 0; min-width: 0; border-radius: 2px 2px 0 0; background: var(--action); }
+.chartAxis { display: flex; justify-content: space-between; gap: 6px; margin-top: 6px; color: var(--text-body); font-size: 9px; line-height: 1.3; }
+.chartSummary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; margin-top: 10px; color: var(--text-body); font-size: 9px; line-height: 1.3; }
+.chartSummary strong { color: var(--ink); font-weight: 500; }
+.balance { margin-top: 10px; padding: 10px 8px; border-radius: 8px; background: var(--neutral); }
+.balance > span { display: block; color: var(--text-body); font-size: 10px; line-height: 1.3; }
+.balance p { margin-top: 5px; font-size: 20px; font-weight: 500; line-height: 1.2; letter-spacing: -.4px; font-variant-numeric: tabular-nums; }
+.balance p > span { font-size: 11px; font-weight: 400; }
+.bonuses > dl { display: grid; gap: 8px; margin-top: 12px; font-size: 10px; line-height: 1.3; }
+.bonuses > dl > div { display: flex; justify-content: space-between; gap: 5px; }
+.bonuses dt { color: var(--text-body); }
+.bonuses dd { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+@container (max-width: 540px) {
+  .browser { width: 100%; height: 100%; aspect-ratio: auto; }
+  .window { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { display: none; }
+  .main { gap: 8px; padding: 12px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
+  .topbar .logo { width: 100px; }
+  .topbar > span { color: var(--text-body); font-size: 10px; line-height: 1.3; }
+  .header h4 { font-size: 16px; }
+  .header p { margin-top: 2px; }
+  .metrics > div { padding: 7px; }
+  .metrics dt { font-size: 9px; }
+  .analytics { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+  .chart, .bonuses { padding: 10px; }
+  .panelHeading > span { display: none; }
+  .chartSummary { gap: 4px; margin-top: 8px; }
+}
+
+@container (max-width: 360px) {
+  .main { gap: 6px; padding: 8px; }
+  .topbar .logo { width: 88px; }
+  .header h4 { font-size: 14px; }
+  .header p { display: none; }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .metrics > div { padding: 5px 7px; }
+  .metrics dt { font-size: 9px; }
+  .fullLabel { display: none; }
+  .compactLabel { display: inline; }
+  .metrics dd { margin-top: 3px; font-size: 14px; }
+  .analytics { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 6px; }
+  .chart, .bonuses { padding: 7px; border-radius: 8px; }
+  .panelHeading h5 { font-size: 10px; }
+  .panelHint, .chartAxis, .chartSummary { display: none; }
+  .bars { gap: 2px; margin-top: 6px; }
+  .balance { margin-top: 5px; padding: 0; background: none; }
+  .balance > span { display: none; }
+  .balance p { margin-top: 0; font-size: 17px; }
+  .balance p > span { font-size: 10px; }
+  .bonuses > dl { gap: 4px; margin-top: 7px; font-size: 9px; }
+}
+
+@container (max-height: 410px) {
+  .menu > p:last-of-type, .menu > span:nth-of-type(n + 10) { display: none; }
+}
+
+@container (max-height: 360px) {
+  .menu > p, .menu > span:nth-of-type(n + 7) { display: none; }
+  .main { gap: 6px; padding: 9px; }
+  .header p, .panelHint, .chartAxis, .chartSummary { display: none; }
+  .header h4 { font-size: 15px; }
+  .metrics > div { padding: 6px; }
+  .metrics dt { font-size: 9px; }
+  .metrics dd { margin-top: 3px; font-size: 14px; }
+  .chart, .bonuses { padding: 8px; }
+  .bars { margin-top: 6px; }
+  .balance { margin-top: 5px; padding: 5px 6px; }
+  .balance p { margin-top: 3px; font-size: 18px; }
+  .bonuses > dl { gap: 5px; margin-top: 7px; font-size: 9px; }
+}
+
+@container (max-width: 360px) and (max-height: 360px) {
+  .main { gap: 5px; padding: 6px; }
+  .header h4 { font-size: 14px; }
+  .metrics > div { padding: 5px 6px; }
+  .metrics dd { margin-top: 2px; font-size: 13px; }
+  .chart, .bonuses { padding: 6px; }
+  .balance { padding: 0; }
+  .balance p { margin-top: 0; font-size: 16px; }
+  .bonuses > dl { gap: 3px; margin-top: 5px; }
+}
+
+@container (max-width: 240px) {
+  .analytics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bonuses > dl > div { gap: 3px; }
+}

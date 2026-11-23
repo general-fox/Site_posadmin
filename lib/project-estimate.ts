@@ -2,8 +2,20 @@ import { LAUNCH_CONCEPTS, type LaunchConcept } from "@/lib/launch-concepts";
 
 export const PROJECT_REGISTER_MIN = 1;
 export const PROJECT_REGISTER_MAX = 10;
+export const PROJECT_PRICES_UPDATED_AT = "2026-11-16";
 export const PROJECT_ESTIMATE_NOTICE = "Черновые расценки, уточняются менеджером. Это не окончательная смета.";
 export const PROJECT_ESTIMATE_EXCLUSIONS = "Оборудование, лицензии, подписки, выезд и нестандартные интеграции не включены.";
+export const PROJECT_CAPABILITIES_NOTICE = "Рассчитаем индивидуально. Стоимость не включена в сумму расчёта.";
+
+/** These requests need a separate quote; they have no catalogue price. */
+export const PROJECT_CAPABILITIES = [
+  { id: "egais", title: "ЕГАИС" },
+  { id: "marking", title: "Маркировка" },
+  { id: "mercury", title: "Меркурий" },
+  { id: "video-surveillance", title: "Видеонаблюдение" },
+  { id: "telephony", title: "Телефония" },
+  { id: "custom-integration", title: "Индивидуальная интеграция" },
+] as const;
 
 /** Draft project-work prices, deliberately separate from approved support tariffs. */
 export const PROJECT_WORKS = [
@@ -19,24 +31,18 @@ export const PROJECT_WORKS = [
 
 export type ProjectWorkId = (typeof PROJECT_WORKS)[number]["id"];
 export type ProjectWork = (typeof PROJECT_WORKS)[number];
+export type ProjectCapabilityId = (typeof PROJECT_CAPABILITIES)[number]["id"];
 export type ProjectEstimateSelection = {
   conceptId: LaunchConcept["id"];
   registers: number;
   selectedWorkIds: ProjectWorkId[];
-};
-
-const recommendedExtras: Record<LaunchConcept["id"], ProjectWorkId[]> = {
-  restaurant: ["kitchen", "stock", "fiscal", "network", "handover"],
-  cafe: ["stock", "fiscal", "handover"],
-  bar: ["stock", "fiscal", "network", "handover"],
-  "quick-service": ["kitchen", "stock", "fiscal", "network", "handover"],
-  delivery: ["kitchen", "stock", "fiscal", "integration", "handover"],
-  hotel: ["kitchen", "stock", "fiscal", "network", "integration", "handover"],
+  /** Optional for clients opened before additional capabilities were introduced. */
+  selectedCapabilityIds?: ProjectCapabilityId[];
 };
 
 export function getDefaultProjectSelection(conceptId: LaunchConcept["id"] = "restaurant"): ProjectEstimateSelection {
-  if (!Object.hasOwn(recommendedExtras, conceptId)) throw new Error("Unknown project concept");
-  return { conceptId, registers: 1, selectedWorkIds: ["design", "pos", ...recommendedExtras[conceptId]] };
+  if (!LAUNCH_CONCEPTS.some(({ id }) => id === conceptId)) throw new Error("Unknown project concept");
+  return { conceptId, registers: 1, selectedWorkIds: PROJECT_WORKS.filter(({ required }) => required).map(({ id }) => id), selectedCapabilityIds: [] };
 }
 
 export function formatProjectMoney(amount: number) {
@@ -58,12 +64,19 @@ export function calculateProjectEstimate(selection: ProjectEstimateSelection) {
   if (!Array.isArray(selection.selectedWorkIds) || selection.selectedWorkIds.some((id) => !PROJECT_WORKS.some((work) => work.id === id))) {
     throw new Error("Unknown project work");
   }
+  const selectedCapabilityIds = selection.selectedCapabilityIds === undefined ? [] : selection.selectedCapabilityIds;
+  if (
+    !Array.isArray(selectedCapabilityIds) || selectedCapabilityIds.length > PROJECT_CAPABILITIES.length ||
+    selectedCapabilityIds.some((id) => !PROJECT_CAPABILITIES.some((capability) => capability.id === id)) ||
+    new Set(selectedCapabilityIds).size !== selectedCapabilityIds.length
+  ) throw new Error("Unknown project capability");
+  const capabilities = PROJECT_CAPABILITIES.filter(({ id }) => selectedCapabilityIds.includes(id));
   const selected = new Set(selection.selectedWorkIds);
   const items = PROJECT_WORKS.filter((work) => work.required || selected.has(work.id)).map((work) => {
     const quantity = work.unit === "register" ? selection.registers : 1;
     return { ...work, quantity, total: work.price * quantity };
   });
-  return { concept, registers: selection.registers, items, total: items.reduce((sum, item) => sum + item.total, 0) };
+  return { concept, registers: selection.registers, items, capabilities, total: items.reduce((sum, item) => sum + item.total, 0) };
 }
 
 export type ProjectEstimate = ReturnType<typeof calculateProjectEstimate>;
@@ -74,6 +87,10 @@ export function buildProjectEstimateBrief(estimate: ProjectEstimate) {
     "Выбранные работы (черновые расценки):",
     ...estimate.items.map((item) => `• ${item.title}: ${item.quantity} × ${formatProjectMoney(item.price)} = ${formatProjectMoney(item.total)}.`),
     `Предварительный ориентир: ${formatProjectMoney(estimate.total)}.`,
+    ...(estimate.capabilities.length ? [
+      `Дополнительные возможности: ${estimate.capabilities.map(({ title }) => title).join(", ")}.`,
+      PROJECT_CAPABILITIES_NOTICE,
+    ] : []),
     PROJECT_ESTIMATE_NOTICE,
     PROJECT_ESTIMATE_EXCLUSIONS,
     "Прошу уточнить состав и прислать согласованную смету удобным способом связи.",

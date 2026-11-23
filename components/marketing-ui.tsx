@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
 
 export function useMarketingReducedMotion() {
@@ -12,6 +12,8 @@ type ScrollRevealOptions = {
   distance?: number;
   rows?: boolean;
 };
+
+export const UpwardScrollContext = createContext<RefObject<boolean> | null>(null);
 
 /**
  * Progressive enhancement: content is visible in SSR and without JavaScript.
@@ -28,6 +30,7 @@ export function useScrollReveal<T extends HTMLElement>({
   const visits = useRef(new WeakMap<HTMLElement, number>());
   const [layoutRevision, setLayoutRevision] = useState(0);
   const reduced = useMarketingReducedMotion();
+  const scrollingUp = useContext(UpwardScrollContext);
 
   useEffect(() => {
     const element = ref.current;
@@ -151,9 +154,15 @@ export function useScrollReveal<T extends HTMLElement>({
         ? { translate: `0 ${Math.min(distance, 14)}px` } : {}),
     });
     const prepare = (group: RevealGroup) => {
+      const bounds = group.anchor.getBoundingClientRect();
+      // On the homepage, an item left above the viewport is already visible on return.
+      if (scrollingUp && bounds.bottom <= 0) {
+        settle(group);
+        return;
+      }
       clearAnimations(group);
       group.phase = "waiting";
-      group.returning = group.count > 0 || group.anchor.getBoundingClientRect().bottom <= 0;
+      group.returning = group.count > 0 || bounds.bottom <= 0;
       // Prepare only offscreen. No visible -> hidden flash at the entry threshold.
       group.animations = group.targets.map((target) => {
         const frame = startFrame(group, target);
@@ -207,7 +216,10 @@ export function useScrollReveal<T extends HTMLElement>({
     const entryObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         const group = states.get(entry.target as HTMLElement);
-        if (group && entry.isIntersecting) play(group);
+        if (!group || !entry.isIntersecting) return;
+        // An instant jump can skip the exit observer's boundary entirely.
+        if (scrollingUp?.current && group.phase === "waiting") settle(group);
+        else play(group);
         // Leaving the viewport never interrupts an entrance already in progress.
       });
     }, { threshold: 0 });
@@ -243,7 +255,7 @@ export function useScrollReveal<T extends HTMLElement>({
       document.removeEventListener("visibilitychange", onVisibilityChange);
       targets.forEach((target) => { delete target.dataset.revealTarget; });
     };
-  }, [delay, distance, rows, layoutRevision, reduced]);
+  }, [delay, distance, rows, layoutRevision, reduced, scrollingUp]);
 
   return ref;
 }

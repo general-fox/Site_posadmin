@@ -21,7 +21,7 @@ const FOV = 1020;
 const ISO = FOV / 600;
 const DOT_SIZE = 1;
 const ANIM_SPEED = 2;
-const DOT_COLOR = "rgba(50, 47, 47, 0.37)";
+const DOT_COLOR = "#95B1EE";
 /** Nudge so the rightmost waves aren't clipped by the card. */
 const SHIFT_X = -68;
 /** Original Figma Group 549: rotate(-169.87deg) scaleY(-1). */

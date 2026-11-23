@@ -4,9 +4,6 @@
   z-index: -1;
   overflow: hidden;
   pointer-events: none;
-  /* Let the decorations disappear before their section clips them. */
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 64px, #000 calc(100% - 64px), transparent);
-  mask-image: linear-gradient(to bottom, transparent, #000 64px, #000 calc(100% - 64px), transparent);
 }
 
 .circuit {
@@ -25,11 +22,6 @@
 }
 
 @media (max-width: 767px) {
-  .atmosphere {
-    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40px, #000 calc(100% - 40px), transparent);
-    mask-image: linear-gradient(to bottom, transparent, #000 40px, #000 calc(100% - 40px), transparent);
-  }
-
   .circuit {
     display: none;
   }

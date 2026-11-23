@@ -13,6 +13,8 @@ import { ArrowRight, useMarketingReducedMotion } from "./marketing-ui";
 import ui from "./marketing.module.css";
 import styles from "./callback-dialog.module.css";
 import { getCalculationSummary, type CalculationSelection } from "@/lib/calculation-request";
+import { getProjectCalculation } from "@/lib/project-calculation";
+import { formatCashRegisters, type ProjectEstimateSelection } from "@/lib/project-estimate";
 import { usePricing } from "./pricing-provider";
 import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import type { CallbackSpecialist } from "@/lib/callback-specialist";
@@ -30,6 +32,7 @@ type CallbackDialogProps = {
   onClose: () => void;
   open: boolean;
   calculation?: CalculationSelection;
+  projectEstimate?: ProjectEstimateSelection;
   chooseSpecialist?: boolean;
 };
 
@@ -67,7 +70,7 @@ function formatRussianPhone(value: string) {
   return formatted;
 }
 
-export function CallbackDialog({ onClose, open, calculation, chooseSpecialist = false }: CallbackDialogProps) {
+export function CallbackDialog({ onClose, open, calculation, projectEstimate, chooseSpecialist = false }: CallbackDialogProps) {
   const { snapshot, updateSnapshot } = usePricing();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
@@ -89,9 +92,25 @@ export function CallbackDialog({ onClose, open, calculation, chooseSpecialist = 
   const [phone, setPhone] = useState("+7 ");
   const [specialist, setSpecialist] = useState<CallbackSpecialist | "">(chooseSpecialist ? "" : "manager");
   const summary = calculation ? getCalculationSummary(calculation, snapshot.config) : null;
+  const projectSummary = projectEstimate ? getProjectCalculation(projectEstimate) : null;
   const dateError = !contactSoon && scheduleNow ? getCallbackDateError(selectedDate, scheduleNow) : null;
   const availableTimes = scheduleNow ? getCallbackSlots(selectedDate, scheduleNow) : [];
   const formatPrice = (value: number) => `${value.toLocaleString("ru-RU")} ₽`;
+  const preview = summary ? {
+    label: "Выбранное сопровождение",
+    title: summary.productName,
+    total: formatPrice(summary.monthlyTotal),
+    period: "/мес.",
+    meta: `Рабочих мест: ${summary.workplaceCount}${summary.locationLabel ? ` · ${summary.locationLabel}` : ""}`,
+    items: summary.modules.map((module) => ({ name: module.name, price: `${formatPrice(module.monthlyPrice)}/мес.` })),
+  } : projectSummary ? {
+    label: "Расчёт запуска предприятия",
+    title: "Расчёт автоматизации",
+    total: formatPrice(projectSummary.estimate.total),
+    period: "",
+    meta: `${projectSummary.estimate.concept.label} · ${formatCashRegisters(projectSummary.estimate.registers)}`,
+    items: projectSummary.estimate.items.map((item) => ({ name: item.title, price: formatPrice(item.total) })),
+  } : null;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -147,7 +166,7 @@ export function CallbackDialog({ onClose, open, calculation, chooseSpecialist = 
       setSubmitError("Выберите, с кем хотите поговорить.");
       return;
     }
-    if (calculation !== undefined && !summary) {
+    if ((calculation !== undefined && !summary) || (projectEstimate !== undefined && !projectSummary) || (calculation !== undefined && projectEstimate !== undefined)) {
       setSubmitError("Не удалось проверить расчёт. Закройте форму и выберите услуги заново.");
       return;
     }
@@ -184,6 +203,7 @@ export function CallbackDialog({ onClose, open, calculation, chooseSpecialist = 
           time,
           website: formData.get("website") || "",
           ...(summary ? { calculation: summary.selection, pricingRevision: snapshot.revision } : {}),
+          ...(projectSummary ? { projectEstimate: projectSummary.selection } : {}),
         }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
@@ -273,7 +293,7 @@ export function CallbackDialog({ onClose, open, calculation, chooseSpecialist = 
                   : contactSoon
                   ? "Менеджер свяжется с вами в ближайшее рабочее время: по будням с 10:00 до 19:00 МСК."
                   : `Передали менеджеру удобное время звонка: ${new Date(`${selectedDate}T12:00:00+03:00`).toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: "Europe/Moscow" })}, ${selectedTime} МСК.`}
-                {summary ? " Ваш расчёт приложен к заявке." : ""}
+                {preview ? " Ваш расчёт приложен к заявке." : ""}
               </p>
               <button
                 className={`${ui.primary} ${styles.submit}`}
@@ -296,10 +316,10 @@ export function CallbackDialog({ onClose, open, calculation, chooseSpecialist = 
               </label>
               <p className={`${ui.eyebrow} ${styles.eyebrow}`}>{chooseSpecialist ? "Обратный звонок" : "Связь с менеджером"}</p>
               <h2 className={styles.title} id={titleId} ref={titleRef} tabIndex={-1}>
-                {chooseSpecialist ? "Кто вам нужен?" : summary ? "Обсудим ваш расчёт" : "Когда вам удобно поговорить?"}
+                {chooseSpecialist ? "Кто вам нужен?" : preview ? "Обсудим ваш расчёт" : "Когда вам удобно поговорить?"}
               </h2>
               <p className={styles.description} id={descriptionId}>
-                {IS_REVIEW_DEMO ? "Демонстрация формы: данные не отправляются. Для проверки можно использовать вымышленный номер." : chooseSpecialist ? "Выберите специалиста и оставьте номер. Передадим запрос нужной команде." : summary ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
+                {IS_REVIEW_DEMO ? "Демонстрация формы: данные не отправляются. Для проверки можно использовать вымышленный номер." : chooseSpecialist ? "Выберите специалиста и оставьте номер. Передадим запрос нужной команде." : preview ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
               </p>
 
               {chooseSpecialist ? (
@@ -321,19 +341,24 @@ export function CallbackDialog({ onClose, open, calculation, chooseSpecialist = 
                 </fieldset>
               ) : null}
 
-              {summary ? (
-                <section className={styles.calculation} aria-label="Выбранное сопровождение">
+              {preview ? (
+                <section className={styles.calculation} aria-label={preview.label}>
                   <div className={styles.calculationHeading}>
-                    <p>{summary.productName}</p>
-                    <p className={styles.calculationTotal}>{formatPrice(summary.monthlyTotal)}<span>/мес.</span></p>
+                    <p>{preview.title}</p>
+                    <p className={styles.calculationTotal}>{preview.total}{preview.period && <span>{preview.period}</span>}</p>
                   </div>
-                  <p className={styles.calculationMeta}>Рабочих мест: {summary.workplaceCount}{summary.locationLabel ? ` · ${summary.locationLabel}` : ""}</p>
+                  <p className={styles.calculationMeta}>{preview.meta}</p>
                   <details className={styles.calculationDetails}>
-                    <summary>Состав услуг</summary>
-                    <ul>{summary.modules.map((module) => (
-                      <li key={module.name}><span>{module.name}</span><span>{formatPrice(module.monthlyPrice)}/мес.</span></li>
+                    <summary>{projectSummary ? "Состав работ" : "Состав услуг"}</summary>
+                    <ul>{preview.items.map((item) => (
+                      <li key={item.name}><span>{item.name}</span><span>{item.price}</span></li>
                     ))}</ul>
                   </details>
+                  {projectSummary && projectSummary.estimate.capabilities.length > 0 && <div className={styles.calculationExtras}>
+                    <p>Индивидуальный расчёт</p>
+                    <ul>{projectSummary.estimate.capabilities.map(({ id, title }) => <li key={id}>{title}</li>)}</ul>
+                    <p>Стоимость не включена в сумму расчёта.</p>
+                  </div>}
                 </section>
               ) : null}
 

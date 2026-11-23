@@ -55,6 +55,7 @@ function load(relativePath) {
 }
 
 const { getCalculationSummary } = load("lib/calculation-request.ts");
+const { getProjectCalculation } = load("lib/project-calculation.ts");
 const { getCallbackSlots, getMoscowDateTime, getNextCallbackSlot, validateCallbackSchedule } = load("lib/callback-schedule.ts");
 const { POST } = load("app/api/callback/route.ts");
 const { getTelegramLeadConfig } = load("lib/telegram-leads.ts");
@@ -91,6 +92,81 @@ test("invalid counts, duplicate/unknown modules and unavailable onsite support a
   for (const selectedAdditionalModules of [["unknown"], ["onsite-hardware-support", "onsite-hardware-support"], null, "onsite-hardware-support"]) assert.equal(getCalculationSummary({ ...selection, selectedAdditionalModules }), null);
   assert.equal(getCalculationSummary({ product: "it_administration", workplaceCount: 1, selectedModules: [] }), null);
   assert.equal(getCalculationSummary({ ...selection, selectedAdditionalModules: [], location: "other" }).monthlyTotal, 6_000);
+});
+
+test("project selections preserve context, include required works and ignore forged prices", () => {
+  const input = { conceptId: "restaurant", registers: 3, selectedWorkIds: ["kitchen"], total: 1, concept: { label: "<b>forged</b>" }, items: [{ title: "forged", total: 1 }] };
+  const result = getProjectCalculation(input);
+  assert.equal(result.estimate.total, 38_000);
+  assert.equal(result.estimate.concept.label, "Ресторан");
+  assert.deepEqual(result.estimate.items.map(({ id, quantity, total }) => ({ id, quantity, total })), [
+    { id: "design", quantity: 1, total: 12_000 },
+    { id: "pos", quantity: 3, total: 18_000 },
+    { id: "kitchen", quantity: 1, total: 8_000 },
+  ]);
+  assert.deepEqual(result.selection, { conceptId: "restaurant", registers: 3, selectedWorkIds: ["design", "pos", "kitchen"], selectedCapabilityIds: [] });
+  assert.deepEqual(result.estimate.capabilities, []);
+  assert.deepEqual(input.selectedWorkIds, ["kitchen"]);
+  for (const registers of [undefined, null, 0, -1, 11, 1.5, "3", NaN, Infinity]) assert.equal(getProjectCalculation({ ...input, registers }), null);
+  for (const selectedWorkIds of [undefined, null, "kitchen", {}, ["unknown"], ["kitchen", "kitchen"], Array(100).fill("pos")]) assert.equal(getProjectCalculation({ ...input, selectedWorkIds }), null);
+  for (const conceptId of [undefined, null, "__proto__", "<b>forged</b>", {}, 1]) assert.equal(getProjectCalculation({ ...input, conceptId }), null);
+});
+
+test("callback delivers the server-recalculated project through the same manager form", async () => {
+  const projectEstimate = { conceptId: "restaurant", registers: 3, selectedWorkIds: ["kitchen"], total: 1, items: [{ title: "forged", total: 1 }] };
+  const response = await post({ ...validRequest, projectEstimate });
+  assert.equal(response.status, 200);
+  const message = deliveries.at(-1).text;
+  assert.match(message, /Расчёт: запуск предприятия/);
+  assert.match(message, /Формат:<\/b> Ресторан/);
+  assert.match(message, /Кассовых мест:<\/b> 3/);
+  assert.match(message, /Настройка кассовых мест — 3 × 6\s000 ₽ = 18\s000 ₽/);
+  assert.match(message, /Итого:<\/b> 38\s000 ₽ \(разово\)/);
+  assert.match(message, /Специалист:<\/b> менеджер/);
+  assert.doesNotMatch(message, /forged|\/мес\./);
+  assert.doesNotMatch(message, /Дополнительные возможности/);
+});
+
+test("additional capabilities survive normalization and manager delivery without changing the priced estimate", async () => {
+  const projectEstimate = {
+    conceptId: "restaurant", registers: 3, selectedWorkIds: ["kitchen"],
+    selectedCapabilityIds: ["custom-integration", "egais", "telephony"],
+    capabilities: [{ title: "<b>forged</b>", price: 1 }], total: 1,
+  };
+  const summary = getProjectCalculation(projectEstimate);
+  assert.deepEqual(summary.selection.selectedCapabilityIds, ["egais", "telephony", "custom-integration"]);
+  assert.deepEqual(summary.estimate.capabilities.map(({ title }) => title), ["ЕГАИС", "Телефония", "Индивидуальная интеграция"]);
+  assert.deepEqual(projectEstimate.selectedCapabilityIds, ["custom-integration", "egais", "telephony"]);
+  assert.equal(summary.estimate.total, 38_000);
+  const before = deliveries.length;
+  assert.equal((await post({ ...validRequest, projectEstimate })).status, 200);
+  assert.equal(deliveries.length, before + 1);
+  const message = deliveries.at(-1).text;
+  assert.match(message, /Итого:<\/b> 38\s000 ₽ \(разово\)/);
+  assert.match(message, /Дополнительные возможности — индивидуальный расчёт:<\/b>\n• ЕГАИС\n• Телефония\n• Индивидуальная интеграция/);
+  assert.match(message, /Стоимость не включена в сумму расчёта\./);
+  assert.doesNotMatch(message, /forged|Маркировка|Меркурий|Видеонаблюдение/);
+});
+
+test("invalid additional capabilities fail validation and cannot reach the manager", async () => {
+  const projectEstimate = { conceptId: "cafe", registers: 2, selectedWorkIds: [] };
+  const before = deliveries.length;
+  for (const selectedCapabilityIds of [null, "egais", {}, ["unknown"], ["egais", "egais"], [1], [{ id: "egais" }], Array(100).fill("egais")]) {
+    const invalid = { ...projectEstimate, selectedCapabilityIds };
+    assert.equal(getProjectCalculation(invalid), null);
+    assert.equal((await post({ ...validRequest, projectEstimate: invalid })).status, 400);
+  }
+  assert.equal(deliveries.length, before);
+});
+
+test("invalid or ambiguous project callbacks do not deliver a lead", async () => {
+  const before = deliveries.length;
+  const projectEstimate = { conceptId: "cafe", registers: 2, selectedWorkIds: [] };
+  for (const invalid of [null, {}, [], { ...projectEstimate, registers: 0 }, { ...projectEstimate, conceptId: "unknown" }, { ...projectEstimate, selectedWorkIds: ["pos", "pos"] }]) {
+    assert.equal((await post({ ...validRequest, projectEstimate: invalid })).status, 400);
+  }
+  assert.equal((await post({ ...validRequest, projectEstimate, calculation: selection })).status, 400);
+  assert.equal(deliveries.length, before);
 });
 
 test("Moscow scheduling crosses UTC dates and skips weekends and elapsed slots", () => {

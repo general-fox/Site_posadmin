@@ -340,7 +340,7 @@ function Label({
       response={response}
     >
       <motion.span
-        className="flex h-full w-full items-center justify-center whitespace-nowrap font-[family-name:var(--font-inter)] font-normal leading-none text-[#322f2f]"
+        className="flex h-full w-full items-center justify-center whitespace-nowrap font-[family-name:var(--font-inter)] font-normal leading-none text-[var(--ink)]"
         custom={0.88}
         style={{ fontSize: "0.655cqw" }}
         variants={accessoryVariants}
@@ -448,7 +448,7 @@ export function ItAdminVisual({ reduced = false }: { reduced?: boolean | null })
         }}
         delay={0.74}
         frame={{ left: 292.14, top: 307.68, width: 195.324, height: 127.286 }}
-        imageClassName="absolute inset-0 h-full w-full rounded-[5px] object-cover shadow-[0_8px_40px_rgba(0,0,0,0.15)]"
+        imageClassName="absolute inset-0 h-full w-full rounded-[5px] object-cover"
         pointer={pointer}
         response={PARALLAX.rkeeperWindow}
         src="/it-admin/rkeeper-window.png"

@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { useParallaxEntry } from "@/components/full-page-parallax";
 
 /** Offsets from title center; designed for ~460×148 title box. */
 const BASE_W = 460;
@@ -86,7 +85,6 @@ export function HeroCapsules({
   short: boolean;
   mobile: boolean;
 }) {
-  const parallaxEntry = useParallaxEntry();
   const stageW = Math.max(280, width || BASE_W);
   const stageH = Math.max(120, height || BASE_H);
   const sx = Math.min(stageW / BASE_W, Math.max(0, containerWidth / 2 - 76) / 358);
@@ -121,7 +119,7 @@ export function HeroCapsules({
     <div className="hero-capsules pointer-events-none absolute inset-0 overflow-visible" data-compact={compact}>
       {tags.map((tag) => (
         <motion.span
-          key={`${tag.label}-${compact}-${short}-${mobile}-${parallaxEntry}`}
+          key={`${tag.label}-${compact}-${short}-${mobile}`}
           className="hero-fall-tag absolute top-1/2 left-1/2 z-[5] select-none"
           transformTemplate={({ x, y, scale, rotate }) =>
             `translateX(-50%) translateY(-50%) translateX(${x}) translateY(${y}) scale(${scale}) rotate(${rotate})`
@@ -143,7 +141,7 @@ export function HeroCapsules({
               ? { duration: 0 }
               : {
                   ...burstSpring,
-                  delay: parallaxEntry > 0 ? tag.delay * 0.25 : 1.7 + tag.delay * 1.4,
+                  delay: 1.7 + tag.delay * 1.4,
                 }
           }
         >

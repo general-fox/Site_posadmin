@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import { motion } from "framer-motion";
 
 const lineEase = [0.22, 1, 0.36, 1] as const;
@@ -32,11 +32,9 @@ function CircuitBoard({
   side: Side;
   reduced: boolean | null;
 }) {
-  const uid = useId().replace(/:/g, "");
   const isLeft = side === "left";
   const paths = isLeft ? LEFT_PATHS : RIGHT_PATHS;
   const vb = isLeft ? "0 0 652.641 192.33" : "0 0 643.916 192.319";
-  const fadeId = `${uid}-fade`;
 
   return (
     <div className="absolute inset-0 overflow-visible">
@@ -46,16 +44,8 @@ function CircuitBoard({
         className="absolute inset-0 size-full overflow-visible"
         fill="none"
       >
-        <defs>
-          <linearGradient id={fadeId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#F5F5ED" stopOpacity="0.08" />
-            <stop offset="42%" stopColor="#F5F5ED" stopOpacity="0.42" />
-            <stop offset="100%" stopColor="#89827A" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-
         {paths.map((d) => (
-          <path key={d} d={d} stroke={`url(#${fadeId})`} strokeWidth="1" />
+          <path key={d} d={d} stroke="var(--accent-border)" strokeWidth="0.75" />
         ))}
       </svg>
 

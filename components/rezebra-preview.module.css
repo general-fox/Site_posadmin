@@ -1,0 +1,92 @@
+.preview {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 474px;
+  margin: 0;
+}
+
+.deviceStage {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  container-type: size;
+}
+
+.device {
+  position: relative;
+  width: min(96cqw, calc(100cqh * 1.5));
+  aspect-ratio: 3 / 2;
+  overflow: clip;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+}
+
+.device:focus-visible {
+  border-radius: 16px;
+  outline: 2px solid var(--action);
+  outline-offset: 4px;
+}
+
+.deviceImage, .screenBase {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.deviceCanvas {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 1536px;
+  height: 1024px;
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+.projectedScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1200px;
+  height: 780px;
+  overflow: hidden;
+  transform-origin: top left;
+  /* Project the 1200 × 780 screen onto the four display corners in the mockup. */
+  transform: matrix3d(
+    .762266036, -.054268263, 0, -.000124429185,
+    -.317365176, .892471226, 0, -.000074150271,
+    0, 0, 1, 0,
+    289, 100, 0, 1
+  );
+}
+
+.screenTrack {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: transform 450ms ease;
+}
+
+.slide { flex: 0 0 100%; min-width: 0; height: 100%; }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screenTrack { transition: none; }
+}

@@ -25,6 +25,14 @@ export function AboutHero({ onContact }: { onContact: () => void }) {
       (event.clientX - bounds.left) / bounds.width * 3,
     )));
     setLastHoveredCard(index);
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const card = event.target instanceof Element ? event.target.closest<HTMLElement>(`.${styles.column}`) : null;
+    if (!card) return;
+
+    const cardBounds = card.getBoundingClientRect();
+    card.style.setProperty("--glow-x", `${event.clientX - cardBounds.left}px`);
+    card.style.setProperty("--glow-y", `${event.clientY - cardBounds.top}px`);
   }
 
   return (

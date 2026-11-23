@@ -1,8 +1,5 @@
-.stack { position: relative; isolation: isolate; }
-.underlay { position: sticky; top: min(0px, calc(100svh - var(--underlay-height, 100000px))); z-index: 0; background: var(--milk); }
-/* Let the complete product demo rise into view before the closing panel arrives. */
-.productUnderlay { padding-bottom: clamp(120px, 22svh, 240px); }
-.ending { position: relative; z-index: 1; display: flow-root; margin-top: calc(var(--section-space) / 2); border-radius: 20px; background: var(--dark-background); }
-.flushEnding { margin-top: 0; }
+.stack { position: relative; }
+.underlay { position: relative; background: var(--milk); }
+.ending { position: relative; display: flow-root; margin-top: calc(var(--section-space) / 2); border-radius: 20px; background: var(--dark-background); }
+.productUnderlay + .ending, .flushEnding { margin-top: 0; }
 .footerEnding { padding-top: clamp(20px, 3vw, 40px); }
-@media (prefers-reduced-motion: reduce) { .underlay { position: relative; top: auto; } .productUnderlay { padding-bottom: 0; } }

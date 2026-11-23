@@ -9,12 +9,13 @@ const PATHS = [
   "M5.72936 12.2083C7.66332 12.2083 9.21049 10.6612 9.21049 8.7272C9.21049 6.79324 7.66332 5.24607 5.72936 5.24607C3.81958 5.24607 2.24823 6.79324 2.24823 8.70303V8.7272V13.272V16.0037V17.43H6.68299e-06V8.7272C6.68299e-06 5.56034 2.5625 2.99785 5.72936 2.99785C8.89622 2.99785 11.4587 5.56034 11.4587 8.7272C11.4587 11.8941 8.89622 14.4566 5.72936 14.4566V12.2083Z",
 ];
 
-export function SiteLogoMark({ className }: { className?: string }) {
+export function SiteLogoMark({ className, withDot = false }: { className?: string; withDot?: boolean }) {
+  const width = withDot ? 106.25 : 94.7954;
   return (
     <svg
       className={className}
-      viewBox="0 0 94.7954 17.43"
-      width="94.795"
+      viewBox={`0 0 ${width} 17.43`}
+      width={width}
       height="17.43"
       fill="none"
       aria-hidden
@@ -23,6 +24,7 @@ export function SiteLogoMark({ className }: { className?: string }) {
         {PATHS.map((d) => (
           <path key={d.slice(0, 24)} d={d} />
         ))}
+        {withDot && <circle cx="103.35" cy="8.715" r="2.9" fill="var(--blue)" />}
       </g>
     </svg>
   );

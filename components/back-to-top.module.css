@@ -10,13 +10,10 @@
   justify-content: center;
   gap: 8px;
   padding: 0 16px;
-  border: 1px solid rgb(245 245 237 / .22);
-  border-radius: 14px;
-  background: rgb(50 47 43 / .92);
+  border: 0;
+  border-radius: 999px;
+  background: var(--dark-background);
   color: var(--milk);
-  box-shadow: 0 4px 16px rgb(37 34 29 / .14);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
   font-family: var(--font-inter), sans-serif;
   font-size: 13px;
   font-weight: 400;
@@ -42,7 +39,8 @@
 
 @media (hover: hover) {
   .button:hover {
-    background: var(--ink);
+    background: var(--surface-selected);
+    color: var(--ink);
   }
 }
 
@@ -51,8 +49,9 @@
 }
 
 .button:focus-visible {
-  outline: 2px solid var(--accent-border);
-  outline-offset: 3px;
+  outline: none;
+  background: var(--surface-selected);
+  color: var(--ink);
 }
 
 :global(body:has(dialog[open])) .button {
@@ -92,3 +91,4 @@
     transform: none;
   }
 }
+@media (min-width: 768px) { .button { font-size: 14px; } }

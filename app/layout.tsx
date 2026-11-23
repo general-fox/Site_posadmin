@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import { BackToTop } from "@/components/back-to-top";
 import { JsonLd } from "@/components/json-ld";
 import {
@@ -12,16 +12,11 @@ import {
 import "./globals.css";
 import { IS_REVIEW_DEMO } from "@/lib/demo-mode";
 
-const inter = Inter({
-  subsets: ["latin", "cyrillic"],
-  variable: "--font-inter",
-  axes: ["opsz"],
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin", "cyrillic"],
-  variable: "--font-montserrat",
-  weight: ["500"],
+const inter = localFont({
+  src: "../public/fonts/inter/Inter-Variable.ttf",
+  variable: "--font-inter-local",
+  weight: "100 900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -55,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" data-scroll-behavior="smooth" className={`${inter.variable} ${montserrat.variable}`}>
+    <html lang="ru" data-scroll-behavior="smooth" className={inter.variable}>
       <body className="min-h-full antialiased">
         <JsonLd data={{
           "@context": "https://schema.org",

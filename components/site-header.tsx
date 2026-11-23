@@ -137,13 +137,13 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
       // through other sections. Undefined means ordinary scroll tracking.
       if (page !== "home" || destination !== undefined) return;
       const line = window.innerHeight * 0.42;
-      const hero = document.querySelector<HTMLElement>("[data-hero-curtain]");
+      const hero = document.querySelector<HTMLElement>("[data-page-hero]");
       if (hero && hero.getBoundingClientRect().bottom > line) {
         setActiveSection(null);
         return;
       }
       // Keep the nearest preceding section active through its supporting
-      // content (clients belong to about; both calculators belong to tariffs).
+      // content (both calculators belong to accompaniment).
       const current = [...HOME_NAVIGATION].reverse().find(({ id }) => {
         const section = document.getElementById(id);
         return section && section.getBoundingClientRect().top <= line;
@@ -265,7 +265,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
         <motion.nav key={pathname} ref={navRef} className={`site-nav ${styles.nav}`} aria-label="Основное меню" {...entry} style={{ visibility: ready ? "visible" : "hidden", clipPath: opened ? "none" : clipPath }} onMouseLeave={resetCapsule} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) resetCapsule(); }}>
           <span aria-hidden="true" className={`site-nav-chip ${styles.chip}`} style={{ transform: `translateX(${capsule.x}px)`, width: Math.max(0, capsule.width - 6) }} />
           <Link ref={logoRef} href="/" aria-label="posadmin, на главную" className={styles.logo} onMouseEnter={(event) => placeCapsule(event.currentTarget)} onFocus={(event) => placeCapsule(event.currentTarget)}>
-            <SiteLogoMark className="site-logo-mark" />
+            <SiteLogoMark className="site-logo-mark" withDot />
           </Link>
           {HOME_NAVIGATION.map((item, index) => (
             <Link key={item.id} ref={(element) => { linkRefs.current[item.id] = element; }} href={item.href}

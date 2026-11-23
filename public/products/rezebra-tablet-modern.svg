@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Серебристый iPad в горизонтальной ориентации</title>
+  <desc id="desc">Современный серебристый планшет с тонким чёрным безелем, камерой и боковыми кнопками.</desc>
+  <defs>
+    <linearGradient id="body" x1="74" y1="48" x2="1370" y2="968" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3F4F1"/>
+      <stop offset=".24" stop-color="#D6D8D5"/>
+      <stop offset=".58" stop-color="#A8ACAB"/>
+      <stop offset=".82" stop-color="#C9CBC8"/>
+      <stop offset="1" stop-color="#ECEDE9"/>
+    </linearGradient>
+    <linearGradient id="bezel" x1="690" y1="34" x2="690" y2="986" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#151517"/>
+      <stop offset="1" stop-color="#09090A"/>
+    </linearGradient>
+    <radialGradient id="camera" cx="0" cy="0" r="1" gradientTransform="translate(688 27) rotate(42) scale(7)">
+      <stop stop-color="#243750"/>
+      <stop offset=".55" stop-color="#101722"/>
+      <stop offset="1" stop-color="#030405"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Side controls -->
+  <rect x="1" y="164" width="8" height="72" rx="4" fill="#B7BAB8"/>
+  <rect x="1" y="254" width="8" height="112" rx="4" fill="#B7BAB8"/>
+  <rect x="1431" y="224" width="8" height="124" rx="4" fill="#B7BAB8"/>
+
+  <!-- Silver aluminium body in the same clean hardware style as the supplied phone. -->
+  <rect x="8" y="8" width="1424" height="1008" rx="68" fill="url(#body)"/>
+  <rect x="18" y="18" width="1404" height="988" rx="59" fill="url(#bezel)"/>
+  <rect x="54" y="34" width="1332" height="956" rx="34" fill="#030304"/>
+
+  <!-- Screen opening follows the source ratio while the complete visual matches FlexBonus at 1440:1024. -->
+  <rect x="72" y="44" width="1296" height="936" rx="22" fill="#303030"/>
+
+  <!-- Camera and microphone -->
+  <circle cx="720" cy="25" r="7" fill="#050506"/>
+  <circle cx="720" cy="25" r="4.5" fill="url(#camera)"/>
+  <circle cx="720" cy="25" r="1.2" fill="#315074" fill-opacity=".8"/>
+  <rect x="744" y="23" width="28" height="4" rx="2" fill="#050506"/>
+
+  <!-- Discreet status indicator -->
+  <circle cx="44" cy="512" r="5" fill="#050506"/>
+</svg>

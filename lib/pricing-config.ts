@@ -26,6 +26,10 @@ function initialRkeeperSchedule(): LegacyPriceSchedule {
   };
 }
 
+// Date confirmed by the site owner for the baseline prices below.
+// Saved revisions carry their own updatedAt timestamp.
+export const DEFAULT_PRICING_UPDATED_AT = "2026-11-16";
+
 export const DEFAULT_PRICING = {
   rkeeper: {
     base: initialRkeeperSchedule(),

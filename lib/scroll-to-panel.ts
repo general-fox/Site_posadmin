@@ -18,23 +18,6 @@ export function centeredPanelScrollTop({
   return Math.max(0, Math.min(maxScroll, panelTop - targetTop));
 }
 
-// These two layers can remain pinned while the document keeps scrolling.
-// Use their normal-flow positions, not their currently painted positions.
-function panelDocumentTop(panel: HTMLElement) {
-  let top = panel.getBoundingClientRect().top + window.scrollY;
-  const closing = panel.closest<HTMLElement>("[data-closing-underlay]");
-  if (closing?.parentElement && getComputedStyle(closing).position === "sticky") {
-    top -= closing.getBoundingClientRect().top - closing.parentElement.getBoundingClientRect().top;
-  }
-  const hero = panel.closest<HTMLElement>("[data-hero-underlay]");
-  if (hero?.parentElement && getComputedStyle(hero).position === "sticky") {
-    const stage = hero.parentElement;
-    const travel = Number.parseFloat(getComputedStyle(stage, "::after").height) || 0;
-    top += travel - (hero.getBoundingClientRect().top - stage.getBoundingClientRect().top);
-  }
-  return top;
-}
-
 /** One native, interruptible scroll. Never locks the page or moves keyboard focus. */
 export function centerPanelInViewport(panel: HTMLElement) {
   if (!panel.isConnected || panel.closest("dialog")) return () => {};
@@ -49,7 +32,7 @@ export function centerPanelInViewport(panel: HTMLElement) {
     ? Math.max(16, viewportTop + viewportHeight - calculationBar.top + 16)
     : 16;
   const top = centeredPanelScrollTop({
-    panelTop: panelDocumentTop(panel),
+    panelTop: panel.getBoundingClientRect().top + window.scrollY,
     panelHeight: panel.getBoundingClientRect().height,
     viewportTop,
     viewportHeight,

@@ -5,13 +5,11 @@ import { SiteLogoMark } from "./site-logo-mark";
 import styles from "./site-footer.module.css";
 import { ArrowRight } from "./marketing-ui";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
-import { HeroDust } from "./hero-dust";
 import { HOME_NAVIGATION, PRODUCT_NAVIGATION } from "@/lib/site-navigation";
 
 export function SiteFooter() {
   return (
     <footer className={styles.footer} data-header-surface="dark">
-      <div className={styles.dust} aria-hidden="true"><HeroDust coverage="full" subtle /></div>
       <div className={styles.reveal}>
       <div className={styles.inner}>
         <div className={styles.brand}>

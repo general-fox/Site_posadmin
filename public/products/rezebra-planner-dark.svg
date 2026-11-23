@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1304 942" role="img" aria-labelledby="title desc">
+  <title id="title">Планировщик ReZebra — светлая тема</title>
+  <desc id="desc">Светлая векторная схема интерфейса планировщика ресторана: список резервов, навигация, схема зала и временная шкала.</desc>
+  <defs>
+    <style>
+      .ui{font-family:Inter,Arial,sans-serif;fill:#11130F}
+      .label{font-size:15px;font-weight:600}
+      .reservation-meta{font-size:16px;font-weight:600}
+      .small{font-size:13px;font-weight:600}
+      .micro{font-size:10px;font-weight:600}
+      .time{font-size:28px;font-weight:600;letter-spacing:-.6px}
+      .stroke{fill:none;stroke:#11130F;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+      .seat{fill:#bfc7d0;stroke:#354454;stroke-width:1}
+      .table{fill:#88e984;stroke:#101510;stroke-width:1.3}
+      .table-number{font-size:14px;font-weight:600;fill:#11130F}
+      .table-text{fill:#0d120d;text-anchor:middle}
+    </style>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#84654e"/>
+      <stop offset="1" stop-color="#684936"/>
+    </linearGradient>
+    <linearGradient id="plant" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#72bd92"/>
+      <stop offset="1" stop-color="#417a5b"/>
+    </linearGradient>
+    <symbol id="rect-table" viewBox="0 0 118 74">
+      <rect class="seat" x="48" width="22" height="7" rx="3.5"/>
+      <rect class="seat" x="48" y="67" width="22" height="7" rx="3.5"/>
+      <rect class="seat" y="29" width="7" height="16" rx="3.5"/>
+      <rect class="seat" x="111" y="29" width="7" height="16" rx="3.5"/>
+      <rect class="table" x="8" y="8" width="102" height="58" rx="5"/>
+    </symbol>
+    <symbol id="round-table" viewBox="0 0 86 86">
+      <rect class="seat" x="34" width="18" height="7" rx="3.5"/>
+      <rect class="seat" x="34" y="79" width="18" height="7" rx="3.5"/>
+      <rect class="seat" y="34" width="7" height="18" rx="3.5"/>
+      <rect class="seat" x="79" y="34" width="7" height="18" rx="3.5"/>
+      <circle class="table" cx="43" cy="43" r="35"/>
+    </symbol>
+    <symbol id="home" viewBox="0 0 24 24"><path class="stroke" d="m3 10 9-7 9 7M6 8v13h12V8M10 21v-7h4v7"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><circle class="stroke" cx="10" cy="10" r="6"/><path class="stroke" d="m15 15 6 6"/></symbol>
+    <symbol id="map" viewBox="0 0 24 24"><path class="stroke" d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5ZM9 3v16M15 5v16"/></symbol>
+    <symbol id="calendar" viewBox="0 0 24 24"><rect class="stroke" x="3" y="5" width="18" height="16" rx="2"/><path class="stroke" d="M7 2v6M17 2v6M3 11h18M15 14v4l3 1"/></symbol>
+    <symbol id="phone" viewBox="0 0 24 24"><path class="stroke" d="m7 3 3 5-3 3c2 4 3 5 7 7l3-3 5 3-2 4C9 22 2 15 2 5l5-2Z"/></symbol>
+    <symbol id="wifi" viewBox="0 0 24 24"><path class="stroke" d="M2 7a17 17 0 0 1 20 0M5 11a12 12 0 0 1 14 0M8 15a6 6 0 0 1 8 0"/><circle cx="12" cy="20" r="1.5" fill="#20c640"/></symbol>
+    <symbol id="refresh" viewBox="0 0 24 24"><path class="stroke" d="M20 9A8 8 0 0 0 6 5L3 8M3 3v5h5M4 15a8 8 0 0 0 14 4l3-3M21 21v-5h-5"/></symbol>
+    <symbol id="settings" viewBox="0 0 24 24"><path class="stroke" d="m10 2h4l1 3 3 1 3 3-2 3v3l1 3-4 3-3-1-3 1-4-3 1-3v-3L5 9l3-3 1-1 1-3Z"/><circle class="stroke" cx="12" cy="12" r="3"/></symbol>
+    <symbol id="users" viewBox="0 0 24 24"><circle class="stroke" cx="9" cy="7" r="4"/><path class="stroke" d="M2 21v-3a7 7 0 0 1 14 0v3M18 12v8M14 16h8"/></symbol>
+  </defs>
+
+  <rect width="1304" height="942" fill="#F5EFD2"/>
+  <g class="ui">
+    <!-- Header -->
+    <rect width="94" height="48" fill="#599df8"/>
+    <path d="m21 18-7 7 7 7" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="34" y="31" font-size="17" font-weight="600" fill="#FFFFFF">Назад</text>
+    <rect x="108" width="138" height="48" fill="#FFF9DF"/>
+    <text x="123" y="31" font-size="18" font-weight="600">Планировщик</text>
+    <path d="M0 49h1304" stroke="#D1CDB8"/>
+
+    <!-- Left navigation -->
+    <rect y="50" width="57" height="892" fill="#FFF9DF"/>
+    <rect y="254" width="57" height="100" fill="#599df8"/>
+    <path d="M57 50v892" stroke="#D1CDB8"/>
+    <use href="#home" x="17" y="94" width="21" height="21"/>
+    <use href="#search" x="17" y="193" width="21" height="21"/>
+    <g transform="translate(17 294) scale(.875)"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5ZM9 3v16M15 5v16" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <use href="#calendar" x="17" y="395" width="21" height="21"/>
+    <use href="#phone" x="17" y="468" width="21" height="21"/>
+    <use href="#wifi" x="17" y="754" width="21" height="21"/>
+    <use href="#refresh" x="17" y="805" width="21" height="21"/>
+    <use href="#settings" x="17" y="855" width="21" height="21"/>
+    <use href="#users" x="17" y="904" width="21" height="21"/>
+
+    <!-- Reservation list -->
+    <rect x="61" y="54" width="330" height="834" fill="#E8E2C3" stroke="#D1CDB8"/>
+    <g font-weight="600">
+      <g transform="translate(61 54)"><path d="M0 72h330" stroke="#C8C3AB"/><text x="10" y="47" class="time">11:00</text><text x="306" y="29" class="reservation-meta" text-anchor="end">1 РЕЗЕРВ</text><text x="306" y="53" class="reservation-meta" text-anchor="end">3 ГОСТЯ</text></g>
+      <g transform="translate(61 126)"><path d="M0 72h330" stroke="#C8C3AB"/><text x="10" y="47" class="time">11:30</text><text x="306" y="29" class="reservation-meta" text-anchor="end">1 РЕЗЕРВ</text><text x="306" y="53" class="reservation-meta" text-anchor="end">4 ГОСТЯ</text></g>
+      <g transform="translate(61 198)"><path d="M0 72h330" stroke="#C8C3AB"/><text x="10" y="47" class="time">12:00</text><text x="306" y="29" class="reservation-meta" text-anchor="end">1 РЕЗЕРВ</text><text x="306" y="53" class="reservation-meta" text-anchor="end">5 ГОСТЕЙ</text></g>
+      <g transform="translate(61 270)"><path d="M0 72h330" stroke="#C8C3AB"/><text x="10" y="47" class="time">12:45</text><text x="306" y="29" class="reservation-meta" text-anchor="end">1 РЕЗЕРВ</text><text x="306" y="53" class="reservation-meta" text-anchor="end">5 ГОСТЕЙ</text></g>
+    </g>
+    <rect x="391" y="54" width="12" height="834" fill="#D0CBB1"/>
+    <rect x="391" y="55" width="10" height="440" rx="5" fill="#95958F"/>
+
+    <!-- Room tabs -->
+    <rect x="574" y="51" width="114" height="37" rx="2" fill="#599df8"/>
+    <text x="430" y="76" font-size="18" font-weight="600">Панорамный зал</text>
+    <text x="631" y="76" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Зал у воды</text>
+    <text x="702" y="76" font-size="17" font-weight="600">Капитанская гостиная</text>
+    <path d="M1170 53v33" stroke="#D1CDB8"/>
+    <text x="1185" y="79" font-size="29">+</text>
+    <text x="1229" y="76" font-size="20">☼</text>
+    <text x="1275" y="77" font-size="24">−</text>
+
+    <!-- Floor plan -->
+    <rect x="412" y="96" width="892" height="752" fill="#E5DFC0"/>
+    <path d="M445 714V219h822v495h-390M445 714h302" fill="none" stroke="#354454" stroke-width="12"/>
+
+    <!-- Plants and bar -->
+    <g transform="translate(665 267)"><circle r="22" fill="url(#plant)" stroke="#86d0a8"/><path d="M-17-1c11-6 18-4 21 1-4 8-12 10-20 5 4-1 8-3 11-7-4 3-8 4-12 3" fill="#d9f2db"/><text x="8" y="4" class="micro" fill="#FFFFFF">Мо...</text></g>
+    <g transform="translate(979 267)"><circle r="22" fill="url(#plant)" stroke="#86d0a8"/><path d="M-17-1c11-6 18-4 21 1-4 8-12 10-20 5 4-1 8-3 11-7-4 3-8 4-12 3" fill="#d9f2db"/><text x="8" y="4" class="micro" fill="#FFFFFF">Фик...</text></g>
+    <rect x="1038" y="244" width="186" height="44" rx="12" fill="url(#bar)" stroke="#a98c74"/>
+    <path d="m1115 258h11l-5.5 8v7m-5 0h10" class="stroke" stroke-width="1.3"/>
+    <text x="1138" y="270" class="small" fill="#FFFFFF">Бар</text>
+
+    <!-- Row 1 -->
+    <text x="497" y="301" class="table-number">1</text><use href="#rect-table" x="484" y="294" width="126" height="79"/><rect x="499" y="294" width="99" height="9" rx="4" class="seat"/><text x="547" y="326" class="table-text label">Через</text><text x="547" y="348" class="table-text" font-size="18" font-weight="600">02:01</text>
+    <text x="729" y="301" class="table-number">2</text><use href="#round-table" x="713" y="294" width="86" height="86"/>
+    <text x="923" y="301" class="table-number">3</text><use href="#rect-table" x="911" y="294" width="118" height="74"/>
+    <text x="1132" y="301" class="table-number">4</text><use href="#rect-table" x="1120" y="294" width="110" height="74"/>
+
+    <!-- Row 2 -->
+    <text x="522" y="405" class="table-number">5</text><use href="#round-table" x="504" y="398" width="86" height="86"/>
+    <text x="716" y="412" class="table-number">6</text><use href="#rect-table" x="702" y="405" width="112" height="74"/><rect x="718" y="404" width="79" height="8" rx="4" class="seat"/>
+    <text x="924" y="412" class="table-number">7</text><use href="#rect-table" x="910" y="405" width="112" height="74"/>
+    <text x="1148" y="405" class="table-number">8</text><use href="#round-table" x="1130" y="398" width="86" height="86"/>
+
+    <!-- Row 3 -->
+    <text x="509" y="516" class="table-number">9</text><use href="#rect-table" x="493" y="509" width="108" height="74"/>
+    <text x="717" y="516" class="table-number">10</text><use href="#rect-table" x="703" y="509" width="112" height="74"/><text x="759" y="542" class="table-text micro">Опаздывает</text><text x="759" y="564" class="table-text" font-size="18" font-weight="600">06:09</text><circle cx="801" cy="521" r="4" fill="#ffac00"/>
+    <text x="938" y="510" class="table-number">11</text><use href="#round-table" x="922" y="503" width="86" height="86"/><rect x="936" y="508" width="51" height="8" rx="4" class="seat"/><text x="965" y="545" class="table-text micro">ОПОЗД.</text><text x="965" y="565" class="table-text" font-size="16" font-weight="600">05:34</text><circle cx="997" cy="518" r="4" fill="#ffac00"/>
+    <text x="1135" y="516" class="table-number">12</text><use href="#rect-table" x="1121" y="509" width="108" height="74"/>
+
+    <!-- Row 4 -->
+    <text x="484" y="617" class="table-number">13</text><use href="#rect-table" x="469" y="610" width="109" height="74"/>
+    <text x="646" y="617" class="table-number">14</text><use href="#round-table" x="628" y="610" width="86" height="86"/>
+    <text x="991" y="617" class="table-number">15</text><use href="#rect-table" x="979" y="610" width="118" height="74"/>
+    <text x="1146" y="617" class="table-number">16</text><use href="#rect-table" x="1134" y="610" width="107" height="74"/><rect x="1149" y="612" width="80" height="8" rx="4" class="seat"/>
+
+    <!-- Hostess and entrance -->
+    <rect x="748" y="630" width="132" height="46" rx="6" fill="#317fc6" stroke="#8fc2f2"/>
+    <path d="m782 649 4-7 4 7h-8Zm-5 8 4-7 4 7h-8Zm10 0 4-7 4 7h-8Z" class="stroke" stroke-width="1.2"/>
+    <text x="829" y="657" class="micro" fill="#FFFFFF" text-anchor="middle">Стойка хостес</text>
+    <rect x="767" y="687" width="92" height="21" rx="5" fill="#728096" stroke="#9aa8b8"/>
+    <text x="813" y="701" class="micro" fill="#FFFFFF" text-anchor="middle">Вход</text>
+
+    <!-- Bottom area -->
+    <path d="M412 848h892" stroke="#D1CDB8"/>
+    <rect x="423" y="874" width="129" height="39" rx="5" fill="#FFF9DF" stroke="#C8C3AB"/>
+    <text x="439" y="899" font-size="13" letter-spacing="1">23. 11. 2026</text>
+    <rect x="538" y="886" width="10" height="10" rx="1" fill="none" stroke="#11130F"/><path d="M538 889h10M541 883v5M545 883v5" stroke="#11130F"/>
+    <rect x="574" y="875" width="610" height="36" rx="4" fill="#FFFDF2" stroke="#C8C3AB"/>
+    <g stroke="#D1CDB8" stroke-width=".8">
+      <path d="M599 877v32M625 877v32M650 877v32M676 877v32M701 877v32M727 877v32M752 877v32M778 877v32M803 877v32M829 877v32M854 877v32M880 877v32M905 877v32M931 877v32M956 877v32M982 877v32M1007 877v32M1033 877v32M1058 877v32M1084 877v32M1109 877v32M1135 877v32M1160 877v32"/>
+    </g>
+    <text x="887" y="872" font-size="17" font-weight="600" text-anchor="middle">18:54</text>
+    <rect x="875" y="875" width="24" height="36" rx="4" fill="#599df8" stroke="#83baff"/>
+    <path d="m883 884-6 9 6 9m9-18 6 9-6 9" class="stroke" stroke-width="1.1"/>
+    <rect x="1207" y="875" width="83" height="38" rx="3" fill="#D1D1D1"/>
+    <text x="1248" y="900" fill="#FFFFFF" font-size="15" text-anchor="middle">Сейчас</text>
+
+    <path d="M61 888h342" stroke="#D1CDB8"/>
+    <text x="68" y="927" font-size="24" font-weight="600">Всего</text>
+    <text x="389" y="911" class="label" text-anchor="end">4 РЕЗЕРВА</text>
+    <text x="389" y="932" class="label" text-anchor="end">17 ГОСТЕЙ</text>
+  </g>
+</svg>
