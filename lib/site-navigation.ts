@@ -6,8 +6,14 @@ export const HOME_NAVIGATION = [
   { id: "contact", href: "/#contact", label: "Контакты" },
 ] as const;
 
+export const SITE_PRODUCTS = {
+  rezebra: { name: "Rezebra", category: "Система бронирования" },
+  flexbonus: { name: "Flexbonus", category: "Система лояльности" },
+  foxControl: { name: "Fox Control", category: "Система аналитики" },
+} as const;
+
 export const PRODUCT_NAVIGATION = [
-  { href: "/#rezebra", label: "ReZebra", description: "Бронирование столов" },
-  { href: "/#flexbonusb", label: "FlexBonus", description: "Лояльность гостей" },
-  { href: "/#foxcontrol", label: "Fox Control", description: "Контроль операций" },
+  { href: "/#rezebra", label: SITE_PRODUCTS.rezebra.name, description: "Бронирование столов" },
+  { href: "/#flexbonusb", label: SITE_PRODUCTS.flexbonus.name, description: "Лояльность гостей" },
+  { href: "/#foxcontrol", label: SITE_PRODUCTS.foxControl.name, description: "Контроль операций" },
 ] as const;

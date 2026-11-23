@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
+import { UiIcon } from "./ui-icon";
 
 export function useMarketingReducedMotion() {
   return useHydratedReducedMotion();
@@ -277,5 +278,5 @@ export function SectionReveal({
 }
 
 export function ArrowRight({ diagonal = false }: { diagonal?: boolean }) {
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={diagonal ? "M6 18 18 6M6 6h12v12" : "M4 12h16m-6-6 6 6-6 6"} /></svg>;
+  return <UiIcon name={diagonal ? "arrow-up-right" : "arrow-right"} />;
 }

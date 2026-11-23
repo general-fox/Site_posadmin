@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { normalizeProjectPhone, normalizeTelegramContact, normalizeProjectChatContact, PROJECT_TASK_MAX_LENGTH, PROJECT_CONTACT_MAX_LENGTH, type ProjectStage, type ProjectContactMethod } from "@/lib/project-request";
 import { ArrowRight, useMarketingReducedMotion } from "./marketing-ui";
+import { UiIcon } from "./ui-icon";
 import shared from "./callback-dialog.module.css";
 import styles from "./project-dialog.module.css";
 import ui from "./marketing.module.css";
@@ -197,7 +198,7 @@ export function ProjectDialog({ open, onClose, initialStage, projectBrief }: { o
               <div className={styles.estimateHeader}><div><p>Предварительный ориентир</p><span>{briefPreview.scope}</span></div><strong>{briefPreview.total}</strong></div>
               <p className={styles.estimateNotice}>{briefPreview.notice}</p>
               <details className={styles.estimateDetails}>
-                <summary>Состав проекта <span>{briefPreview.items.length} поз.</span></summary>
+                <summary><UiIcon name="chevron-down" size={16} />Состав проекта <span>{briefPreview.items.length} поз.</span></summary>
                 <ul>{briefPreview.items.map((item) => <li key={item.title}><div><strong>{item.title}</strong><span>{item.detail}</span></div><span>{item.amount}</span></li>)}</ul>
                 <p>{briefPreview.exclusions}</p>
               </details>
@@ -217,7 +218,12 @@ export function ProjectDialog({ open, onClose, initialStage, projectBrief }: { o
               <span className={shared.hint} id={contactHintId}>{contactMethod === "phone" ? "Можно начать с +7, 8 или ввести 10 цифр." : contactMethod === "telegram" ? "@Имя из настроек Telegram или ссылка t.me/username." : "Напишите, где вам удобно получить расчёт и как найти вас в этом чате."}</span>
             </label>
             <details className={styles.taskDisclosure} open={taskExpanded} onToggle={(event) => setTaskExpanded(event.currentTarget.open)}>
-              <summary>{task.trim() ? "Пожелания к проекту" : "Добавить пожелания"}<span>{task.trim() ? "добавлены" : "необязательно"}</span></summary>
+              <summary>
+                <UiIcon name="plus" className={styles.taskCollapsedIcon} />
+                <UiIcon name="minus" className={styles.taskExpandedIcon} />
+                {task.trim() ? "Пожелания к проекту" : "Добавить пожелания"}
+                <span>{task.trim() ? "добавлены" : "необязательно"}</span>
+              </summary>
               {taskField}
             </details>
             <label className={shared.consent}><input type="checkbox" name="personalDataConsent" checked={consent} onChange={(event) => { setConsent(event.target.checked); clearError(); }} required disabled={submitting} aria-invalid={errorField === "personalDataConsent"} aria-describedby={errorField === "personalDataConsent" ? errorId : undefined} /><span>Я даю согласие на обработку персональных данных.</span></label>

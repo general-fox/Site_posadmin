@@ -10,7 +10,7 @@ const PATHS = [
 ];
 
 export function SiteLogoMark({ className, withDot = false }: { className?: string; withDot?: boolean }) {
-  const width = withDot ? 106.25 : 94.7954;
+  const width = withDot ? 109 : 94.7954;
   return (
     <svg
       className={className}
@@ -24,7 +24,7 @@ export function SiteLogoMark({ className, withDot = false }: { className?: strin
         {PATHS.map((d) => (
           <path key={d.slice(0, 24)} d={d} />
         ))}
-        {withDot && <circle cx="103.35" cy="8.715" r="2.9" fill="var(--blue)" />}
+        {withDot && <circle cx="103.35" cy="8.715" r="2.9" fill="var(--blue)" shapeRendering="geometricPrecision" />}
       </g>
     </svg>
   );

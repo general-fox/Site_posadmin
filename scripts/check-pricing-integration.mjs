@@ -14,6 +14,7 @@ const testDirectory = mkdtempSync(path.join(tmpdir(), "posadmin-pricing-test-"))
 const isolatedGlobal = {};
 const modules = new Map();
 const pdfs = [];
+const rkeeperPdfInputs = [];
 const messages = [];
 let snapshot;
 function load(relativePath) {
@@ -21,17 +22,22 @@ function load(relativePath) {
   if (modules.has(filename)) return modules.get(filename).exports;
   const module = { exports: {} };
   modules.set(filename, module);
-  const code = ts.transpileModule(readFileSync(filename, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const code = ts.transpileModule(readFileSync(filename, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
   const resolve = (id) => {
     if (id === "server-only") return {};
     if (id === "@/lib/pricing-store") return { getPricingSnapshot: () => structuredClone(snapshot) };
     if (id === "@/lib/rkeeper-pdf") return {
-      createRkeeperPdf: async ({ calculation }) => { pdfs.push(calculation); return Buffer.from("%PDF-test"); },
+      createRkeeperPdf: async (input) => {
+        pdfs.push(input.calculation);
+        rkeeperPdfInputs.push(input);
+        return Buffer.from("%PDF-test");
+      },
       createItAdministrationPdf: async ({ calculation }) => { pdfs.push(calculation); return Buffer.from("%PDF-test"); },
     };
     if (id === "next/server") return { NextResponse: { json: (body, init) => Response.json(body, init) } };
     if (id === "node:fs") return { ...require(id), readFileSync() { throw new Error("Credential files are inaccessible in integration tests."); } };
     if (id.startsWith("@/")) return load(`${id.slice(2)}.ts`);
+    if (id.startsWith(".") && id.endsWith(".json")) return require(path.resolve(path.dirname(filename), id));
     if (id.startsWith(".")) return load(path.relative(root, path.resolve(path.dirname(filename), `${id}.ts`)));
     return require(id);
   };
@@ -92,6 +98,35 @@ test("IT PDF uses the same current configuration", async () => {
   assert.equal((await it.POST(request({ product: "it_administration", workplaceCount: 1, selectedModules: ["system-administration"], pricingRevision: 3 }))).status, 200);
   assert.equal(pdfs.at(-1).monthlyTotal, 6000);
 });
+test("the optional r_keeper IT module validates the flag and uses the current tariff", async () => {
+  const withoutIt = { ...selection, includeItSupport: false };
+  const withIt = { ...selection, includeItSupport: true };
+  assert.equal(getCalculationSummary(withoutIt, snapshot.config).monthlyTotal, 13_000);
+  assert.equal(getCalculationSummary(withIt, snapshot.config).monthlyTotal, 19_000);
+  assert.equal((await rk.POST(request(withoutIt))).status, 200);
+  assert.equal(rkeeperPdfInputs.at(-1).itAdministration, undefined);
+  assert.equal((await rk.POST(request(withIt))).status, 200);
+  assert.equal(rkeeperPdfInputs.at(-1).itAdministration.monthlyTotal, 6000);
+
+  const before = rkeeperPdfInputs.length;
+  for (const includeItSupport of ["true", 1, null, {}]) {
+    const invalid = { ...selection, includeItSupport };
+    assert.equal(getCalculationSummary(invalid, snapshot.config), null);
+    assert.equal((await rk.POST(request(invalid))).status, 400);
+  }
+  assert.equal(rkeeperPdfInputs.length, before);
+});
+test("r_keeper PDF validates a confirmed city without pricing an unsupported visit", async () => {
+  const otherSelection = { ...selection, location: "other", selectedAdditionalModules: [] };
+  assert.equal((await rk.POST(request(otherSelection))).status, 200);
+  assert.equal((await rk.POST(request({ ...otherSelection, otherCity: "Казань, Республика Татарстан" }))).status, 200);
+  assert.equal(rkeeperPdfInputs.at(-1).calculation.monthlyTotal, 4500);
+
+  const before = rkeeperPdfInputs.length;
+  assert.equal((await rk.POST(request({ ...otherSelection, otherCity: "Несуществующий пункт" }))).status, 400);
+  assert.equal((await rk.POST(request({ ...selection, otherCity: "Казань, Республика Татарстан" }))).status, 400);
+  assert.equal(rkeeperPdfInputs.length, before);
+});
 test("stale and missing revisions cannot silently download a different price", async () => {
   for (const revision of [0, 2, undefined, "3"]) {
     const before = pdfs.length;
@@ -141,6 +176,17 @@ test("custom formulas stay consistent across both calculators, summaries, PDF en
       assert.equal(getCalculationSummary(itSelection, snapshot.config).monthlyTotal, itCalculation.monthlyTotal);
       assert.equal((await it.POST(request(itSelection))).status, 200);
       assert.equal(pdfs.at(-1).monthlyTotal, itCalculation.monthlyTotal);
+
+      const combinedSelection = { ...rkSelection, includeItSupport: true };
+      const combinedSummary = getCalculationSummary(combinedSelection, snapshot.config);
+      assert.equal(combinedSummary.selection.includeItSupport, true);
+      assert.deepEqual(combinedSummary.modules.at(-1), {
+        name: "Системное IT администрирование",
+        monthlyPrice: itCalculation.monthlyTotal,
+      });
+      assert.equal(combinedSummary.monthlyTotal, calculated.monthlyTotal + itCalculation.monthlyTotal);
+      assert.equal((await rk.POST(request(combinedSelection))).status, 200);
+      assert.deepEqual(rkeeperPdfInputs.at(-1).itAdministration, itCalculation);
     }
     assert.match(getServiceBySlug("soprovozhdenie-r-keeper", snapshot.config).pricing.text, /6\s250/);
     assert.match(getServiceBySlug("vyezdnoe-soprovozhdenie", snapshot.config).pricing.text, /2\s400/);
@@ -154,9 +200,10 @@ test("callback endpoint recomputes formula prices and rejects stale formula revi
   assert.equal(validated.ok, true, validated.error);
   snapshot = { config: validated.value, revision: 4, updatedAt: "2026-09-25T13:00:00.000Z" };
   try {
-    for (const calculation of [
-      { ...selection, workplaceCount: 8, monthlyTotal: 1, formula: "=1" },
-      { product: "it_administration", workplaceCount: 8, selectedModules: ["system-administration"], monthlyTotal: 1 },
+    for (const [calculation, expectedTotal] of [
+      [{ ...selection, workplaceCount: 8, monthlyTotal: 1, formula: "=1" }, /Итого:<\/b> 23\s700 ₽/],
+      [{ ...selection, workplaceCount: 8, includeItSupport: true, monthlyTotal: 1 }, /Итого:<\/b> 35\s700 ₽/],
+      [{ product: "it_administration", workplaceCount: 8, selectedModules: ["system-administration"], monthlyTotal: 1 }, /Итого:<\/b> 12\s000 ₽/],
     ]) {
       const before = messages.length;
       const body = { phone: "+7 (999) 123-45-67", personalDataConsent: true, contactSoon: true, calculation, pricingRevision: 4 };
@@ -165,7 +212,10 @@ test("callback endpoint recomputes formula prices and rejects stale formula revi
       assert.equal(messages.length, before + 1);
       const text = messages.at(-1).text;
       assert.match(text, /Рабочих мест:<\/b> 8/);
-      assert.match(text, calculation.product === "r_keeper" ? /Итого:<\/b> 23\s700 ₽/ : /Итого:<\/b> 12\s000 ₽/);
+      assert.match(text, expectedTotal);
+      if (calculation.includeItSupport) {
+        assert.match(text, /Системное IT администрирование — 12\s000 ₽/);
+      }
       const stale = await callback.POST(request({ ...body, pricingRevision: 3 }));
       assert.equal(stale.status, 409);
       assert.equal(messages.length, before + 1);

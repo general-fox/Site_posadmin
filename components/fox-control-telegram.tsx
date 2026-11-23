@@ -83,7 +83,7 @@ function PhoneChat() {
             <PhoneStatus />
             <div className={styles.chatHeader}>
               <svg className={styles.backIcon} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="m14 5-7 7 7 7M7 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="m12 5-7 7 7 7M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <div className={styles.chatIdentity}>
                 <span className={styles.chatAvatar}><FoxMark /></span>

@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
-// Keep a running preview independent from production builds.
+// Keep local previews independent from legacy and production build artifacts.
 const nextConfig = (phase: string): NextConfig => ({
-  distDir: phase === PHASE_DEVELOPMENT_SERVER ? (process.env.POSADMIN_PREVIEW_DIST_DIR || ".next") : ".next-build",
+  distDir: phase === PHASE_DEVELOPMENT_SERVER ? (process.env.POSADMIN_PREVIEW_DIST_DIR || ".next-preview-local") : ".next-build",
   async redirects() {
     return [
       {
@@ -12,6 +12,7 @@ const nextConfig = (phase: string): NextConfig => ({
         destination: "https://posadmin.ru/:path*",
         permanent: true,
       },
+      { source: "/about", destination: "/#about", permanent: true },
     ];
   },
   async headers() {

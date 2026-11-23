@@ -25,11 +25,13 @@ function load(relativePath) {
   const module = { exports: {} };
   cache.set(filename, module);
   const code = ts.transpileModule(readFileSync(filename, "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText;
   const resolve = (id) => {
     if (id === "@/lib/pricing-store") return { getPricingSnapshot: () => ({ config: load("lib/pricing-config.ts").DEFAULT_PRICING, revision: pricingRevision, updatedAt: null }) };
     if (id.startsWith("@/")) return load(`${id.slice(2)}.ts`);
+    if (id.startsWith(".") && id.endsWith(".json")) return require(path.resolve(path.dirname(filename), id));
+    if (id.startsWith(".")) return load(path.relative(root, path.resolve(path.dirname(filename), `${id}.ts`)));
     if (id === "next/server") return { NextResponse: { json: (body, init) => Response.json(body, init) } };
     if (id === "node:fs") return { readFileSync() {
       credentialReadAttempts += 1;
@@ -55,6 +57,7 @@ function load(relativePath) {
 }
 
 const { getCalculationSummary } = load("lib/calculation-request.ts");
+const { ONSITE_CITY_MAX_LENGTH } = load("lib/onsite-support.ts");
 const { getProjectCalculation } = load("lib/project-calculation.ts");
 const { getCallbackSlots, getMoscowDateTime, getNextCallbackSlot, validateCallbackSchedule } = load("lib/callback-schedule.ts");
 const { POST } = load("app/api/callback/route.ts");
@@ -92,6 +95,48 @@ test("invalid counts, duplicate/unknown modules and unavailable onsite support a
   for (const selectedAdditionalModules of [["unknown"], ["onsite-hardware-support", "onsite-hardware-support"], null, "onsite-hardware-support"]) assert.equal(getCalculationSummary({ ...selection, selectedAdditionalModules }), null);
   assert.equal(getCalculationSummary({ product: "it_administration", workplaceCount: 1, selectedModules: [] }), null);
   assert.equal(getCalculationSummary({ ...selection, selectedAdditionalModules: [], location: "other" }).monthlyTotal, 6_000);
+});
+
+test("a custom onsite city survives normalization and reaches the manager without an online charge", async () => {
+  const calculation = { ...selection, location: "other", selectedAdditionalModules: [], otherCity: "  Казань,  Республика Татарстан  " };
+  const result = getCalculationSummary(calculation);
+  assert.equal(result.locationLabel, "Казань, Республика Татарстан");
+  assert.equal(result.selection.otherCity, result.locationLabel);
+  assert.equal(result.onsiteByRequest, true);
+  assert.equal(result.monthlyTotal, 6_000);
+  assert.equal(result.modules.length, 1);
+
+  const response = await post({ ...validRequest, calculation });
+  assert.equal(response.status, 200);
+  const message = deliveries.at(-1).text;
+  assert.match(message, /Специалист:<\/b> менеджер/);
+  assert.match(message, /Город \/ регион:<\/b> Казань, Республика Татарстан/);
+  assert.match(message, /Итого:<\/b> 6\s000 ₽\/мес\./);
+  assert.match(message, /Выездное сопровождение:<\/b> по запросу\. Стоимость уточняется отдельно и не включена в расчёт\./);
+  assert.doesNotMatch(message, /• Выездное аппаратно-техническое сопровождение/);
+});
+
+test("invalid or inconsistent custom city fields cannot reach the manager", async () => {
+  const calculation = { ...selection, location: "other", selectedAdditionalModules: [] };
+  const before = deliveries.length;
+  for (const invalid of [
+    ...["", "   ", "12", null, "Новый\nУренгой", "Владимир\u202E", "а".repeat(ONSITE_CITY_MAX_LENGTH + 1)].map((otherCity) => ({ ...calculation, otherCity })),
+    { ...selection, otherCity: "Казань" },
+    { ...calculation, location: undefined, otherCity: "Казань" },
+    { ...calculation, selectedAdditionalModules: ["onsite-hardware-support"], otherCity: "Казань" },
+    { product: "it_administration", workplaceCount: 1, selectedModules: ["system-administration"], otherCity: "Казань" },
+  ]) {
+    assert.equal(getCalculationSummary(invalid), null);
+    assert.equal((await post({ ...validRequest, calculation: invalid })).status, 400);
+  }
+  for (const otherCity of ["Несуществующий пункт", "Казань <центр> & район"]) {
+    const response = await post({ ...validRequest, calculation: { ...calculation, otherCity } });
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /город или регион из списка/);
+  }
+  assert.equal(deliveries.length, before);
+  assert.equal((await post({ ...validRequest, calculation })).status, 200);
+  assert.match(deliveries.at(-1).text, /Город \/ регион:<\/b> Другой город/);
 });
 
 test("project selections preserve context, include required works and ignore forged prices", () => {
@@ -135,7 +180,7 @@ test("additional capabilities survive normalization and manager delivery without
   };
   const summary = getProjectCalculation(projectEstimate);
   assert.deepEqual(summary.selection.selectedCapabilityIds, ["egais", "telephony", "custom-integration"]);
-  assert.deepEqual(summary.estimate.capabilities.map(({ title }) => title), ["ЕГАИС", "Телефония", "Индивидуальная интеграция"]);
+  assert.deepEqual(summary.estimate.capabilities.map(({ title }) => title), ["ЕГАИС", "IP-телефония", "Индивидуальная интеграция"]);
   assert.deepEqual(projectEstimate.selectedCapabilityIds, ["custom-integration", "egais", "telephony"]);
   assert.equal(summary.estimate.total, 38_000);
   const before = deliveries.length;
@@ -143,7 +188,7 @@ test("additional capabilities survive normalization and manager delivery without
   assert.equal(deliveries.length, before + 1);
   const message = deliveries.at(-1).text;
   assert.match(message, /Итого:<\/b> 38\s000 ₽ \(разово\)/);
-  assert.match(message, /Дополнительные возможности — индивидуальный расчёт:<\/b>\n• ЕГАИС\n• Телефония\n• Индивидуальная интеграция/);
+  assert.match(message, /Дополнительные возможности — индивидуальный расчёт:<\/b>\n• ЕГАИС\n• IP-телефония\n• Индивидуальная интеграция/);
   assert.match(message, /Стоимость не включена в сумму расчёта\./);
   assert.doesNotMatch(message, /forged|Маркировка|Меркурий|Видеонаблюдение/);
 });

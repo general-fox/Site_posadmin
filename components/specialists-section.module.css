@@ -8,14 +8,12 @@
 .questionTitle::marker { content: ""; }
 .questionTitle h3 { margin: 0; font-size: clamp(19px, 1.8vw, 23px); font-weight: 400; line-height: 1.4; letter-spacing: -.16px; }
 .questionCaption { grid-column: 1; grid-row: 2; color: var(--text-body); font-size: 14px; line-height: 1.5; }
-.toggle { grid-column: 2; grid-row: 1 / span 2; position: relative; width: 36px; height: 36px; border-radius: 50%; color: var(--ink); background: var(--milk); transition: background .2s, color .2s; }
-.toggle > span { position: absolute; top: 50%; left: 50%; width: 12px; height: 1.5px; background: currentColor; transform: translate(-50%, -50%); }
-.toggle > span:last-child { transform: translate(-50%, -50%) rotate(90deg); transition: transform .2s; }
+.toggle { display: grid; place-items: center; grid-column: 2; grid-row: 1 / span 2; width: 36px; height: 36px; border-radius: 50%; color: var(--ink); background: var(--milk); transition: background .2s, color .2s; }
+.toggle > svg:last-child, .question[open] .toggle > svg:first-child { display: none; }
 .question[open] .toggle { background: var(--blue); color: var(--milk); }
-.question[open] .toggle > span:last-child { transform: translate(-50%, -50%) rotate(0deg); }
+.question[open] .toggle > svg:last-child { display: block; }
 .section :is(summary, a):focus-visible { outline: none; text-decoration: none; background: var(--ink); color: var(--milk); }
 .questionTitle:focus-visible .questionCaption { color: var(--milk); }
-.clients a:focus-visible { background: var(--surface-muted); color: var(--ink); }
 .questionTitle:focus-visible .toggle { background: var(--blue); color: var(--milk); }
 .answer { padding: 0 84px 32px 28px; color: var(--text-body); font-size: var(--font-body); line-height: 1.7; }
 .answer > p, .principles { max-width: 800px; }
@@ -25,18 +23,17 @@
 .principles { display: grid; gap: 12px; padding: 0; list-style: none; }
 .principles strong { color: var(--ink); font-weight: 500; }
 .links { display: flex; flex-wrap: wrap; gap: 8px 28px; }
-.clients { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 8px 0 0; list-style: none; }
-.clients a { display: flex; align-items: center; justify-content: center; position: relative; min-height: 104px; padding: 20px; border-radius: 16px; background: var(--milk); transition: background .2s; }
-.clients img { width: 100%; max-width: 130px; height: 54px; object-fit: contain; }
-.clients svg { position: absolute; right: 4px; top: 8px; width: 13px; height: 13px; color: var(--text-muted); }
 .offices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; max-width: 800px; }
 .offices h4 { color: var(--ink); font-size: 18px; font-weight: 400; }
 .offices address { margin-top: 4px; font-style: normal; }
-.actions { align-self: start; }
+.requisites { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; max-width: 800px; }
+.requisiteWide { grid-column: 1 / -1; }
+.requisites dt { color: var(--text-muted); font-size: var(--font-small); }
+.requisites dd { color: var(--ink); overflow-wrap: anywhere; }
+.requisites dd a { text-decoration: underline; text-underline-offset: .2em; }
 @keyframes answer-enter { from { opacity: .35; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (hover: hover) {
   .questionTitle:hover .toggle { background: var(--blue); color: var(--milk); }
-  .clients a:hover { background: var(--surface-muted); }
 }
 @media (max-width: 767px) {
   .layout { gap: 28px; }
@@ -45,15 +42,11 @@
   .questionCaption { grid-column: 1; grid-row: 2; font-size: 14px; }
   .toggle { width: 32px; height: 32px; }
   .answer { padding: 0 20px 24px; }
-  .clients { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .clients a { padding: 12px; min-height: 80px; }
-  .clients img { height: 44px; }
 }
 @media (max-width: 480px) {
-  .clients { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .offices { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   .question[open] .answer { animation: none; }
-  .toggle, .toggle > span:last-child, .clients a { transition: none; }
+  .toggle { transition: none; }
 }

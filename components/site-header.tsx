@@ -3,23 +3,18 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { animate, motion, useMotionTemplate, useMotionValue } from "framer-motion";
 import { SiteLogoMark } from "@/components/site-logo-mark";
-import { useHydratedReducedMotion } from "@/components/use-hydrated-reduced-motion";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { HOME_NAVIGATION } from "@/lib/site-navigation";
 import styles from "./site-header.module.css";
 
-type Page = "home" | "about" | "services" | "contacts" | "other";
+type Page = "home" | "services" | "contacts" | "other";
 type Section = typeof HOME_NAVIGATION[number]["id"];
 type HeaderSurface = "light" | "dark";
 type HeaderSurfaceRegion = {
   surface: HeaderSurface;
   bounds: { left: number; right: number; top: number; bottom: number };
 };
-const waveEase = [0.33, 1, 0.68, 1] as const;
-const openEase = [0.22, 1, 0.36, 1] as const;
-
 export function resolveHeaderSurface(regions: readonly HeaderSurfaceRegion[], x: number, y: number): HeaderSurface {
   // Marked surfaces are in document paint order: a nested panel overrides its
   // parent, and the closing panel comes after the sticky page underneath it.
@@ -28,12 +23,6 @@ export function resolveHeaderSurface(regions: readonly HeaderSurfaceRegion[], x:
     if (x >= bounds.left && x < bounds.right && y >= bounds.top && y < bounds.bottom) return surface;
   }
   return "light";
-}
-
-function reveal(delay: number, reduced: boolean) {
-  return reduced
-    ? { initial: false as const, animate: { opacity: 1, x: 0 } }
-    : { initial: { opacity: 0, x: -10 }, animate: { opacity: 1, x: 0 }, transition: { delay, duration: 0.4, ease: openEase } };
 }
 
 function Arrow() {
@@ -59,27 +48,21 @@ function TelegramIcon() {
 
 export function SiteHeader({ page = "home" }: { page?: Page }) {
   const pathname = usePathname();
-  const reduced = useHydratedReducedMotion();
-  const [surface, setSurface] = useState<HeaderSurface>(page === "home" || page === "about" ? "dark" : "light");
+  const [surface, setSurface] = useState<HeaderSurface>(page === "home" ? "dark" : "light");
   const [activeSection, setActiveSection] = useState<Section | null>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const logoRef = useRef<HTMLAnchorElement>(null);
   const linkRefs = useRef<Partial<Record<Section, HTMLAnchorElement | null>>>({});
-  const mobileTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileDisclosureRef = useRef<HTMLDetailsElement>(null);
+  const mobileTriggerRef = useRef<HTMLElement>(null);
   const [capsule, setCapsule] = useState({ x: 0, width: 145 });
-  const [ready, setReady] = useState(false);
-  const [opened, setOpened] = useState(false);
-  const rightInset = useMotionValue(0);
-  const clipPath = useMotionTemplate`inset(0px ${rightInset}px 0px 0px round 12px)`;
-  const currentSection = page === "home" ? activeSection : page === "contacts" ? "contact" : page === "about" ? "about" : page === "services" ? "launch" : null;
+  const currentSection = page === "home" ? activeSection : page === "contacts" ? "contact" : page === "services" ? "launch" : null;
 
   const closeMenus = useCallback(() => {
-    setMobileOpen(false);
+    const menu = mobileDisclosureRef.current;
+    if (menu?.open) menu.open = false;
   }, []);
-
-  useEffect(() => { closeMenus(); }, [pathname, closeMenus]);
 
   useEffect(() => {
     const dismissOutside = (event: Event) => {
@@ -89,7 +72,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
       if (event.target instanceof Element && event.target.closest("a")) closeMenus();
     };
     const escape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || !mobileOpen) return;
+      if (event.key !== "Escape" || !mobileDisclosureRef.current?.open) return;
       mobileTriggerRef.current?.focus();
       closeMenus();
       event.preventDefault();
@@ -107,7 +90,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
       header?.removeEventListener("click", dismissOnLink);
       window.removeEventListener("hashchange", closeMenus);
     };
-  }, [closeMenus, mobileOpen]);
+  }, [closeMenus]);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 1024px)");
@@ -129,7 +112,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
       // may ignore pointer events. Neither changes the visible page surface,
       // so read its explicit regions instead of hit-testing interactive nodes.
       const regions: HeaderSurfaceRegion[] = Array.from(document.querySelectorAll<HTMLElement>("[data-header-surface]"))
-        .filter((element) => !header.contains(element) && !element.closest('dialog, [role="dialog"], [aria-modal="true"], [popover]') && element.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }))
+        .filter((element) => !header.contains(element) && !element.closest('dialog, [role="dialog"], [aria-modal="true"], [popover]') && (element.checkVisibility?.({ checkOpacity: true, checkVisibilityCSS: true }) ?? true))
         .map((element) => ({ surface: element.dataset.headerSurface === "dark" ? "dark" : "light", bounds: element.getBoundingClientRect() }));
       const next = resolveHeaderSurface(regions, bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
       setSurface((current) => current === next ? current : next);
@@ -234,47 +217,22 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
     return () => observer.disconnect();
   }, [pathname, resetCapsule]);
 
-  useLayoutEffect(() => {
-    const nav = navRef.current;
-    const logo = logoRef.current;
-    if (!nav || !logo) return;
-    if (reduced) {
-      rightInset.set(0);
-      setOpened(true);
-      setReady(true);
-      return;
-    }
-    rightInset.set(Math.max(0, nav.getBoundingClientRect().width - logo.getBoundingClientRect().width));
-    setOpened(false);
-    setReady(true);
-    const controls = animate(rightInset, 0, { delay: 0.35, duration: 0.55, ease: openEase });
-    void controls.then(() => setOpened(true));
-    return () => controls.stop();
-  }, [pathname, reduced, rightInset]);
-
-  const entry = {
-    initial: reduced ? false as const : { y: 12, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    transition: reduced ? { duration: 0 } : { delay: 0.08, duration: 0.55, ease: waveEase },
-  };
-
   return (
     <header ref={headerRef} className={`site-header ${styles.header}`} data-surface={surface} data-page={page}>
-      <noscript><style>{`.site-header .site-nav { visibility: visible !important; opacity: 1 !important; clip-path: none !important; transform: none !important; } .site-header .site-nav span { opacity: 1 !important; transform: none !important; } .site-header [data-nav-fallback] { display: flex !important; }`}</style></noscript>
       <div className={styles.headerInner}>
-        <motion.nav key={pathname} ref={navRef} className={`site-nav ${styles.nav}`} aria-label="Основное меню" {...entry} style={{ visibility: ready ? "visible" : "hidden", clipPath: opened ? "none" : clipPath }} onMouseLeave={resetCapsule} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) resetCapsule(); }}>
+        <nav key={pathname} ref={navRef} className={`site-nav ${styles.nav}`} aria-label="Основное меню" onMouseLeave={resetCapsule} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) resetCapsule(); }}>
           <span aria-hidden="true" className={`site-nav-chip ${styles.chip}`} style={{ transform: `translateX(${capsule.x}px)`, width: Math.max(0, capsule.width - 6) }} />
           <Link ref={logoRef} href="/" aria-label="posadmin, на главную" className={styles.logo} onMouseEnter={(event) => placeCapsule(event.currentTarget)} onFocus={(event) => placeCapsule(event.currentTarget)}>
             <SiteLogoMark className="site-logo-mark" withDot />
           </Link>
-          {HOME_NAVIGATION.map((item, index) => (
+          {HOME_NAVIGATION.map((item) => (
             <Link key={item.id} ref={(element) => { linkRefs.current[item.id] = element; }} href={item.href}
               className={`${styles.navItem} ${styles.desktopLink}`} aria-current={currentSection === item.id ? "location" : undefined}
               onMouseEnter={(event) => placeCapsule(event.currentTarget)} onFocus={(event) => placeCapsule(event.currentTarget)}>
-              <motion.span className="nav-link" data-active={currentSection === item.id ? "true" : undefined} {...reveal(0.48 + index * 0.035, reduced)}>{item.label}</motion.span>
+              <span className="nav-link" data-active={currentSection === item.id ? "true" : undefined}>{item.label}</span>
             </Link>
           ))}
-        </motion.nav>
+        </nav>
         <div className={styles.contactActions}>
           <a className={`site-header-glass ${styles.phone}`} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
             <PhoneIcon /><span className={styles.phoneNumber}>{SITE_CONTACTS.phone}</span>
@@ -283,18 +241,24 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
             <TelegramIcon />
           </a>
         </div>
-        <motion.button key={`mobile-${pathname}`} ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} type="button" aria-expanded={mobileOpen} aria-controls="mobile-site-navigation" {...entry} style={{ visibility: ready ? "visible" : "hidden" }} onClick={() => setMobileOpen((current) => !current)}>
-          <span className={styles.mobileTriggerLabel}>{mobileOpen ? "Закрыть" : "Меню"}</span><span aria-hidden="true" className={styles.menuIcon} data-open={mobileOpen}><span /><span /></span>
-        </motion.button>
-        <nav id="mobile-site-navigation" aria-label="Мобильное меню" className={`site-mobile-menu ${styles.mobileMenu}`} hidden={!mobileOpen} data-lenis-prevent>
-          {HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href} className={styles.mobileItem} aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
-          <div className={styles.mobileContact}>
-            <a className={styles.mobilePhone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
-              <PhoneIcon /><span><small>Позвонить нам</small><span>{SITE_CONTACTS.phone}</span></span>
-            </a>
-          </div>
-        </nav>
-        <div data-nav-fallback className={styles.noScriptLinks}>{HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}</div>
+        <details key={`mobile-${pathname}`} ref={mobileDisclosureRef} className={styles.mobileDisclosure}>
+          <summary ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} aria-controls="mobile-site-navigation">
+            <span className={`${styles.mobileTriggerLabel} ${styles.openMenuLabel}`}>Меню</span>
+            <span className={`${styles.mobileTriggerLabel} ${styles.closeMenuLabel}`}>Закрыть</span>
+            <svg className={styles.menuIcon} width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+              <path d="M2 8h12" />
+              <path d="M2 8h12" />
+            </svg>
+          </summary>
+          <nav id="mobile-site-navigation" aria-label="Мобильное меню" className={`site-mobile-menu ${styles.mobileMenu}`} data-lenis-prevent>
+            {HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href} className={styles.mobileItem} aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
+            <div className={styles.mobileContact}>
+              <a className={styles.mobilePhone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
+                <PhoneIcon /><span><small>Позвонить нам</small><span>{SITE_CONTACTS.phone}</span></span>
+              </a>
+            </div>
+          </nav>
+        </details>
       </div>
     </header>
   );

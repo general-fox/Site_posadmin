@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
+import { UiIcon } from "./ui-icon";
 import styles from "./mobile-calculation-bar.module.css";
 
 type MobileCalculationBarProps = {
@@ -66,7 +67,7 @@ export function MobileCalculationBar({ configurationRef, summaryRef, summaryId, 
     </div>
     <a className={styles.link} href={`#${summaryId}`} aria-label={`Посмотреть итог расчёта ${productName}`}>
       К расчёту
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      <UiIcon name="chevron-down" />
     </a>
   </nav>, document.body);
 }

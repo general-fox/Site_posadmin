@@ -32,8 +32,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next-build/types/**/*.ts",
-    ".next/types/**/*.ts",
     "next-env.d.ts",
+    ".next-preview-local/types/**/*.ts",
     ".next-preview-3100/types/**/*.ts"
   ],
   "exclude": [

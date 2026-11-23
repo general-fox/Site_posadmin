@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
 import { ReZebraPlannerScreen } from "./rezebra-planner-screen";
 import { ReZebraReservationScreen } from "./rezebra-reservation-screen";
@@ -20,7 +20,6 @@ const screenOutline = "M312 99 769 75Q773 76 775 82Q777 87 783 87L816 85Q825 85 
 
 export function ReZebraPreview() {
   const [active, setActive] = useState(0);
-  const [scale, setScale] = useState(0);
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -30,18 +29,9 @@ export function ReZebraPreview() {
   const pointerStart = useRef<{ id: number; x: number; y: number } | null>(null);
   const reduceMotion = useHydratedReducedMotion();
 
-  useLayoutEffect(() => {
-    const element = device.current;
-    if (!element) return;
-    setScale(element.clientWidth / tabletWidth);
-    const resize = new ResizeObserver(([entry]) => setScale(entry.contentRect.width / tabletWidth));
-    resize.observe(element);
-    return () => resize.disconnect();
-  }, []);
-
   useEffect(() => {
     const element = device.current;
-    if (!element) return;
+    if (!element || !("IntersectionObserver" in window)) return;
     const visibility = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), { threshold: 0.2 });
     visibility.observe(element);
     return () => visibility.disconnect();
@@ -91,7 +81,7 @@ export function ReZebraPreview() {
     }
   }
 
-  return <figure className={styles.preview} aria-label="Интерфейс ReZebra на планшете">
+  return <figure className={styles.preview} aria-label="Интерфейс Rezebra на планшете">
     <div className={styles.deviceStage}>
       <div
         ref={device}
@@ -124,7 +114,7 @@ export function ReZebraPreview() {
         </svg>
         <span
           className={styles.deviceCanvas}
-          style={{ transform: `scale(${scale})`, clipPath: `path("${screenOutline}")` }}
+          style={{ clipPath: `path("${screenOutline}")` }}
           aria-hidden="true"
         >
           <span className={styles.projectedScreen}>

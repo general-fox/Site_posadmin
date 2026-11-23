@@ -73,7 +73,9 @@
 .calculationTotal span { margin-left: 4px; color: var(--text-body); font-size: 12px; font-weight: 400; letter-spacing: 0; }
 .calculationMeta { margin-top: 6px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
 .calculationDetails { margin-top: 8px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
-.calculationDetails summary { min-height: 44px; display: list-item; width: fit-content; padding: 12px 0; cursor: pointer; text-decoration: none; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+.calculationDetails summary { min-height: 44px; display: flex; align-items: center; gap: 6px; width: fit-content; padding: 12px 0; list-style: none; cursor: pointer; text-decoration: none; text-decoration-color: var(--border-strong); text-underline-offset: 3px; }
+.calculationDetails summary::-webkit-details-marker { display: none; }
+.calculationDetails:not([open]) summary svg { transform: rotate(-90deg); }
 .calculationDetails ul { margin: 8px 0 0; padding: 0; list-style: none; }
 .calculationDetails li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-block: 6px; border: 0; }
 .calculationDetails li > :last-child { flex-shrink: 0; white-space: nowrap; }

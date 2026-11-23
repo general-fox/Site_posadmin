@@ -5,6 +5,7 @@ import { getProjectCalculation } from "@/lib/project-calculation";
 import { validateCallbackSchedule } from "@/lib/callback-schedule";
 import { parseCallbackSpecialist } from "@/lib/callback-specialist";
 import { getPricingSnapshot } from "@/lib/pricing-store";
+import { findRussianLocationLabel } from "@/lib/russian-locations";
 import { deliverTelegramLead, getTelegramCallbackConfig } from "@/lib/telegram-leads";
 
 export const runtime = "nodejs";
@@ -144,6 +145,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const onsiteCity = calculation?.selection.product === "r_keeper" ? calculation.selection.otherCity : undefined;
+  if (onsiteCity && !findRussianLocationLabel(onsiteCity)) {
+    return NextResponse.json(
+      { error: "Выберите город или регион из списка и отправьте заявку ещё раз." },
+      { status: 400 },
+    );
+  }
+
   if (!contactSoon) {
     const scheduleError = validateCallbackSchedule(date, time);
     if (scheduleError) {
@@ -177,7 +186,8 @@ export async function POST(request: Request) {
       `<b>Рабочих мест:</b> ${calculation.workplaceCount}\n` +
       (calculation.locationLabel ? `<b>Город / регион:</b> ${escapeHtml(calculation.locationLabel)}\n` : "") +
       calculation.modules.map((module) => `• ${escapeHtml(module.name)} — ${module.monthlyPrice.toLocaleString("ru-RU")} ₽/мес.`).join("\n") +
-      `\n<b>Итого:</b> ${calculation.monthlyTotal.toLocaleString("ru-RU")} ₽/мес.`
+      `\n<b>Итого:</b> ${calculation.monthlyTotal.toLocaleString("ru-RU")} ₽/мес.` +
+      (calculation.onsiteByRequest ? "\n\n<b>Выездное сопровождение:</b> по запросу. Стоимость уточняется отдельно и не включена в расчёт." : "")
     : projectSummary
     ? `\n\n<b>Расчёт: запуск предприятия</b>\n` +
       `<b>Формат:</b> ${escapeHtml(projectSummary.estimate.concept.label)}\n` +

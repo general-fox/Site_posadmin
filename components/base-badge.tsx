@@ -4,7 +4,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./base-badge.module.css";
 
-export function BaseBadge({ className }: { className?: string }) {
+export function BaseBadge({ className, label = "База" }: { className?: string; label?: string }) {
   const tooltipId = useId();
   const rootRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLSpanElement>(null);
@@ -84,7 +84,7 @@ export function BaseBadge({ className }: { className?: string }) {
     onBlur={hide}
     onClick={show}
   >
-    База
+    {label}
     {open && createPortal(<span
       ref={tooltipRef}
       id={tooltipId}

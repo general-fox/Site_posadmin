@@ -63,8 +63,8 @@ function Plant({ x, y }: { x: number; y: number }) {
 export function ReZebraPlannerScreen() {
   const id = useId();
   return <svg viewBox="0 0 1200 780" preserveAspectRatio="none" width="100%" height="100%" role="img" aria-labelledby={`${id}-title ${id}-description`} xmlns="http://www.w3.org/2000/svg" style={{ display: "block", fontFamily: "Inter, Arial, sans-serif" }}>
-    <title id={`${id}-title`}>Планировщик ReZebra в тёмной теме — зал у воды</title>
-    <desc id={`${id}-description`}>Чёткая векторная иллюстрация тёмного интерфейса ReZebra: список резервов по времени, схема зала с двенадцатью столами, статусы бронирований и временная шкала. Данные показаны для примера.</desc>
+    <title id={`${id}-title`}>Планировщик Rezebra в тёмной теме — зал у воды</title>
+    <desc id={`${id}-description`}>Чёткая векторная иллюстрация тёмного интерфейса Rezebra: список резервов по времени, схема зала с двенадцатью столами, статусы бронирований и временная шкала. Данные показаны для примера.</desc>
     <rect width="1200" height="780" fill={palette.background} />
     <g fill={palette.text}>
       <rect width="94" height="48" fill={palette.blue} />
@@ -76,10 +76,10 @@ export function ReZebraPlannerScreen() {
 
       <rect y="50" width="40" height="730" fill={palette.panel} />
       <rect y="250" width="40" height="70" fill={palette.blue} />
-      <NavIcon x={9} y={92} kind="home" /><NavIcon x={9} y={190} kind="search" />
-      <NavIcon x={9} y={274} kind="map" active /><NavIcon x={9} y={390} kind="calendar" />
-      <NavIcon x={9} y={490} kind="phone" /><NavIcon x={9} y={625} kind="wifi" />
-      <NavIcon x={9} y={678} kind="refresh" /><NavIcon x={9} y={721} kind="settings" /><NavIcon x={9} y={754} kind="users" />
+      <NavIcon x={8} y={92} kind="home" /><NavIcon x={8} y={190} kind="search" />
+      <NavIcon x={8} y={273} kind="map" active /><NavIcon x={8} y={390} kind="calendar" />
+      <NavIcon x={8} y={490} kind="phone" /><NavIcon x={8} y={625} kind="wifi" />
+      <NavIcon x={8} y={678} kind="refresh" /><NavIcon x={8} y={721} kind="settings" /><NavIcon x={8} y={754} kind="users" />
 
       <rect x="46" y="55" width="210" height="641" fill={palette.background} stroke={palette.line} />
       {reservations.map(([time, guests], index) => <g key={time} transform={`translate(46 ${55 + index * 53})`}>
@@ -97,10 +97,13 @@ export function ReZebraPlannerScreen() {
       <rect x="438" y="54" width="133" height="38" rx="3" fill={palette.blue} />
       <text x="504" y="79" fontSize="16" fontWeight="600" fill="#FFFFFF" textAnchor="middle">Зал у воды</text>
       <text x="589" y="79" fontSize="16" fontWeight="600">Капитанская гостиная</text>
-      <text x="1086" y="81" fontSize="26" textAnchor="middle">+</text>
+      <path d="M1079 73.5h14M1086 66.5v14" stroke={palette.text} strokeWidth="1.8" strokeLinecap="round" />
       <rect x="1111" y="55" width="89" height="36" fill={palette.control} />
-      <text x="1138" y="79" fontSize="19" fill="#FFFFFF" textAnchor="middle">☼</text>
-      <text x="1180" y="79" fontSize="22" fill="#FFFFFF" textAnchor="middle">−</text>
+      <g transform="translate(1138 73.5)" fill="none" stroke="#FFFFFF" strokeWidth="1.4" strokeLinecap="round">
+        <circle r="3.3" />
+        <path d="M0-8v2M0 6v2M-8 0h2M6 0h2M-6-6l2 2M4 4l2 2M-6 6l2-2M4-4l2-2" />
+      </g>
+      <path d="M1173 73.5h14" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" />
 
       <rect x="268" y="93" width="932" height="616" fill={palette.panel} />
       <path d="M302 665V165h860v500H832M302 665h350" fill="none" stroke={palette.wall} strokeWidth="10" strokeLinejoin="miter" />

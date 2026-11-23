@@ -1,0 +1,24 @@
+/* The default styles are visible. Browsers can play the entrance without React. */
+@media (prefers-reduced-motion: no-preference) {
+  .title { animation: title-enter .85s cubic-bezier(.22, 1, .36, 1) .15s backwards; }
+  .lead { animation: hero-enter .65s cubic-bezier(.22, 1, .36, 1) .3s backwards; }
+  .actions { animation: hero-enter .55s cubic-bezier(.33, 1, .68, 1) .55s backwards; }
+  .system { --entry-offset: 6px; animation: hero-enter .45s cubic-bezier(.22, 1, .36, 1) backwards; }
+  .visual { --entry-offset: 20px; animation: hero-enter .7s cubic-bezier(.22, 1, .36, 1) .35s backwards; }
+  .product { --entry-offset: 12px; animation: hero-enter .55s cubic-bezier(.22, 1, .36, 1) backwards; }
+
+  .actions:focus-within, .visual:focus-within, .visual:focus-within .product {
+    animation-duration: 0s;
+    animation-delay: 0s !important;
+  }
+}
+
+@keyframes title-enter {
+  from { transform: translateY(105%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes hero-enter {
+  from { opacity: 0; transform: translateY(var(--entry-offset, 12px)); }
+  to { opacity: 1; transform: translateY(0); }
+}

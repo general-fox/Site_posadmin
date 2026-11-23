@@ -29,6 +29,7 @@ const LEGAL_HEIGHT = 119;
 
 export type RkeeperPdfData = {
   calculation: RkeeperCalculation;
+  itAdministration?: ItAdministrationCalculation;
   calculationNumber: string;
   generatedAt: Date;
 };
@@ -312,14 +313,21 @@ function buildDocumentDefinition(data: CalculationDocumentData): TDocumentDefini
 }
 
 function getRkeeperDocumentData(data: RkeeperPdfData): CalculationDocumentData {
-  const { calculation } = data;
+  const { calculation, itAdministration } = data;
   return {
     calculationNumber: data.calculationNumber,
     overview: {
-      generatedAt: data.generatedAt, title: "Сопровождение r_keeper",
-      monthlyTotal: calculation.monthlyTotal, workplaceCount: calculation.workplaceCount, workplaceSubtitle: "кассира / официанта",
+      generatedAt: data.generatedAt,
+      title: "Сопровождение r_keeper",
+      monthlyTotal: calculation.monthlyTotal + (itAdministration?.monthlyTotal ?? 0),
+      workplaceCount: calculation.workplaceCount,
+      workplaceSubtitle: "кассира / официанта",
     },
-    serviceCards: [{ label: "Базовый модуль", module: calculation.baseModule }, ...calculation.additionalModules.map((module) => ({ label: module.name, module }))],
+    serviceCards: [
+      { label: "Базовый модуль", module: calculation.baseModule },
+      ...calculation.additionalModules.map((module) => ({ label: module.name, module })),
+      ...(itAdministration?.selectedModules ?? []).map((module) => ({ label: module.name, module })),
+    ],
     metadataTitle: "Предварительный расчёт r_keeper",
     metadataSubject: "Предварительный расчёт стоимости сопровождения r_keeper",
   };

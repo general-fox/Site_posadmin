@@ -1,9 +1,11 @@
+import { getProjectScope, type ProjectEstimateSelection } from "@/lib/project-scope";
+
 /** Client-safe validation shared by the project form and its server endpoint. */
 export const PROJECT_TASK_MAX_LENGTH = 1600;
 export const PROJECT_CONTACT_MAX_LENGTH = 128;
 
 export type ProjectStage = "new" | "existing";
-export type ProjectContactMethod = "phone" | "telegram" | "chat";
+export type ProjectContactMethod = "phone" | "telegram" | "chat" | "email" | "whatsapp" | "max";
 
 export type ProjectRequest = {
   projectStage: ProjectStage;
@@ -11,6 +13,7 @@ export type ProjectRequest = {
   contactMethod: ProjectContactMethod;
   contact: string;
   personalDataConsent: true;
+  projectSelection?: ProjectEstimateSelection;
 };
 
 type ProjectRequestField = keyof ProjectRequest | "website";
@@ -49,12 +52,66 @@ export function normalizeTelegramContact(value: string): string | null {
   return /^[a-z][a-z\d_]{4,31}$/i.test(username) ? `@${username}` : null;
 }
 
+export function normalizeProjectEmail(value: string): string | null {
+  const input = value.trim();
+  if (input.length > PROJECT_CONTACT_MAX_LENGTH) return null;
+
+  const [local, domain, extra] = input.split("@");
+  if (extra !== undefined || !domain || !/^[a-z\d!#$%&'*+/=?^_`{|}~.-]{1,64}$/i.test(local)) return null;
+  if (local.startsWith(".") || local.endsWith(".") || local.includes("..")) return null;
+
+  const labels = domain.split(".");
+  if (labels.length < 2 || labels.some((label) => !/^[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?$/u.test(label))) return null;
+  return `${local}@${domain.toLowerCase()}`;
+}
+
+export function normalizeProjectMessengerPhone(value: string): string | null {
+  const input = value.trim();
+  if (input.length > PROJECT_CONTACT_MAX_LENGTH || !/^\+?[\d .()\u00a0\u202f-]+$/.test(input)) return null;
+  if (!input.startsWith("+")) return normalizeProjectPhone(input);
+
+  const digits = input.replace(/\D/g, "");
+  if (digits.startsWith("7") && digits.length !== 11) return null;
+  return /^[1-9]\d{7,14}$/.test(digits) ? `+${digits}` : null;
+}
+
 /** The manager contacts the client manually; this is not an automated chat integration. */
 export function normalizeProjectChatContact(value: string): string | null {
   const input = value.trim();
   return input.length >= 5 && input.length <= PROJECT_CONTACT_MAX_LENGTH && !/[\u0000-\u001f\u007f]/.test(input)
     ? input
     : null;
+}
+
+const MESSENGER_PHONE_ERROR = "Укажите номер телефона с кодом страны, например +7 (999) 123-45-67.";
+
+const PROJECT_CONTACTS = {
+  phone: {
+    label: "Телефон",
+    error: "Проверьте номер: российский номер должен содержать 10 или 11 цифр.",
+    normalize: normalizeProjectPhone,
+  },
+  telegram: {
+    label: "Telegram",
+    error: "Укажите имя пользователя в Telegram, например @username, или ссылку t.me/username.",
+    normalize: normalizeTelegramContact,
+  },
+  chat: {
+    label: "Удобный чат",
+    error: "Укажите мессенджер и ваш контакт: номер, имя пользователя или ссылку на профиль.",
+    normalize: normalizeProjectChatContact,
+  },
+  email: {
+    label: "Email",
+    error: "Укажите адрес электронной почты, например hello@example.ru.",
+    normalize: normalizeProjectEmail,
+  },
+  whatsapp: { label: "WhatsApp", error: MESSENGER_PHONE_ERROR, normalize: normalizeProjectMessengerPhone },
+  max: { label: "MAX", error: MESSENGER_PHONE_ERROR, normalize: normalizeProjectMessengerPhone },
+} satisfies Record<ProjectContactMethod, { label: string; error: string; normalize: (value: string) => string | null }>;
+
+function isProjectContactMethod(value: unknown): value is ProjectContactMethod {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(PROJECT_CONTACTS, value);
 }
 
 export function validateProjectRequest(value: unknown): ProjectRequestValidation {
@@ -83,31 +140,27 @@ export function validateProjectRequest(value: unknown): ProjectRequestValidation
     return { ok: false, error: `Описание должно содержать не больше ${PROJECT_TASK_MAX_LENGTH} символов.`, field: "task" };
   }
 
-  if (body.contactMethod !== "phone" && body.contactMethod !== "telegram" && body.contactMethod !== "chat") {
+  if (!isProjectContactMethod(body.contactMethod)) {
     return { ok: false, error: "Выберите удобный способ связи.", field: "contactMethod" };
   }
 
-  const contact = typeof body.contact === "string"
-    ? body.contactMethod === "phone"
-      ? normalizeProjectPhone(body.contact)
-      : body.contactMethod === "telegram"
-        ? normalizeTelegramContact(body.contact)
-        : normalizeProjectChatContact(body.contact)
-    : null;
+  const contactOption = PROJECT_CONTACTS[body.contactMethod];
+  const contact = typeof body.contact === "string" ? contactOption.normalize(body.contact) : null;
   if (!contact) {
     return {
       ok: false,
-      error: body.contactMethod === "phone"
-        ? "Проверьте номер: российский номер должен содержать 10 или 11 цифр."
-        : body.contactMethod === "telegram"
-          ? "Укажите имя пользователя в Telegram, например @username, или ссылку t.me/username."
-          : "Укажите мессенджер и ваш контакт: номер, имя пользователя или ссылку на профиль.",
+      error: contactOption.error,
       field: "contact",
     };
   }
 
   if (body.personalDataConsent !== true) {
     return { ok: false, error: "Необходимо согласие на обработку персональных данных.", field: "personalDataConsent" };
+  }
+
+  const project = body.projectSelection !== undefined ? getProjectScope(body.projectSelection) : null;
+  if (body.projectSelection !== undefined && !project) {
+    return { ok: false, error: "Проверьте ответы в анкете автоматизации.", field: "projectSelection" };
   }
 
   return {
@@ -119,6 +172,7 @@ export function validateProjectRequest(value: unknown): ProjectRequestValidation
       contactMethod: body.contactMethod,
       contact,
       personalDataConsent: true,
+      ...(project ? { projectSelection: project.selection } : {}),
     },
   };
 }
@@ -129,17 +183,35 @@ function escapeHtml(value: string) {
 
 export function buildProjectRequestMessage(data: ProjectRequest, requestId: string) {
   const stage = data.projectStage === "new" ? "Новый проект / открытие" : "Действующее предприятие";
-  const contactLabel = data.contactMethod === "phone" ? "Телефон" : data.contactMethod === "telegram" ? "Telegram" : "Удобный чат";
+  const contactLabel = PROJECT_CONTACTS[data.contactMethod].label;
+  const project = data.projectSelection ? getProjectScope(data.projectSelection) : null;
+  const questionnaire = project ? [
+    "<b>Анкета автоматизации</b>",
+    `<b>Формат:</b> ${escapeHtml(project.concept.label)}`,
+    `<b>Рабочих мест:</b> ${project.selection.registers}`,
+    "",
+    "<b>Работы:</b>",
+    ...project.works.map(({ title }) => `• ${escapeHtml(title)}`),
+    ...(project.capabilities.length ? [
+      "",
+      "<b>Дополнительные возможности:</b>",
+      ...project.capabilities.map(({ title }) => `• ${escapeHtml(title)}`),
+    ] : []),
+    "",
+  ] : [];
 
   return [
     `🌐 <b>Новая заявка с сайта #${escapeHtml(requestId)}</b>`,
     "",
     `<b>Проект:</b> ${stage}`,
     "",
-    "<b>Задача клиента:</b>",
-    data.task ? escapeHtml(data.task) : "Не указана — уточнить при связи.",
-    "",
+    ...questionnaire,
+    ...(data.task || !project ? [
+      "<b>Задача клиента:</b>",
+      data.task ? escapeHtml(data.task) : "Не указана — уточнить при связи.",
+      "",
+    ] : []),
     `<b>Как связаться:</b> ${contactLabel} — ${escapeHtml(data.contact)}`,
-    "<b>Источник:</b> форма обсуждения проекта на posadmin.ru",
+    `<b>Источник:</b> ${project ? "анкета автоматизации" : "форма обсуждения проекта"} на posadmin.ru`,
   ].join("\n");
 }

@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { buildProjectRequestMessage, validateProjectRequest } from "@/lib/project-request";
-import { deliverTelegramLead, getTelegramLeadConfig } from "@/lib/telegram-leads";
+import { deliverTelegramLead, getTelegramCallbackConfig, getTelegramLeadConfig } from "@/lib/telegram-leads";
 
 export const runtime = "nodejs";
 
@@ -94,14 +94,23 @@ export async function POST(request: Request) {
   const requestId = `PRJ-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`;
   if (validation.honeypot) return NextResponse.json({ ok: true, requestId });
 
-  const { token, chatId } = getTelegramLeadConfig();
-  if (!token || !chatId) {
+  const telegramConfig = validation.data.projectSelection
+    ? getTelegramCallbackConfig("manager")
+    : getTelegramLeadConfig();
+  if (!telegramConfig?.token || !telegramConfig.chatId) {
     console.error("Telegram project request configuration is missing.");
     return NextResponse.json({ error: "Сервис временно недоступен. Попробуйте позже." }, { status: 503 });
   }
 
   try {
-    await deliverTelegramLead({ token, chatId }, buildProjectRequestMessage(validation.data, requestId));
+    const { token, chatId } = telegramConfig;
+    const messageThreadId = "messageThreadId" in telegramConfig && typeof telegramConfig.messageThreadId === "number"
+      ? telegramConfig.messageThreadId
+      : undefined;
+    await deliverTelegramLead(
+      { token, chatId, messageThreadId },
+      buildProjectRequestMessage(validation.data, requestId),
+    );
   } catch {
     // Fetch exceptions can include the token-bearing URL: log only a fixed label.
     console.error("Telegram project request delivery failed.");

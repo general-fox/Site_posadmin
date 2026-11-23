@@ -26,6 +26,7 @@ function load(relativePath) {
 
 const { LAUNCH_CONCEPTS } = load("lib/launch-concepts.ts");
 const { PROJECT_TASK_MAX_LENGTH, validateProjectRequest } = load("lib/project-request.ts");
+const { getProjectScope } = load("lib/project-scope.ts");
 const {
   PROJECT_WORKS, PROJECT_REGISTER_MIN, PROJECT_REGISTER_MAX, PROJECT_ESTIMATE_NOTICE, PROJECT_ESTIMATE_EXCLUSIONS,
   PROJECT_CAPABILITIES, PROJECT_CAPABILITIES_NOTICE,
@@ -53,6 +54,28 @@ test("all six concepts start with base work only and repeatable totals", () => {
   const mutated = getDefaultProjectSelection();
   mutated.selectedWorkIds.length = 0;
   assert.deepEqual(getDefaultProjectSelection().selectedWorkIds, baseIds);
+});
+
+test("the questionnaire returns canonical work and capabilities without estimate values", () => {
+  const input = {
+    conceptId: "cafe",
+    registers: 4,
+    selectedWorkIds: ["handover", "kitchen"],
+    selectedCapabilityIds: ["mercury", "egais"],
+    total: 1,
+  };
+  const scope = getProjectScope(input);
+  assert.deepEqual(scope.selection, {
+    conceptId: "cafe",
+    registers: 4,
+    selectedWorkIds: ["design", "pos", "kitchen", "handover"],
+    selectedCapabilityIds: ["egais", "mercury"],
+  });
+  assert.deepEqual(scope.works.map(({ id }) => id), scope.selection.selectedWorkIds);
+  assert.deepEqual(scope.capabilities.map(({ id }) => id), scope.selection.selectedCapabilityIds);
+  assert.doesNotMatch(JSON.stringify(scope), /"(?:price|total)":/);
+  assert.equal(getProjectScope({ ...input, selectedWorkIds: ["kitchen", "kitchen"] }), null);
+  assert.equal(getProjectScope({ ...input, selectedCapabilityIds: ["egais", "egais"] }), null);
 });
 
 test("optional toggles change only selected work, while base items cannot disappear", () => {

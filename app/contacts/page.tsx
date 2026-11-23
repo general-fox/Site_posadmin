@@ -3,7 +3,7 @@ import { Breadcrumbs, ServiceArrow, ServicePageFrame } from "@/components/servic
 import { ContactsSection } from "@/components/contacts-section";
 import { JsonLd } from "@/components/json-ld";
 import { buildPageMetadata, SITE_URL } from "@/lib/seo";
-import { ONSITE_SUPPORT_LOCATIONS } from "@/lib/onsite-support";
+import { ONSITE_GEOGRAPHY } from "@/lib/onsite-support";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import styles from "@/components/service-pages.module.css";
 
@@ -41,7 +41,7 @@ export default function ContactsPage() {
       </header>
       <section className={styles.contactNote} aria-labelledby="onsite-geography">
         <h2 id="onsite-geography">Где доступно выездное сопровождение</h2>
-        <p>{ONSITE_SUPPORT_LOCATIONS.map(({ name }) => name).join(", ")}.</p>
+        <p>{ONSITE_GEOGRAPHY.join(", ")}.</p>
         <Link className={styles.textLink} href="/#pricing">Тарифы и выездное сопровождение <ServiceArrow /></Link>
       </section>
     </div>

@@ -27,11 +27,17 @@ function Grid({ x, y, width, height, columns, values, selected }: {
       const cellX = x + (index % columns) * cellWidth;
       const cellY = y + Math.floor(index / columns) * cellHeight;
       const active = value === selected;
+      const centerX = cellX + cellWidth / 2;
+      const centerY = cellY + cellHeight / 2;
       return <g key={`${value}-${index}`}>
         {active && <rect x={cellX} y={cellY} width={cellWidth} height={cellHeight} fill={palette.selected} />}
         {index % columns !== 0 && <path d={`M${cellX} ${cellY}v${cellHeight}`} stroke={palette.divider} strokeWidth=".7" />}
         {index >= columns && <path d={`M${cellX} ${cellY}h${cellWidth}`} stroke={palette.divider} strokeWidth=".7" />}
-        <text x={cellX + cellWidth / 2} y={cellY + cellHeight / 2 + 6} textAnchor="middle" fill={active ? "#142D4F" : palette.ink} fontSize={value === "←" || value === "→" ? 27 : active ? 20 : 19} fontWeight={active ? "700" : "600"}>{value}</text>
+        {value === "previous" || value === "next" ? (
+          <path d="M-8 0H8M2-6l6 6-6 6" transform={`translate(${centerX} ${centerY}) scale(${value === "previous" ? -1 : 1} 1)`} fill="none" stroke={palette.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        ) : (
+          <text x={centerX} y={centerY + 6} textAnchor="middle" fill={active ? "#142D4F" : palette.ink} fontSize={active ? 20 : 19} fontWeight={active ? "700" : "600"}>{value}</text>
+        )}
       </g>;
     })}
   </g>;
@@ -57,8 +63,8 @@ function Navigation() {
 
 /** A vector presentation of the product UI, with no guest or venue data. */
 export function ReZebraReservationScreen() {
-  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" preserveAspectRatio="none" width="100%" height="100%" role="img" aria-label="ReZebra: создание резерва, выбор времени и числа гостей" style={{ display: "block", fontFamily: "Inter, Arial, sans-serif" }}>
-    <title>Создание резерва в ReZebra</title>
+  return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" preserveAspectRatio="none" width="100%" height="100%" role="img" aria-label="Rezebra: создание резерва, выбор времени и числа гостей" style={{ display: "block", fontFamily: "Inter, Arial, sans-serif" }}>
+    <title>Создание резерва в Rezebra</title>
     <desc>Векторный пример интерфейса: дата, продолжительность, время, количество гостей и пустые поля контактов и комментариев.</desc>
     <rect width="1200" height="780" fill={palette.background} />
     <rect y="50" width="56" height="730" fill={palette.panel} />
@@ -84,26 +90,26 @@ export function ReZebraReservationScreen() {
       <circle cx="566" cy="99" r="8" fill="#B5B5B5" />
       <text x="603" y="104" fontSize="16">Без лимита</text>
       <text x="80" y="144">Продолжительность резерва</text>
-      <Grid x={69} y={150} width={730} height={66} columns={8} values={["←", "02:15", "02:30", "02:45", "03:00", "03:15", "03:30", "→"]} selected="02:30" />
+      <Grid x={69} y={150} width={730} height={66} columns={8} values={["previous", "02:15", "02:30", "02:45", "03:00", "03:15", "03:30", "next"]} selected="02:30" />
 
       <text x="77" y="237">Часы</text>
       <text x="394" y="237">Минуты</text>
-      <Grid x={70} y={244} width={301} height={198} columns={3} values={["←", "12", "13", "14", "15", "16", "17", "18", "→"]} selected="15" />
+      <Grid x={70} y={244} width={301} height={198} columns={3} values={["previous", "12", "13", "14", "15", "16", "17", "18", "next"]} selected="15" />
       <text x="380" y="354" textAnchor="middle" fontSize="24">:</text>
       <Grid x={389} y={244} width={410} height={198} columns={4} values={["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"]} selected="30" />
 
       <text x="75" y="458">Количество гостей</text>
-      <Grid x={72} y={464} width={727} height={68} columns={12} values={["←", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "→"]} selected="2" />
+      <Grid x={72} y={464} width={727} height={68} columns={12} values={["previous", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "next"]} selected="2" />
       <text x="75" y="549">Стол</text>
       <rect x="72" y="556" width="360" height="48" rx="6" fill={palette.panel} stroke={palette.divider} />
       <text x="252" y="585" textAnchor="middle" fontSize="18" fontWeight="500">Отсутствует</text>
 
       <text x="810" y="82">Номер телефона</text>
       <rect x="808" y="89" width="376" height="68" rx="6" fill={palette.panel} stroke={palette.divider} />
-      <text x="1155" y="130" fontSize="22">×</text>
+      <path d="m1156 118 10 10m0-10-10 10" fill="none" stroke={palette.ink} strokeWidth="1.7" strokeLinecap="round" />
       <text x="810" y="175">Имя</text>
       <rect x="808" y="182" width="376" height="68" rx="6" fill={palette.panel} stroke={palette.divider} />
-      <text x="1155" y="223" fontSize="22">×</text>
+      <path d="m1156 211 10 10m0-10-10 10" fill="none" stroke={palette.ink} strokeWidth="1.7" strokeLinecap="round" />
       <text x="808" y="270" fontSize="17">Комментарий к гостю</text>
       <rect x="808" y="277" width="376" height="144" rx="6" fill={palette.panel} stroke={palette.divider} />
       <CommentIcon x={818} y={289} />

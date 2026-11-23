@@ -30,7 +30,7 @@
   <rect x="18" y="18" width="1404" height="988" rx="59" fill="url(#bezel)"/>
   <rect x="54" y="34" width="1332" height="956" rx="34" fill="#030304"/>
 
-  <!-- Screen opening follows the source ratio while the complete visual matches FlexBonus at 1440:1024. -->
+  <!-- Screen opening follows the source ratio while the complete visual matches Flexbonus at 1440:1024. -->
   <rect x="72" y="44" width="1296" height="936" rx="22" fill="#303030"/>
 
   <!-- Camera and microphone -->

@@ -17,7 +17,7 @@ function DashboardIcon() {
 }
 
 export function FlexBonusPreview() {
-  return <figure className={styles.preview} aria-label="Демонстрационный интерфейс FlexBonus">
+  return <figure className={styles.preview} aria-label="Демонстрационный интерфейс Flexbonus">
     <div className={styles.browser}>
       <Image className={styles.browserChrome} src="/products/flexbonus-browser.svg" width={1440} height={56} alt="" aria-hidden="true" draggable={false} />
       <div className={styles.screen}>

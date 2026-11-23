@@ -1,9 +1,9 @@
 .hero { position: relative; display: grid; gap: 64px; width: min(100%, calc(var(--content-max) + var(--page-gutter) * 2)); margin-inline: auto; padding: 72px var(--page-gutter) 80px; color: var(--ink); }
 .copy { min-width: 0; max-width: 980px; margin-inline: auto; text-align: center; }
-.eyebrow { color: var(--text-body); font-size: 14px; line-height: 1.5; letter-spacing: .025em; }
-.title { margin-top: 20px; font-size: clamp(48px, 6vw, 80px); font-weight: 400; line-height: 1.04; letter-spacing: -.055em; }
+.title { margin-top: 41px; font-size: clamp(44px, 4.8vw, 66px); font-weight: 400; line-height: 1.14; letter-spacing: -.018em; }
 .line { display: block; overflow: hidden; padding-bottom: .12em; margin-bottom: -.12em; }
 .line > span { display: block; text-wrap: balance; }
+.unbroken { white-space: nowrap; }
 .lead { max-width: 590px; margin: 24px auto 0; color: var(--text-body); font-size: 18px; line-height: 1.65; text-wrap: pretty; }
 .copy :global(.hero-actions) { justify-content: center; flex-wrap: wrap; margin: 28px auto 0; gap: 12px; }
 .copy :global(.hero-project-link), .copy :global(.hero-callback-link) { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 48px; padding: 14px 24px; border: 0; border-radius: 999px; font-size: 15px; font-weight: 400; }
@@ -14,8 +14,8 @@
 .copy :global(.hero-callback-link):hover, .copy :global(.hero-callback-link):focus-visible { background: var(--ink); color: var(--milk); }
 .systems { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 28px; padding: 0; list-style: none; }
 .systems > li { padding: 7px 11px; border-radius: 100px; background: var(--neutral); color: var(--text-body); font-size: 14px; line-height: 1.4; }
-.dealer { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 16px; color: var(--text-body); font-size: 14px; line-height: 1.5; }
-.dealer::before { content: ""; flex: 0 0 6px; height: 6px; border-radius: 50%; background: var(--action); }
+.dealer { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; margin-top: 16px; padding: 8px 16px; border-radius: 999px; background: color-mix(in srgb, var(--action) 12%, var(--milk)); color: var(--ink); font-size: 14px; line-height: 1.5; }
+.dealer:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--action) 20%, var(--milk)); }
 .visual { position: relative; isolation: isolate; min-width: 0; padding: 28px; border-radius: 28px; background: var(--surface-selected); }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .visual::before {
@@ -35,13 +35,14 @@
 .visualHeader h2 { font-size: 24px; font-weight: 400; line-height: 1.3; letter-spacing: -.025em; }
 .visualHeader > span { color: var(--text-body); font-size: 14px; }
 .areas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.area { display: flex; flex-direction: column; justify-content: space-between; gap: 30px; min-width: 0; min-height: 174px; padding: 24px; border-radius: 20px; background: var(--milk); }
-.areaHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.area { display: flex; flex-direction: column; justify-content: space-between; gap: 20px; min-width: 0; min-height: 174px; padding: 24px; border-radius: 20px; background: var(--milk); }
+.areaHeader { display: grid; grid-template-columns: minmax(0, 1fr) 32px; align-items: center; gap: 5px 12px; }
+.areaCategory { grid-column: 1 / -1; color: var(--text-body); font-size: var(--font-small); line-height: 1.4; }
 .area h3 { font-size: 26px; font-weight: 400; line-height: 1.2; letter-spacing: -.035em; }
 .area p { max-width: 25ch; color: var(--text-body); font-size: 16px; line-height: 1.5; }
-.productArrow { display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 50%; background: var(--neutral); font-size: 20px; line-height: 1; }
+.productArrow { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--neutral); }
 .area:focus-visible { outline: none; background: var(--action); color: var(--milk); }
-.area:focus-visible p { color: inherit; }
+.area:focus-visible :is(.areaCategory, p) { color: inherit; }
 .area:focus-visible .productArrow { color: var(--ink); }
 .visualBottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
 .visualBottom > span { color: var(--text-body); font-size: 14px; line-height: 1.5; }
@@ -55,7 +56,7 @@
 @media (max-width: 767px) {
   .hero { gap: 40px; padding-top: 48px; padding-bottom: 56px; }
   .copy { max-width: 600px; }
-  .title { font-size: clamp(39px, 7.6vw, 58px); letter-spacing: -.045em; line-height: 1.08; }
+  .title { font-size: clamp(30px, calc(6vw + 8px), 44px); }
   .lead { max-width: 500px; margin-top: 20px; font-size: 16px; line-height: 1.65; }
   .copy :global(.hero-actions) { margin-top: 24px; }
   .systems { gap: 6px; margin-top: 24px; }
@@ -70,4 +71,4 @@
   .area p { max-width: 32ch; }
   .visualBottom { margin-top: 20px; }
 }
-@media (max-width: 400px) { .hero { padding-top: 36px; } .title { font-size: 38px; } .eyebrow { font-size: 14px; } .visual { padding: 16px; } .visualHeader { align-items: flex-start; flex-direction: column; gap: 6px; } .area { padding: 20px; } }
+@media (max-width: 400px) { .hero { padding-top: 36px; } .visual { padding: 16px; } .visualHeader { align-items: flex-start; flex-direction: column; gap: 6px; } .area { padding: 20px; } }

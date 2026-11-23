@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1304 942" role="img" aria-labelledby="title desc">
-  <title id="title">Планировщик ReZebra — светлая тема</title>
+  <title id="title">Планировщик Rezebra — светлая тема</title>
   <desc id="desc">Светлая векторная схема интерфейса планировщика ресторана: список резервов, навигация, схема зала и временная шкала.</desc>
   <defs>
     <style>
@@ -89,9 +89,11 @@
     <text x="631" y="76" font-size="17" font-weight="600" fill="#FFFFFF" text-anchor="middle">Зал у воды</text>
     <text x="702" y="76" font-size="17" font-weight="600">Капитанская гостиная</text>
     <path d="M1170 53v33" stroke="#D1CDB8"/>
-    <text x="1185" y="79" font-size="29">+</text>
-    <text x="1229" y="76" font-size="20">☼</text>
-    <text x="1275" y="77" font-size="24">−</text>
+    <path class="stroke" d="M1186 70h14M1193 63v14M1276 70h14"/>
+    <g class="stroke" transform="translate(1237 70)">
+      <circle r="3.3"/>
+      <path d="M0-8v2M0 6v2M-8 0h2M6 0h2M-6-6l2 2M4 4l2 2M-6 6l2-2M4-4l2-2"/>
+    </g>
 
     <!-- Floor plan -->
     <rect x="412" y="96" width="892" height="752" fill="#E5DFC0"/>

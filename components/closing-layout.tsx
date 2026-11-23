@@ -7,8 +7,7 @@ import styles from "./closing-layout.module.css";
 
 function anchorTop(target: HTMLElement) {
   const top = target.getBoundingClientRect().top + window.scrollY;
-  // Contacts have their own internal header clearance. Their dark surface must
-  // meet the viewport edge, including on /about with its global scroll padding.
+  // Contacts use their own header clearance so their dark surface meets the viewport edge.
   if (target.id === "contact") return Math.max(0, top);
   return Math.max(0, top - (parseFloat(getComputedStyle(target).scrollMarginTop) || 0)
     - (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0));
@@ -20,7 +19,7 @@ export function ClosingLayout({
   ending,
 }: {
   children: ReactNode;
-  page?: "home" | "about" | "services" | "contacts" | "other";
+  page?: "home" | "services" | "contacts" | "other";
   ending?: ReactNode;
 }) {
   useEffect(() => {

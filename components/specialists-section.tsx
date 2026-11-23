@@ -1,11 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
-import { SITE_CLIENTS } from "@/lib/site-clients";
-import { ONSITE_SUPPORT_LOCATIONS } from "@/lib/onsite-support";
+import { ONSITE_GEOGRAPHY } from "@/lib/onsite-support";
 import { ArrowRight, SectionReveal } from "./marketing-ui";
+import { UiIcon } from "./ui-icon";
 import { useDisclosureCentering } from "./use-disclosure-centering";
 import ui from "./marketing.module.css";
 import styles from "./specialists-section.module.css";
@@ -35,28 +34,13 @@ const COMPANY_DETAILS = [
     </ul>,
   },
   {
-    id: "clients",
-    title: "Нам доверяют",
-    caption: "Рестораны и сети",
-    Content: () => <>
-      <p>Сопровождаем эти команды в ежедневной работе. Логотипы ведут на сайты заведений.</p>
-      <ul className={styles.clients} aria-label="Клиенты Posadmin">
-        {SITE_CLIENTS.map((client) => <li key={client.name}>
-          <a href={client.href} target="_blank" rel="noopener noreferrer" aria-label={`${client.name} — сайт клиента (откроется в новой вкладке)`}>
-            <Image src={client.src} alt={client.name} width={130} height={54} sizes="130px" />
-            <ArrowRight diagonal />
-          </a>
-        </li>)}
-      </ul>
-    </>,
-  },
-  {
     id: "geography",
     title: "География работы",
     caption: "Удалённо и на месте",
     Content: () => <>
-      <p>Удалённо решаем задачи 24/7. Выездное сопровождение подключается отдельно в следующих городах и регионах:</p>
-      <p>{ONSITE_SUPPORT_LOCATIONS.map(({ name }) => name).join(" · ")}</p>
+      <p>Осуществляем удалённую поддержку в любом регионе России 24/7.</p>
+      <p>Выездное сопровождение подключается отдельно в следующих городах и регионах:</p>
+      <p>{ONSITE_GEOGRAPHY.join(" · ")}</p>
       <p className={styles.note}>Возможность выезда в другие города обсуждаем с менеджером.</p>
     </>,
   },
@@ -77,10 +61,21 @@ const COMPANY_DETAILS = [
   {
     id: "company-details",
     title: "Карточка компании и реквизиты",
-    caption: "По запросу",
+    caption: "ИП Кимряков Александр Сергеевич",
     Content: () => <>
-      <p>Отправим карточку компании и реквизиты для проверки контрагента или подготовки договора.</p>
-      <a className={ui.textLink} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer">Запросить у менеджера <ArrowRight diagonal /></a>
+      <dl className={styles.requisites}>
+        <div className={styles.requisiteWide}>
+          <dt>Полное наименование</dt>
+          <dd>Индивидуальный предприниматель Кимряков Александр Сергеевич</dd>
+        </div>
+        <div><dt>ИНН</dt><dd>501305826728</dd></div>
+        <div><dt>ОГРНИП</dt><dd>315504000000628</dd></div>
+        <div className={styles.requisiteWide}>
+          <dt>Связь с менеджером</dt>
+          <dd><a href={SITE_CONTACTS.phoneHref}>{SITE_CONTACTS.phone}</a> · {SITE_CONTACTS.managerHours}</dd>
+        </div>
+      </dl>
+      <a className={ui.textLink} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer">Запросить полные реквизиты <ArrowRight diagonal /></a>
     </>,
   },
 ];
@@ -100,14 +95,14 @@ export function SpecialistsSection() {
             <summary className={styles.questionTitle}>
               <h3>{title}</h3>
               <span className={styles.questionCaption}>{caption}</span>
-              <span className={styles.toggle} aria-hidden="true"><span /><span /></span>
+              <span className={styles.toggle} aria-hidden="true">
+                <UiIcon name="plus" size={20} />
+                <UiIcon name="minus" size={20} />
+              </span>
             </summary>
             <div className={styles.answer}><Content /></div>
           </details>
         ))}
-      </div>
-      <div className={styles.actions}>
-        <Link href="/about" className={ui.textLink}>Подробнее о компании <ArrowRight diagonal /></Link>
       </div>
     </div>
   </section>;

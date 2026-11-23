@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync, execFileSync } from 'node:child_process';
@@ -12,26 +12,31 @@ const output = resolve(root, process.env.REVIEW_OUTPUT || 'output/github-pages')
 if (!output.startsWith(resolve(root, 'output') + (process.platform === 'win32' ? '\\' : '/'))) throw new Error('Output must be under output/');
 if (existsSync(output)) throw new Error(`Output already exists. Choose a new REVIEW_OUTPUT: ${output}`);
 const files = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+const ignoredTracked = new Set(execFileSync('git', ['ls-files', '-z', '--cached', '--ignored', '--exclude-standard'], { encoding: 'utf8' }).split('\0'));
 const assetRoots = readdirSync(join(root, 'public')).filter(name => !name.startsWith('.'));
 const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const assets = new RegExp(`(["'\x60(])\\/(${assetRoots.map(escape).join('|')})(?=[/"'\x60)?])`, 'g');
 const rootFiles = ['package.json', 'package-lock.json', 'tsconfig.json', 'postcss.config.mjs', 'eslint.config.mjs'];
 for (const file of new Set(files)) {
+  if (ignoredTracked.has(file)) continue;
   if (!/^(app|components|lib|public)\//.test(file) && !rootFiles.includes(file) && file !== 'assets/fonts/pdf/Inter-Regular.ttf') continue;
   if (/^(app\/(api|admin)(\/|$)|components\/admin-|lib\/admin-)/.test(file)) continue;
   if (['app/robots.ts', 'app/sitemap.ts', 'lib/pricing-store.ts'].includes(file)) continue;
-  if (file.split('/').some(part => part.startsWith('.env') || part === 'private-data')) throw new Error('Private file selected');
+  const sourcePath = join(root, file);
+  // The index can still list locally deleted files. Stage only regular files from the working tree.
+  if (!lstatSync(sourcePath, { throwIfNoEntry: false })?.isFile()) continue;
+  if (file.split('/').some(part => /^\.env|^private-data$/i.test(part))) throw new Error('Private file selected');
   const destination = join(stage, file);
   mkdirSync(dirname(destination), { recursive: true });
   if (/\.(tsx?|css)$/.test(file)) {
-    let source = readFileSync(join(root, file), 'utf8');
+    let source = readFileSync(sourcePath, 'utf8');
     source = source.replace(assets, `$1${basePath}/$2`);
     source = source.replace('export const dynamic = "force-dynamic";', 'export const dynamic = "force-static";');
     if (file === 'app/services/[slug]/page.tsx') source += '\nexport const dynamicParams = false;\n';
     if (file === 'app/opengraph-image.tsx') source += '\nexport const dynamic = "force-static";\n';
     if (file === 'components/closing-layout.tsx') source = source.replace('url.pathname !== "/"', `url.pathname !== "${basePath}/"`);
     writeFileSync(destination, source);
-  } else cpSync(join(root, file), destination);
+  } else cpSync(sourcePath, destination);
 }
 writeFileSync(join(stage, 'lib/pricing-store.ts'), `import { DEFAULT_PRICING } from './pricing-config';\nexport function getPricingSnapshot() { return { config: structuredClone(DEFAULT_PRICING), revision: 0, updatedAt: null }; }\n`);
 writeFileSync(join(stage, 'next.config.ts'), `import type { NextConfig } from 'next';\nconst config: NextConfig = { output: 'export', basePath: ${JSON.stringify(basePath)}, trailingSlash: true, images: { unoptimized: true } };\nexport default config;\n`);

@@ -12,8 +12,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 const cache = new Map();
 const deliveries = [];
+const deliveryConfigs = [];
 let deliveryFails = false;
 let configurationAvailable = true;
+let managerTopicAvailable = true;
+const defaultConfig = { token: "offline-test-token", chatId: "offline-test-chat" };
+const managerConfig = { token: "offline-test-token", chatId: "offline-test-service-chat", messageThreadId: 23 };
 
 function load(relativePath) {
   const filename = path.join(root, relativePath);
@@ -27,13 +31,19 @@ function load(relativePath) {
     if (id === "@/lib/project-request") return load("lib/project-request.ts");
     if (id === "@/lib/telegram-leads") return {
       getTelegramLeadConfig: () => configurationAvailable
-        ? { token: "offline-test-token", chatId: "offline-test-chat" }
+        ? defaultConfig
         : { token: "", chatId: "" },
-      deliverTelegramLead: async (_config, message) => {
+      getTelegramCallbackConfig: (specialist) => {
+        assert.equal(specialist, "manager");
+        return managerTopicAvailable && configurationAvailable ? managerConfig : null;
+      },
+      deliverTelegramLead: async (config, message) => {
         if (deliveryFails) throw new Error("Offline delivery failure");
+        deliveryConfigs.push(config);
         deliveries.push(message);
       },
     };
+    if (id.startsWith("@/lib/")) return load(`${id.slice(2)}.ts`);
     if (id === "next/server") return { NextResponse: { json: (body, init) => Response.json(body, init) } };
     if (id === "node:crypto") return require(id);
     throw new Error(`Unexpected import is blocked in offline tests: ${id}`);
@@ -48,11 +58,18 @@ function load(relativePath) {
 
 const {
   PROJECT_TASK_MAX_LENGTH, PROJECT_CONTACT_MAX_LENGTH,
-  validateProjectRequest, normalizeProjectPhone, normalizeTelegramContact, normalizeProjectChatContact, buildProjectRequestMessage,
+  validateProjectRequest, normalizeProjectPhone, normalizeTelegramContact, normalizeProjectChatContact,
+  normalizeProjectEmail, normalizeProjectMessengerPhone, buildProjectRequestMessage,
 } = load("lib/project-request.ts");
 const { LAUNCH_CONCEPTS, getLaunchScope, buildLaunchBrief } = load("lib/launch-concepts.ts");
 const { POST } = load("app/api/project-request/route.ts");
 const validRequest = { projectStage: "new", contactMethod: "phone", contact: "+7 (999) 123-45-67", personalDataConsent: true };
+const questionnaire = {
+  ...validRequest,
+  contactMethod: "email",
+  contact: "sales@example.ru",
+  projectSelection: { conceptId: "quick-service", registers: 2, selectedWorkIds: ["kitchen"], selectedCapabilityIds: ["egais", "marking"] },
+};
 let requestNumber = 0;
 const post = (body) => POST(new Request("http://localhost/api/project-request", {
   method: "POST", headers: { "content-type": "application/json", "x-real-ip": `project-test-${++requestNumber}` }, body: JSON.stringify(body),
@@ -124,6 +141,25 @@ test("a preferred chat is carried to the manager and cannot contain control char
   assert.match(buildProjectRequestMessage(escaped, "CHAT-TEST"), /чат: &lt;test&amp;name&gt;/);
 });
 
+test("email and messenger phone contacts normalize for use by the manager", () => {
+  assert.equal(normalizeProjectEmail("  Sales+site@EXAMPLE.RU  "), "Sales+site@example.ru");
+  for (const contact of ["", "sales", "a@b", "a..b@example.ru", "a@-example.ru", "a@example..ru", "a\n@example.ru", "a@b@c.ru"]) {
+    assert.equal(normalizeProjectEmail(contact), null);
+    rejectsField({ ...validRequest, contactMethod: "email", contact }, "contact");
+  }
+  for (const contactMethod of ["whatsapp", "max"]) {
+    for (const contact of ["8 999 123-45-67", "+7 (999) 123-45-67"]) {
+      assert.equal(normalizeProjectMessengerPhone(contact), "+79991234567");
+      assert.equal(dataFrom({ ...validRequest, contactMethod, contact }).contact, "+79991234567");
+    }
+    assert.equal(normalizeProjectMessengerPhone("+44 20 7946 0123"), "+442079460123");
+    for (const contact of ["", "+01234567891", "++79991234567", "999\n1234567", "+7 (999) 12-34-56", "@test_user", "https://example.ru/contact"]) {
+      assert.equal(normalizeProjectMessengerPhone(contact), null);
+      rejectsField({ ...validRequest, contactMethod, contact }, "contact");
+    }
+  }
+});
+
 test("every launch concept produces a complete brief that fits the existing request contract", () => {
   assert.equal(new Set(LAUNCH_CONCEPTS.map(({ id }) => id)).size, LAUNCH_CONCEPTS.length);
   for (const concept of LAUNCH_CONCEPTS) {
@@ -151,7 +187,7 @@ test("launch requests with a preferred chat reach only the offline delivery stub
 test("malformed payloads, missing stage or method, and non-explicit consent fail", () => {
   for (const body of [null, [], "request", 42]) assert.equal(validateProjectRequest(body).ok, false);
   for (const projectStage of [undefined, "", "other", 1]) rejectsField({ ...validRequest, projectStage }, "projectStage");
-  for (const contactMethod of [undefined, "", "email"]) rejectsField({ ...validRequest, contactMethod }, "contactMethod");
+  for (const contactMethod of [undefined, "", "fax", "__proto__"]) rejectsField({ ...validRequest, contactMethod }, "contactMethod");
   for (const personalDataConsent of [undefined, false, "true", 1]) rejectsField({ ...validRequest, personalDataConsent }, "personalDataConsent");
   rejectsField({ ...validRequest, website: {} }, "website");
 });
@@ -174,9 +210,64 @@ test("the route accepts optional-task requests and confirms only stubbed success
   assert.equal(result.ok, true);
   assert.match(result.requestId, /^PRJ-/);
   assert.equal(deliveries.length, count + 1);
+  assert.equal(deliveryConfigs.at(-1).chatId, defaultConfig.chatId);
+  assert.equal(deliveryConfigs.at(-1).messageThreadId, undefined);
   assert.match(deliveries.at(-1), /Не указана — уточнить при связи/);
   assert.match(deliveries.at(-1), /\+79991234567/);
   assert.match(deliveries.at(-1), /Новый проект \/ открытие/);
+});
+
+test("the automation questionnaire sends chosen services and contact to the manager without prices", async () => {
+  for (const [contactMethod, contact, expectedContact] of [
+    ["email", "Sales@EXAMPLE.RU", /Email — Sales@example\.ru/],
+    ["telegram", "https://t.me/test_user", /Telegram — @test_user/],
+    ["whatsapp", "+7 (999) 123-45-67", /WhatsApp — \+79991234567/],
+    ["max", "8 (999) 123-45-67", /MAX — \+79991234567/],
+  ]) {
+    const body = {
+      ...questionnaire,
+      contactMethod, contact,
+      ...(contactMethod === "email" ? { task: "Доставка & <самовывоз>" } : {}),
+      projectSelection: { ...questionnaire.projectSelection, total: 1234, formattedTotal: "1 234 ₽", concept: { label: "Forged format" } },
+    };
+    assert.deepEqual(dataFrom(body).projectSelection, { ...questionnaire.projectSelection, selectedWorkIds: ["design", "pos", "kitchen"] });
+    const count = deliveries.length;
+    const response = await post(body);
+    assert.equal(response.status, 200);
+    assert.match((await response.json()).requestId, /^PRJ-/);
+    assert.equal(deliveries.length, count + 1);
+    assert.deepEqual(deliveryConfigs.at(-1), managerConfig);
+    const message = deliveries.at(-1);
+    assert.match(message, /Анкета автоматизации/);
+    assert.match(message, /Формат:<\/b> Фастфуд \/ столовая/);
+    assert.match(message, /Рабочих мест:<\/b> 2/);
+    assert.match(message, /• Схема автоматизации\n• Настройка кассовых мест\n• Кухня и выдача/);
+    assert.match(message, /Дополнительные возможности:<\/b>\n• ЕГАИС\n• Маркировка/);
+    assert.match(message, expectedContact);
+    assert.doesNotMatch(message, /₽|Складской учёт|Forged format|\b1234\b|Итого/);
+    if (contactMethod === "email") assert.match(message, /Доставка &amp; &lt;самовывоз&gt;/);
+    else assert.doesNotMatch(message, /Задача клиента/);
+  }
+});
+
+test("invalid questionnaire selections and missing manager routing never reach delivery", async () => {
+  const before = deliveries.length;
+  for (const projectSelection of [
+    null,
+    { ...questionnaire.projectSelection, conceptId: "invalid" },
+    { ...questionnaire.projectSelection, registers: 11 },
+    { ...questionnaire.projectSelection, selectedWorkIds: ["kitchen", "kitchen"] },
+    { ...questionnaire.projectSelection, selectedCapabilityIds: ["unknown"] },
+  ]) {
+    const response = await post({ ...questionnaire, projectSelection });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).field, "projectSelection");
+  }
+  managerTopicAvailable = false;
+  try {
+    assert.equal((await post(questionnaire)).status, 503);
+  } finally { managerTopicAvailable = true; }
+  assert.equal(deliveries.length, before);
 });
 
 test("invalid requests and honeypot requests never reach delivery", async () => {

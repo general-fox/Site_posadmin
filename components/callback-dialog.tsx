@@ -9,7 +9,8 @@ import {
   type FormEvent,
   type MouseEvent,
 } from "react";
-import { ArrowRight, useMarketingReducedMotion } from "./marketing-ui";
+import { useMarketingReducedMotion } from "./marketing-ui";
+import { UiIcon } from "./ui-icon";
 import ui from "./marketing.module.css";
 import styles from "./callback-dialog.module.css";
 import { getCalculationSummary, type CalculationSelection } from "@/lib/calculation-request";
@@ -19,6 +20,7 @@ import { usePricing } from "./pricing-provider";
 import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import type { CallbackSpecialist } from "@/lib/callback-specialist";
 import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
+import { formatRussianPhone, RUSSIAN_PHONE_PREFIX } from "@/lib/russian-phone";
 import {
   CALLBACK_HOURS_LABEL,
   getCallbackDateError,
@@ -35,40 +37,6 @@ type CallbackDialogProps = {
   projectEstimate?: ProjectEstimateSelection;
   chooseSpecialist?: boolean;
 };
-
-function formatRussianPhone(value: string) {
-  const rawDigits = value.replace(/\D/g, "");
-  const hasRussianPrefix = value.trimStart().startsWith("+7");
-  let nationalDigits = rawDigits;
-  if (hasRussianPrefix && nationalDigits.startsWith("7")) {
-    nationalDigits = nationalDigits.slice(1);
-  }
-  if (
-    nationalDigits.length > 10 &&
-    (nationalDigits.startsWith("7") || nationalDigits.startsWith("8"))
-  ) {
-    nationalDigits = nationalDigits.slice(1);
-  }
-  nationalDigits = nationalDigits.slice(0, 10);
-
-  let formatted = "+7";
-  if (nationalDigits.length === 0) return `${formatted} `;
-
-  formatted += ` (${nationalDigits.slice(0, 3)}`;
-  if (nationalDigits.length < 3) return formatted;
-
-  formatted += ")";
-  if (nationalDigits.length === 3) return `${formatted} `;
-
-  formatted += ` ${nationalDigits.slice(3, 6)}`;
-  if (nationalDigits.length > 6) {
-    formatted += `-${nationalDigits.slice(6, 8)}`;
-  }
-  if (nationalDigits.length > 8) {
-    formatted += `-${nationalDigits.slice(8, 10)}`;
-  }
-  return formatted;
-}
 
 export function CallbackDialog({ onClose, open, calculation, projectEstimate, chooseSpecialist = false }: CallbackDialogProps) {
   const { snapshot, updateSnapshot } = usePricing();
@@ -89,7 +57,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [contactSoon, setContactSoon] = useState(true);
-  const [phone, setPhone] = useState("+7 ");
+  const [phone, setPhone] = useState(RUSSIAN_PHONE_PREFIX);
   const [specialist, setSpecialist] = useState<CallbackSpecialist | "">(chooseSpecialist ? "" : "manager");
   const summary = calculation ? getCalculationSummary(calculation, snapshot.config) : null;
   const projectSummary = projectEstimate ? getProjectCalculation(projectEstimate) : null;
@@ -102,7 +70,10 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
     total: formatPrice(summary.monthlyTotal),
     period: "/мес.",
     meta: `Рабочих мест: ${summary.workplaceCount}${summary.locationLabel ? ` · ${summary.locationLabel}` : ""}`,
-    items: summary.modules.map((module) => ({ name: module.name, price: `${formatPrice(module.monthlyPrice)}/мес.` })),
+    items: [
+      ...summary.modules.map((module) => ({ name: module.name, price: `${formatPrice(module.monthlyPrice)}/мес.` })),
+      ...(summary.onsiteByRequest ? [{ name: "Выездное сопровождение", price: "По запросу" }] : []),
+    ],
   } : projectSummary ? {
     label: "Расчёт запуска предприятия",
     title: "Расчёт автоматизации",
@@ -125,7 +96,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
       submittingRef.current = false;
       setSubmitError("");
       setContactSoon(true);
-      setPhone("+7 ");
+      setPhone(RUSSIAN_PHONE_PREFIX);
       setSpecialist(chooseSpecialist ? "" : "manager");
       setScheduleNow(now);
       setSelectedDate(nextSlot.date);
@@ -149,6 +120,12 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
       document.documentElement.style.overflow = previousOverflow;
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !submitted) return;
+    const frame = window.requestAnimationFrame(() => titleRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [open, submitted]);
 
   const closeDialog = () => {
     if (!submittingRef.current) dialogRef.current?.close();
@@ -273,20 +250,16 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
             onClick={closeDialog}
             type="button"
           >
-            <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 16 16">
-              <path d="M3 3L13 13M13 3L3 13" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
-            </svg>
+            <UiIcon name="close" />
           </button>
 
           {submitted ? (
             <div className={styles.success} role="status">
               <span className={styles.successIcon} aria-hidden="true">
-                <svg className="h-7 w-7" viewBox="0 0 28 28">
-                  <path d="M7 14.5L11.5 19L21 9.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                </svg>
+                <UiIcon name="check" size={24} />
               </span>
               <p className={ui.eyebrow}>Спасибо за обращение</p>
-              <h2 className={styles.title} id={titleId}>Заявка принята</h2>
+              <h2 className={styles.title} id={titleId} ref={titleRef} tabIndex={-1}>Заявка принята</h2>
               <p className={styles.description} id={descriptionId}>
                 {specialist === "technical"
                   ? "Заявка на звонок технического специалиста принята. Мы свяжемся с вами по указанному номеру."
@@ -349,7 +322,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                   </div>
                   <p className={styles.calculationMeta}>{preview.meta}</p>
                   <details className={styles.calculationDetails}>
-                    <summary>{projectSummary ? "Состав работ" : "Состав услуг"}</summary>
+                    <summary><UiIcon name="chevron-down" size={14} />{projectSummary ? "Состав работ" : "Состав услуг"}</summary>
                     <ul>{preview.items.map((item) => (
                       <li key={item.name}><span>{item.name}</span><span>{item.price}</span></li>
                     ))}</ul>
@@ -502,7 +475,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                 type="submit"
               >
                 {submitting ? "Отправляем…" : chooseSpecialist ? "Запросить звонок" : "Оставить заявку"}
-                {!submitting && <ArrowRight />}
+                {!submitting && <UiIcon name="arrow-right" />}
               </button>
             </form>
           )}

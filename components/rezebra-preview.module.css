@@ -21,6 +21,7 @@
   position: relative;
   width: min(96cqw, calc(100cqh * 1.5));
   aspect-ratio: 3 / 2;
+  container-type: inline-size;
   overflow: clip;
   touch-action: pan-y pinch-zoom;
   user-select: none;
@@ -46,6 +47,9 @@
   inset: 0 auto auto 0;
   width: 1536px;
   height: 1024px;
+  /* Convert the ratio of container width to the source width into a unitless scale. */
+  transform: scale(tan(atan2(100cqw, 1536px)));
+  transform: scale(calc(100cqw / 1536px));
   transform-origin: top left;
   pointer-events: none;
 }

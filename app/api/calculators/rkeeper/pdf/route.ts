@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { calculateItAdministrationPricing, IT_ADMINISTRATION_MODULE_ID } from "@/lib/it-administration-pricing";
 import {
   calculateRkeeperPricing,
   isRkeeperAdditionalModuleId,
@@ -17,8 +18,10 @@ import { getPricingSnapshot } from "@/lib/pricing-store";
 import {
   isOnsiteSupportAvailable,
   isOnsiteSupportLocation,
+  normalizeOnsiteCity,
   ONSITE_SUPPORT_BY_REQUEST_MESSAGE,
 } from "@/lib/onsite-support";
+import { findRussianLocationLabel } from "@/lib/russian-locations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +31,9 @@ type RkeeperPdfRequest = {
   product?: unknown;
   workplaceCount?: unknown;
   selectedAdditionalModules?: unknown;
+  includeItSupport?: unknown;
   location?: unknown;
+  otherCity?: unknown;
 };
 
 function parseRequest(body: RkeeperPdfRequest) {
@@ -66,9 +71,20 @@ function parseRequest(body: RkeeperPdfRequest) {
     );
   }
 
+  const includeItSupport = body.includeItSupport;
+  if (includeItSupport !== undefined && typeof includeItSupport !== "boolean") {
+    throw new CalculationPdfInputError("Некорректный выбор IT-сопровождения");
+  }
+
   const location = body.location;
   if (location !== undefined && !isOnsiteSupportLocation(location)) {
     throw new CalculationPdfInputError("Некорректный город или регион");
+  }
+  if (body.otherCity !== undefined) {
+    const otherCity = normalizeOnsiteCity(body.otherCity);
+    if (location !== "other" || !otherCity || !findRussianLocationLabel(otherCity)) {
+      throw new CalculationPdfInputError("Выберите город или регион из списка");
+    }
   }
   if (
     selectedModules.includes("onsite-hardware-support") &&
@@ -82,6 +98,7 @@ function parseRequest(body: RkeeperPdfRequest) {
   return {
     workplaceCount: Number(body.workplaceCount),
     selectedModules: selectedModules as RkeeperAdditionalModuleId[],
+    includeItSupport,
     location,
   };
 }
@@ -96,7 +113,7 @@ export async function POST(request: Request) {
 
   try {
     const body = (await request.json()) as RkeeperPdfRequest;
-    const { workplaceCount, selectedModules, location } = parseRequest(body);
+    const { workplaceCount, selectedModules, includeItSupport, location } = parseRequest(body);
     const snapshot = getPricingSnapshot();
     if ((body.pricingRevision ?? 0) !== snapshot.revision) {
       return NextResponse.json({ message: "Цены обновились. Проверьте новый расчёт.", snapshot }, { status: 409 });
@@ -107,10 +124,14 @@ export async function POST(request: Request) {
       location,
       snapshot.config,
     );
+    const itAdministration = includeItSupport
+      ? calculateItAdministrationPricing(workplaceCount, [IT_ADMINISTRATION_MODULE_ID], snapshot.config)
+      : undefined;
     const generatedAt = new Date();
     const calculationNumber = createCalculationNumber(generatedAt);
     const pdfBuffer = await createRkeeperPdf({
       calculation,
+      ...(itAdministration ? { itAdministration } : {}),
       calculationNumber,
       generatedAt,
     });

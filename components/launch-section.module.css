@@ -1,125 +1,397 @@
-.updatedAt { color: var(--text-body); font-size: 14px; line-height: 1.6; text-align: right; }
-.updatedAt time { color: var(--ink); white-space: nowrap; }
-.stages { display: grid; gap: 64px; }
-.stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; scroll-margin-top: 100px; }
-.stageTitle { margin: 0; font-size: 28px; font-weight: 500; line-height: 1.25; letter-spacing: -.5px; }
-.stageContent { min-width: 0; }
-.formatHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px 32px; }
-.formatLayout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 24px; }
-.concepts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; padding: 0; border: 0; }
-.concept { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; min-height: 112px; padding: 24px; border-radius: 20px; background: var(--neutral); cursor: pointer; transition: background .2s; }
-.concept > span:first-of-type { min-width: 0; }
-.concept:has(input:checked) { background: var(--surface-selected); }
-.concept:has(input:focus-visible), .work:has(input:focus-visible) { background: var(--ink); color: var(--milk); --text-body: var(--milk); }
-.concept:has(input:focus-visible) .radioMark, .work:has(input:focus-visible) .checkMark { background: var(--action); color: var(--action-ink); }
-.concept input, .work input, .capability input, .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.concept strong { display: block; font-size: 16px; font-weight: 500; line-height: 1.5; }
-.concept strong + span { display: block; margin-top: 6px; color: var(--text-body); font-size: 14px; line-height: 1.5; }
-.radioMark { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--text-muted); }
+.wizard {
+  --wizard-focus-color: var(--text-muted);
+
+  width: 100%;
+  padding: clamp(16px, 3.2vw, 36px);
+  border-radius: var(--card-radius);
+  background: var(--neutral);
+  scroll-margin-top: 88px;
+  overflow-anchor: none;
+}
+
+.progress {
+  margin-bottom: clamp(22px, 3.2vw, 36px);
+}
+
+.progressLabel {
+  margin-bottom: 10px;
+  color: var(--text-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.progressList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progressStep {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: start;
+}
+
+.progressStep[data-state="visited"] {
+  color: var(--ink);
+}
+
+.progressStep:enabled {
+  cursor: pointer;
+}
+
+.progressList .progressStep:focus-visible {
+  outline: 2px solid var(--wizard-focus-color);
+  outline-offset: 2px;
+  background: var(--surface-selected);
+  color: var(--ink);
+}
+
+.progressStep[data-state="current"] {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.progressCaption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.stepNumber {
+  display: grid;
+  place-items: center;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  background: var(--surface-selected);
+}
+
+.progressStep[data-state="current"] .stepNumber { background: var(--action); color: var(--action-ink); }
+.progressStep[data-state="visited"] .stepNumber { color: var(--action); }
+
+.progressTrack {
+  position: relative;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-selected);
+}
+
+.progressTrack::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--action);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 420ms cubic-bezier(.22, 1, .36, 1);
+  content: "";
+}
+
+.progressStep[data-filled="true"] .progressTrack::before {
+  transform: scaleX(1);
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.stage {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.4vw, 24px);
+}
+
+.stage[inert] { visibility: hidden; }
+
+.stageTitle {
+  margin: 0;
+  font-size: clamp(21px, 2.8vw, 28px);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -.02em;
+}
+
+.stageTitle:focus { outline: none; }
+
+.concepts,
+.workList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.concept,
+.work {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 66px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--milk);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.4;
+  transition: background .18s ease;
+}
+
+.concept:has(input:checked),
+.work:has(input:checked) {
+  background: var(--surface-selected);
+}
+
+.concept:has(input:focus-visible),
+.work:has(input:focus-visible),
+.capability:has(input:focus-visible) {
+  outline: 2px solid var(--wizard-focus-color);
+  outline-offset: 2px;
+}
+
+.concept input,
+.work input,
+.capability input,
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.radioMark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  background: var(--text-muted);
+  border-radius: 50%;
+}
+
 .concept:has(input:checked) .radioMark { background: var(--action); }
-.formatHeader .registers { position: relative; flex: 0 1 auto; gap: 12px 20px; }
-.formatHeader .registers > div:first-child { flex: 0 1 auto; }
-.formatHeader .registers .registerLimit { position: absolute; z-index: 4; top: calc(100% + 12px); right: 0; width: min(340px, calc(100vw - 40px)); padding: 14px 16px; margin: 0; border-radius: 12px; background: var(--ink); color: var(--milk); font-size: 16px; line-height: 1.5; pointer-events: none; }
-.workList { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; margin-top: 0; padding: 0; border: 0; }
-.work { position: relative; display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: start; gap: 14px; min-width: 0; padding: 24px; border-radius: 20px; background: var(--neutral); cursor: pointer; transition: background .2s; }
-.work:has(input:checked) { background: var(--surface-selected); }
+
+.concept:has(input:checked) .radioMark::after {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--action-ink);
+  content: "";
+}
+
+.registers { position: relative; }
+
+.registers .registerLimit {
+  position: absolute;
+  z-index: 4;
+  bottom: calc(100% + 6px);
+  right: 0;
+  width: min(330px, 100%);
+  padding: 12px 14px;
+  margin: 0;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--milk);
+  font-size: 14px;
+  line-height: 1.5;
+  pointer-events: none;
+}
+
 .work[data-required="true"] { cursor: default; }
-.checkMark { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-top: 3px; border-radius: 5px; background: var(--text-muted); color: var(--milk); }
-.work:has(input:checked) .checkMark { background: var(--action); color: var(--action-ink); }
-.workCopy > strong { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 16px; font-weight: 500; line-height: 1.5; }
-.included { padding: 3px 8px; border-radius: 999px; background: var(--milk); font-size: 12px; line-height: 1.5; color: var(--text-body); }
-.workCopy > span { display: block; margin-top: 6px; color: var(--text-body); font-size: 14px; line-height: 1.6; }
-.workPrice { text-align: right; white-space: nowrap; }
-.workPrice strong { display: block; font-size: 16px; line-height: 1.5; font-weight: 500; font-variant-numeric: tabular-nums; }
-.workPrice > span { display: block; margin-top: 4px; color: var(--text-body); font-size: 14px; line-height: 1.6; }
-.capabilities { min-width: 0; margin-top: 32px; padding: 0; border: 0; }
-.capabilities legend { padding: 0; font-size: 20px; font-weight: 500; line-height: 1.4; letter-spacing: -.2px; }
-.capabilities > p { margin-top: 10px; color: var(--text-body); font-size: 14px; line-height: 1.6; }
-.capabilityChoices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.capability { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border-radius: 999px; background: var(--neutral); color: var(--ink); cursor: pointer; font-size: 14px; line-height: 1.5; text-align: center; transition: background .2s, color .2s; }
-.capability:has(input:checked) { background: var(--action); color: var(--action-ink); }
-.capability:has(input:focus-visible) { background: var(--ink); color: var(--milk); }
-.estimateLayout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 28px 32px; }
-.estimateTitle { grid-column: 1 / -1; }
-.estimateStage { min-width: 0; scroll-margin-top: 104px; }
-.resultCard { display: grid; gap: 28px; padding: 28px; border-radius: 24px; background: var(--neutral); color: var(--ink); }
-.resultHeader { display: flex; align-items: center; gap: 12px; }
-.resultHeader h3 { margin: 0; font-size: 24px; font-weight: 500; line-height: 1.3; letter-spacing: -.4px; }
-.resultContext { margin-top: 18px; font-size: 16px; line-height: 1.6; }
-.resultContext > span { display: block; font-size: 14px; color: var(--text-body); }
-.totalValue { margin-top: 24px; font-size: clamp(36px, 3.5vw, 44px); font-weight: 500; letter-spacing: -.3px; font-variant-numeric: tabular-nums; line-height: 1.15; }
-.resultPeriod { margin-top: 8px; font-size: 14px; line-height: 1.5; color: var(--text-body); }
-.resultActions { display: grid; gap: 16px; align-content: start; min-width: 0; }
-.resultCapabilities h4 { font-size: 14px; font-weight: 500; line-height: 1.5; }
-.resultCapabilities ul { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 0; margin: 8px 0 0; list-style: none; font-size: 14px; line-height: 1.5; }
-.resultCapabilities p { margin-top: 8px; color: var(--text-body); font-size: 14px; line-height: 1.5; }
-.resultDetails { min-width: 0; overflow: hidden; border-radius: 14px; background: var(--milk); color: var(--ink); }
-.resultDetails summary { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 12px 14px; font-size: 14px; line-height: 1.5; list-style: none; cursor: pointer; }
-.resultDetails summary::-webkit-details-marker { display: none; }
-.resultCount { display: inline-flex; flex: 0 0 22px; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border-radius: 50%; background: var(--neutral); color: var(--text-body); font-size: 12px; line-height: 1; text-align: center; font-variant-numeric: tabular-nums lining-nums; }
-.resultExpand { margin-left: auto; font-size: 20px; line-height: 1; }
-.resultDetails[open] .resultExpand { transform: rotate(45deg); }
-.resultList { padding: 0; margin: 0; list-style: none; }
-.resultDetails .resultList { max-height: 240px; overflow-y: auto; overscroll-behavior: contain; padding: 0 14px 14px; scrollbar-width: thin; }
-.resultDetails .resultList:focus-visible { outline: none; background: var(--neutral); }
-.resultList li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; font-size: 14px; line-height: 1.5; }
-.resultList strong { flex-shrink: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
-.resultList small { display: block; margin-top: 4px; color: var(--text-body); font-size: 14px; }
-.resultCard .resultActions > button { width: 100%; gap: 12px; padding-inline: 14px; background: var(--action); color: var(--action-ink); font-size: 14px; }
-.resultCard .resultActions > button:hover, .resultCard .resultActions > button:focus-visible { background: var(--ink); color: var(--milk); transform: none; }
-.afterLaunch { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding-top: 40px; }
-.afterLaunch > span { max-width: 660px; color: var(--text-body); font-size: 14px; line-height: 1.7; }
-.afterLaunch strong { color: var(--ink); font-weight: 500; }
-.afterLaunch a { flex-shrink: 0; font-size: 14px; }
+.work { align-items: flex-start; }
+.work .checkMark { margin-top: 2px; }
+
+.checkMark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  background: var(--text-muted);
+  border-radius: 4px;
+  color: var(--action-ink);
+}
+
+.checkMark svg {
+  width: 13px;
+  height: 13px;
+}
+
+.work:has(input:checked) .checkMark {
+  background: var(--action);
+}
+
+.optionCopy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.optionTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.optionHint {
+  color: var(--text-body);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.optionTitle .included {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--milk);
+  color: var(--text-body);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.capabilities {
+  min-width: 0;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.capabilities legend {
+  padding: 0;
+  color: var(--text-body);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.capabilityChoices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.capability {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--milk);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  transition: background .18s ease, color .18s ease;
+}
+
+.capability:has(input:checked) {
+  background: var(--action);
+  color: var(--action-ink);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.actions .back { margin-inline-end: auto; }
+.actions .back:enabled { background: var(--milk); }
+
+.wizard .actions > button:enabled:is(:active, :focus-visible) {
+  background: var(--surface-selected);
+  color: var(--ink);
+}
+
+.wizard .actions > button:enabled:focus-visible {
+  outline: 2px solid var(--wizard-focus-color);
+  outline-offset: 2px;
+}
+
 @media (hover: hover) {
-  .concept:hover:not(:has(input:checked)), .work:not([data-required="true"]):hover:not(:has(input:checked)) { background: var(--surface-selected); }
-  .work:hover:not(:has(input:checked)) .checkMark { background: var(--text-muted); }
-  .capability:hover:not(:has(input:checked)) { background: var(--surface-selected); }
+  .progressStep:enabled:hover,
+  .wizard .actions > button:enabled:hover {
+    background: var(--surface-selected);
+    color: var(--ink);
+  }
+
+  .concept:hover:not(:has(input:checked)),
+  .work:hover:not(:has(input:checked)),
+  .capability:hover:not(:has(input:checked)) {
+    background: var(--surface-selected);
+  }
 }
-@media (min-width: 600px) {
-  .concepts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (min-width: 900px) {
-  .workList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (min-width: 700px) and (max-width: 1199px) {
-  .resultCard { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
-}
-@media (min-width: 1200px) {
-  .estimateLayout { grid-template-columns: minmax(0, 1fr) 340px; }
-  .estimateStage { position: sticky; top: 104px; }
-  .work { grid-template-columns: 18px minmax(0, 1fr); }
-  .workPrice { grid-column: 2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; text-align: left; }
-  .workPrice > span { margin-top: 0; }
-  .resultDetails .resultList { max-height: min(240px, max(88px, calc(100svh - 520px))); }
-}
-@media (min-width: 1200px) and (max-height: 600px) {
-  .estimateStage { position: static; }
-}
-@media (min-width: 1000px) {
+
+@media (min-width: 650px) {
   .concepts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-@media (max-width: 767px) {
-  .formatHeader .registers .registerLimit { left: 0; right: auto; }
-  .stages { gap: 48px; }
-  .stageTitle { font-size: 24px; }
-  .concept { min-height: 96px; padding: 20px; }
-  .concept strong { font-size: 16px; }
-  .concept strong + span { font-size: 14px; }
-  .updatedAt, .workCopy > span, .workPrice > span, .resultList small, .afterLaunch > span { font-size: 14px; }
-  .work { gap: 12px; padding: 20px; }
-  .afterLaunch { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+@media (min-width: 768px) {
+  .formatStage .concepts { flex: 1 1 auto; max-height: 220px; }
+  .stage > .actions { margin-top: auto; }
 }
+
 @media (max-width: 480px) {
-  .work { grid-template-columns: 18px minmax(0, 1fr); }
-  .workPrice { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 8px; text-align: left; }
-  .workPrice > span { margin-top: 0; }
-  .resultCard { padding: 24px 20px; }
-  .resultList li { font-size: 14px; gap: 12px; }
+  .progressList { gap: 5px; }
+  .progressStep { padding: 8px 6px; font-size: 12px; }
+  .stepNumber { flex-basis: 18px; width: 18px; height: 18px; font-size: 11px; }
+  .progressCaption { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .concepts, .workList { gap: 8px; }
+  .concept, .work { padding: 11px; gap: 8px; }
+  .work { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+  .wizard .registers { gap: 4px 8px; }
+  .wizard .registers > div:first-child { flex-basis: 76px; }
+  .wizard .registers > div:last-of-type { grid-template-columns: 44px 36px 44px; }
 }
+
+@media (max-width: 365px) {
+  .concepts, .workList { grid-template-columns: minmax(0, 1fr); }
+  .work { display: flex; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .concept, .work, .capability { transition: none; }
+  .progressTrack::before, .concept, .work, .capability { transition: none; }
 }
+
 @media (forced-colors: active) {
-  .concept:has(input:checked) strong, .work:has(input:checked) .workCopy > strong, .capability:has(input:checked) span { text-decoration: underline; }
+  .wizard { --wizard-focus-color: Highlight; }
+
+  .progressStep[data-state="current"],
+  .concept:has(input:checked),
+  .work:has(input:checked),
+  .capability:has(input:checked) { text-decoration: underline; }
 }

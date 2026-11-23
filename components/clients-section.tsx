@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SITE_CLIENTS } from "@/lib/site-clients";
 import { SectionReveal, useScrollReveal } from "./marketing-ui";
+import { UiIcon } from "./ui-icon";
 import ui from "./marketing.module.css";
 
 export function ClientsSection() {
@@ -19,7 +20,7 @@ export function ClientsSection() {
           </SectionReveal>
           <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>С этими заведениями мы давно работаем на постоянной основе. Помогаем решать технические задачи, чтобы их команды могли сосредоточиться на гостях.</p></SectionReveal>
         </div>
-        <p className="clients-link-hint">Логотипы ведут на сайты заведений <span aria-hidden="true">↗</span></p>
+        <p className="clients-link-hint">Логотипы ведут на сайты заведений <UiIcon name="arrow-up-right" size={14} /></p>
         <div className="clients-layout" data-header-surface="light">
           <div ref={logoGridRef} className="clients-grid" data-scroll-reveal="">
             {SITE_CLIENTS.map((client) => (
@@ -57,7 +58,7 @@ export function ClientsSection() {
         </div>
         <div className="clients-next-step">
           <p>Долгосрочное сотрудничество. Поддержка в ежедневной работе.</p>
-          <Link href="/about#approach">Как устроена работа <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6" /></svg></Link>
+          <Link href="/#about-approach">Как устроена работа <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6" /></svg></Link>
         </div>
       </div>
     </section>

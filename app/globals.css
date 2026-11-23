@@ -60,7 +60,7 @@
   --grid-gap: 24px;
   --card-radius: 24px;
   --control-radius: 12px;
-  --heading-section: clamp(34px, 4vw, 54px);
+  --heading-section: clamp(31px, 3.75vw, 50px);
   --font-body: 16px;
   --font-small: 14px;
   --font-label: 12px;
@@ -109,6 +109,10 @@ dialog::backdrop {
 
 /* Keep native form validation, keyboard navigation and mobile selection. */
 select:not([multiple]) { font: inherit; color: var(--ink); }
+:where(a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 1px solid var(--action-focus);
+  outline-offset: 3px;
+}
 @supports (appearance: base-select) {
   select:not([multiple]), select:not([multiple])::picker(select) { appearance: base-select; }
   select:not([multiple]):not([size]) {
@@ -118,7 +122,20 @@ select:not([multiple]) { font: inherit; color: var(--ink); }
     gap: 12px;
     cursor: pointer;
   }
-  select::picker-icon { color: var(--text-body); }
+  select::picker-icon,
+  select option::checkmark {
+    content: "";
+    width: 16px;
+    height: 16px;
+    flex: none;
+    background-color: currentColor;
+    mask: var(--select-icon) center / contain no-repeat;
+    forced-color-adjust: none;
+  }
+  select::picker-icon {
+    --select-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6' fill='none' stroke='black' stroke-width='1.65' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    color: var(--text-body);
+  }
   select:open::picker-icon { rotate: 180deg; }
   select::picker(select) {
     width: anchor-size(width);
@@ -145,9 +162,15 @@ select:not([multiple]) { font: inherit; color: var(--ink); }
     font-variant-numeric: tabular-nums;
     cursor: pointer;
   }
-  select option::checkmark { order: 1; margin-inline-start: auto; }
-  select:not([multiple]) option:is(:hover, :focus-visible) { background: var(--milk); }
+  select option::checkmark {
+    --select-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 12 4 4L19 6' fill='none' stroke='black' stroke-width='1.65' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    order: 1;
+    margin-inline-start: auto;
+  }
+  select:not([multiple]) option:enabled:not(:checked):is(:hover, :focus-visible) { background: var(--milk); }
+  select:not([multiple]) option:focus-visible { outline: none; }
   select:not([multiple]) option:checked { background: var(--action); color: var(--action-ink); }
+  select:not([multiple]) option:checked:focus-visible { background: color-mix(in srgb, var(--action) 90%, var(--ink)); }
 }
 
 .page-scroll-section {
@@ -390,7 +413,7 @@ a.hero-glass-btn:hover {
 .clients-inner h2 > span:last-child { display: block; }
 .clients-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--grid-gap); }
 .clients-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-.clients-link-hint { margin: -12px 0 16px; color: var(--surface-deep); font-size: 12px; line-height: 1.6; }
+.clients-link-hint { display: flex; align-items: center; gap: 5px; margin: -12px 0 16px; color: var(--surface-deep); font-size: 12px; line-height: 1.6; }
 .client-external-arrow { position: absolute; top: 12px; right: 12px; color: var(--text-muted); z-index: 1; opacity: 0; pointer-events: none; transition: opacity 160ms ease; }
 .clients-next-step { display: flex; align-items: center; justify-content: space-between; gap: 12px 28px; flex-wrap: wrap; margin-top: 24px; padding-top: 20px; font-size: 14px; line-height: 1.65; }
 .clients-next-step p { color: var(--surface-deep); }

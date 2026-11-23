@@ -1,6 +1,6 @@
 const symbolPath = "M15.8 29.2V17.1H13.8V13.4H15.8V12.3C15.8 8.7 18.1 6.8 21.8 6.8C22.8 6.8 23.7 6.9 24.6 7.1V10.9H22.7C20.9 10.9 20.1 11.5 20.1 13.2V13.4H24.1V17.1H20.1V29.2H15.8Z";
 
-/** Vector artwork redrawn from the supplied FlexBonus brand mark. */
+/** Vector artwork redrawn from the supplied Flexbonus brand mark. */
 export function FlexBonusLogo({ className }: { className?: string }) {
   return <svg
     className={className}
@@ -9,7 +9,7 @@ export function FlexBonusLogo({ className }: { className?: string }) {
     width="144"
     height="38"
     role="img"
-    aria-label="FlexBonus"
+    aria-label="Flexbonus"
     focusable="false"
   >
     <g transform="translate(1 1)">

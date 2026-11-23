@@ -1,58 +1,40 @@
-import { LAUNCH_CONCEPTS, type LaunchConcept } from "@/lib/launch-concepts";
+import { LAUNCH_CONCEPTS } from "@/lib/launch-concepts";
+import {
+  formatCashRegisters, PROJECT_CAPABILITIES, PROJECT_REGISTER_MAX, PROJECT_REGISTER_MIN, PROJECT_SCOPE_WORKS,
+  type ProjectEstimateSelection, type ProjectWorkId,
+} from "@/lib/project-scope";
 
-export const PROJECT_REGISTER_MIN = 1;
-export const PROJECT_REGISTER_MAX = 10;
-export const PROJECT_PRICES_UPDATED_AT = "2026-11-16";
+export { formatCashRegisters, getDefaultProjectSelection, PROJECT_CAPABILITIES, PROJECT_REGISTER_MAX, PROJECT_REGISTER_MIN } from "@/lib/project-scope";
+export type { ProjectCapabilityId, ProjectEstimateSelection, ProjectWorkId } from "@/lib/project-scope";
+
 export const PROJECT_ESTIMATE_NOTICE = "Черновые расценки, уточняются менеджером. Это не окончательная смета.";
 export const PROJECT_ESTIMATE_EXCLUSIONS = "Оборудование, лицензии, подписки, выезд и нестандартные интеграции не включены.";
 export const PROJECT_CAPABILITIES_NOTICE = "Рассчитаем индивидуально. Стоимость не включена в сумму расчёта.";
 
-/** These requests need a separate quote; they have no catalogue price. */
-export const PROJECT_CAPABILITIES = [
-  { id: "egais", title: "ЕГАИС" },
-  { id: "marking", title: "Маркировка" },
-  { id: "mercury", title: "Меркурий" },
-  { id: "video-surveillance", title: "Видеонаблюдение" },
-  { id: "telephony", title: "Телефония" },
-  { id: "custom-integration", title: "Индивидуальная интеграция" },
-] as const;
+/** Draft prices kept for existing estimates and legacy callback requests. */
+const projectWorkPrices = {
+  design: 12_000,
+  pos: 6_000,
+  kitchen: 8_000,
+  stock: 14_000,
+  fiscal: 5_000,
+  network: 10_000,
+  integration: 12_000,
+  handover: 12_000,
+} as const satisfies Record<ProjectWorkId, number>;
 
-/** Draft project-work prices, deliberately separate from approved support tariffs. */
-export const PROJECT_WORKS = [
-  { id: "design", title: "Схема автоматизации", price: 12_000, unit: "project", required: true, description: "Разберём процессы и подготовим схему систем и оборудования." },
-  { id: "pos", title: "Настройка кассовых мест", price: 6_000, unit: "register", required: true, description: "Установка и настройка кассового ПО, меню, ролей и способов оплаты." },
-  { id: "kitchen", title: "Кухня и выдача", price: 8_000, unit: "project", required: false, description: "Настройка передачи заказов и маршрутов печати или кухонных экранов." },
-  { id: "stock", title: "Складской учёт", price: 14_000, unit: "project", required: false, description: "Базовая настройка склада, единиц измерения и процессов списания." },
-  { id: "fiscal", title: "Подключение ККТ", price: 5_000, unit: "register", required: false, description: "Настройка связи кассового ПО с ККТ и проверка фискальных операций." },
-  { id: "network", title: "Сеть и рабочие места", price: 10_000, unit: "project", required: false, description: "Базовая настройка локальной сети, Wi-Fi и доступа к системам." },
-  { id: "integration", title: "Стандартная интеграция", price: 12_000, unit: "project", required: false, description: "Одно готовое подключение: доставка, лояльность или гостиничная система." },
-  { id: "handover", title: "Пусконаладка и обучение", price: 12_000, unit: "project", required: false, description: "Проверка пути заказа, тестовая смена и один сеанс обучения команды." },
-] as const;
+export type ProjectWork = {
+  [Work in (typeof PROJECT_SCOPE_WORKS)[number] as Work["id"]]: Work & { readonly price: (typeof projectWorkPrices)[Work["id"]] };
+}[ProjectWorkId];
 
-export type ProjectWorkId = (typeof PROJECT_WORKS)[number]["id"];
-export type ProjectWork = (typeof PROJECT_WORKS)[number];
-export type ProjectCapabilityId = (typeof PROJECT_CAPABILITIES)[number]["id"];
-export type ProjectEstimateSelection = {
-  conceptId: LaunchConcept["id"];
-  registers: number;
-  selectedWorkIds: ProjectWorkId[];
-  /** Optional for clients opened before additional capabilities were introduced. */
-  selectedCapabilityIds?: ProjectCapabilityId[];
-};
-
-export function getDefaultProjectSelection(conceptId: LaunchConcept["id"] = "restaurant"): ProjectEstimateSelection {
-  if (!LAUNCH_CONCEPTS.some(({ id }) => id === conceptId)) throw new Error("Unknown project concept");
-  return { conceptId, registers: 1, selectedWorkIds: PROJECT_WORKS.filter(({ required }) => required).map(({ id }) => id), selectedCapabilityIds: [] };
-}
+export const PROJECT_WORKS: readonly ProjectWork[] = PROJECT_SCOPE_WORKS.map((work) => ({
+  ...work,
+  price: projectWorkPrices[work.id],
+}) as ProjectWork);
 
 export function formatProjectMoney(amount: number) {
   if (!Number.isSafeInteger(amount) || amount < 0) throw new RangeError("Invalid project amount");
   return `${amount.toLocaleString("ru-RU")}\u00a0₽`;
-}
-
-export function formatCashRegisters(count: number) {
-  const suffix = count === 1 ? "кассовое место" : count >= 2 && count <= 4 ? "кассовых места" : "кассовых мест";
-  return `${count} ${suffix}`;
 }
 
 export function calculateProjectEstimate(selection: ProjectEstimateSelection) {

@@ -2,7 +2,7 @@
 // Usage: node scripts/check-admin-security.mjs (Node.js 24+).
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmdirSync, rmSync, symlinkSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -107,8 +107,12 @@ test("admin security, persistence and atomic pricing", async (t) => {
           const caseDirectory = path.join(directory, `dangling-${filename}`);
           mkdirSync(caseDirectory);
           const entry = path.join(caseDirectory, filename);
+          const target = path.join(caseDirectory, "missing-target");
+          const usesJunction = process.platform === "win32";
+          // Windows requires a directory at the junction target when the link is created.
+          if (usesJunction) mkdirSync(target);
           try {
-            symlinkSync(path.join(caseDirectory, "missing-target"), entry, process.platform === "win32" ? "junction" : "file");
+            symlinkSync(target, entry, usesJunction ? "junction" : "file");
           } catch (error) {
             if (error.code === "EPERM" || error.code === "ENOTSUP") {
               subtest.skip("The operating system does not permit test symlinks.");
@@ -116,6 +120,7 @@ test("admin security, persistence and atomic pricing", async (t) => {
             }
             throw error;
           }
+          if (usesJunction) rmdirSync(target);
           assert.equal(lstatSync(entry).isSymbolicLink(), true);
           assert.equal(existsSync(entry), false);
           env.POSADMIN_DATA_DIR = caseDirectory;

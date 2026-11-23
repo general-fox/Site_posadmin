@@ -1,5 +1,7 @@
 /* The local surface takes precedence over the shared section background. */
 .section.section { padding-block: calc(var(--section-space) / 2); background: var(--neutral); }
+.headingLogo { display: inline-block; width: auto; max-width: 100%; height: .86em; vertical-align: -.13em; }
+.headingLogo path { stroke: var(--neutral); stroke-width: .62px; stroke-linejoin: round; }
 .productGrid {
   --product-card-height: min(560px, calc(100svh - 104px));
   display: grid;
@@ -48,6 +50,8 @@
     --product-stack-step: 12px;
     grid-template: repeat(3, var(--product-card-height)) / minmax(0, 1fr);
     isolation: isolate;
+    /* Shadow the combined silhouette so overlapping cards cast one shadow. */
+    filter: drop-shadow(0 6px 12px rgb(29 29 31 / 7%));
   }
 
   /* Each hash links to a flow position while its card sticks within the remaining rows. */
@@ -67,7 +71,7 @@
   .productAnchor > .productCard {
     position: sticky;
     top: calc(var(--product-sticky-top) + var(--product-stack-offset, 0px));
-    box-shadow: 0 -1px 0 rgb(29 29 31 / 7%), 0 12px 28px rgb(29 29 31 / 8%);
+    box-shadow: inset 0 1px 0 rgb(29 29 31 / 6%);
     pointer-events: auto;
   }
 }
@@ -85,16 +89,20 @@
 @media (max-width: 767px) and (orientation: portrait) {
   .tabletCard {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(190px, 1fr);
+    grid-template-rows: auto minmax(256px, 1fr);
     align-items: start;
-    height: min(600px, calc(100svh - 84px));
-    min-height: 548px;
+    height: auto;
+    min-height: min(600px, calc(100svh - 84px));
   }
 }
 
 @media (max-width: 360px) and (orientation: portrait) {
-  .tabletCard { min-height: 580px; padding: 18px 16px; gap: 14px; }
+  .tabletCard { padding: 18px 16px; gap: 14px; }
   .tabletCard .description { margin-block: 10px 12px; }
+}
+
+@media (max-width: 767px) and (max-height: 640px) and (orientation: portrait) {
+  .tabletCard:not(.foxCard) { grid-template-rows: auto minmax(196px, 1fr); }
 }
 
 @media (max-width: 767px) and (orientation: portrait) {
@@ -104,7 +112,7 @@
 
 @media (max-height: 540px) and (orientation: landscape) {
   .productAnchor { scroll-margin-top: 66px; }
-  .tabletCard { gap: 20px; padding: 16px 20px; height: calc(100svh - 72px); }
+  .tabletCard { grid-template-rows: minmax(256px, 1fr); gap: 20px; padding: 16px 20px; height: auto; min-height: calc(100svh - 72px); }
   .tabletCard h3 { font-size: 32px; }
   .tabletCard .category { margin-bottom: 4px; }
   .tabletCard .description { margin: 10px 0 12px; font-size: 14px; line-height: 1.4; }

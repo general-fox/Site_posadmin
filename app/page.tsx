@@ -30,7 +30,6 @@ export default function HomePage() {
         <HeroSection />
       </div>
       <SupportPricingSection />
-      <SupportPricingSection service="it" />
       <LaunchSection />
       <ProductsSection />
       <SpecialistsSection />

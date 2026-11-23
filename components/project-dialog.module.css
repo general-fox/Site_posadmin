@@ -33,8 +33,10 @@
 .estimateHeader > strong { font-size: 21px; font-weight: 500; line-height: 1.3; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .estimateNotice { margin-top: 10px; font-size: 11px; color: var(--text-body); line-height: 1.6; }
 .estimateDetails { margin-top: 8px; border: 0; }
-.estimateDetails summary { min-height: 44px; padding-block: 12px; font-size: 12px; font-weight: 500; line-height: 1.5; cursor: pointer; }
-.estimateDetails summary > span { margin-left: 8px; font-weight: 400; font-size: 11px; color: var(--text-body); }
+.estimateDetails summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding-block: 12px; font-size: 12px; font-weight: 500; line-height: 1.5; cursor: pointer; list-style: none; }
+.estimateDetails summary::-webkit-details-marker { display: none; }
+.estimateDetails[open] summary > svg { rotate: 180deg; }
+.estimateDetails summary > span { font-weight: 400; font-size: 11px; color: var(--text-body); }
 .estimateDetails ul { margin: 0; padding: 0; list-style: none; }
 .estimateDetails li { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: baseline; gap: 12px; padding-block: 10px; border: 0; font-size: 12px; line-height: 1.5; }
 .estimateDetails li strong { display: block; font-weight: 400; }
@@ -45,8 +47,8 @@
 .taskDisclosure { margin-top: 16px; }
 .taskDisclosure summary { display: flex; min-height: 44px; align-items: center; gap: 8px; padding-block: 8px; color: var(--ink); cursor: pointer; font-size: 13px; line-height: 1.5; list-style: none; }
 .taskDisclosure summary::-webkit-details-marker { display: none; }
-.taskDisclosure summary::before { content: ""; flex-shrink: 0; width: 18px; height: 18px; color: var(--text-olive); background: linear-gradient(currentColor, currentColor) center / 12px 1.5px no-repeat, linear-gradient(currentColor, currentColor) center / 1.5px 12px no-repeat; }
-.taskDisclosure[open] summary::before { background-size: 12px 1.5px, 0 0; }
+.taskDisclosure summary > svg { color: var(--text-olive); }
+.taskDisclosure:not([open]) .taskExpandedIcon, .taskDisclosure[open] .taskCollapsedIcon { display: none; }
 .taskDisclosure summary > span { margin-left: auto; font-size: 11px; color: var(--text-body); }
 .taskDisclosure summary:focus-visible { outline: none; border-radius: 4px; text-decoration: none; text-underline-offset: 4px; }
 .taskDisclosure .taskField { margin-top: 8px; }
