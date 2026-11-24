@@ -102,11 +102,11 @@ export function LaunchSection() {
     <section id="launch" className={ui.section} aria-labelledby="launch-title">
       <div className={ui.shell}>
         <div className={ui.sectionHeader}>
-          <SectionReveal distance={22}>
+          <SectionReveal>
             <p className={ui.eyebrow}>Проект · автоматизация HoReCa</p>
             <h2 id="launch-title" className={ui.heading}>Расчет автоматизации</h2>
           </SectionReveal>
-          <SectionReveal distance={18} delay={0.1}>
+          <SectionReveal delay={0.2}>
             <p className={ui.lead}>Укажите формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</p>
           </SectionReveal>
         </div>

@@ -85,11 +85,11 @@ export function SpecialistsSection() {
 
   return <section id="about" className={styles.section} aria-labelledby="specialists-title">
     <div className={`${ui.shell} ${styles.layout}`}>
-      <SectionReveal className={styles.intro} distance={12}>
+      <SectionReveal className={styles.intro}>
         <p className={ui.eyebrow}>О нас · Команда Posadmin</p>
         <h2 id="specialists-title" className={ui.heading}>О нас</h2>
       </SectionReveal>
-      <div className={styles.questions}>
+      <SectionReveal className={styles.questions} blur={false}>
         {COMPANY_DETAILS.map(({ id, title, caption, Content }) => (
           <details key={id} className={styles.question} id={`about-${id}`} name="about-questions" {...disclosureCentering}>
             <summary className={styles.questionTitle}>
@@ -103,7 +103,7 @@ export function SpecialistsSection() {
             <div className={styles.answer}><Content /></div>
           </details>
         ))}
-      </div>
+      </SectionReveal>
     </div>
   </section>;
 }

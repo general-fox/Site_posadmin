@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
 import { CallbackDialog } from "./callback-dialog";
 import { BaseBadge } from "./base-badge";
 import { OnsiteLocationDialog } from "./onsite-location-dialog";
@@ -107,7 +107,9 @@ function WorkplaceCount({ value, onChange, disabled }: { value: number; onChange
   </div>;
 }
 
-function ModuleCard({ anchorId, name, features, price, selected, required, onChange, disabled, opensDialog, children }: {
+const moduleEntranceInterval = 0.055;
+
+function ModuleCard({ anchorId, name, features, price, selected, required, onChange, disabled, opensDialog, children, entranceIndex = 0, revealAfter }: {
   anchorId?: string;
   name: string;
   features: readonly string[];
@@ -117,9 +119,11 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
   onChange?: () => void;
   disabled: boolean;
   opensDialog?: boolean;
+  entranceIndex?: number;
+  revealAfter: RefObject<HTMLElement | null>;
   children?: ReactNode;
 }) {
-  const revealRef = useScrollReveal<HTMLElement>({ distance: 12 });
+  const revealRef = useScrollReveal<HTMLElement>({ scaleIn: true, delay: entranceIndex * moduleEntranceInterval, after: revealAfter });
   const disclosureCentering = useDisclosureCentering();
   return <article id={anchorId} ref={revealRef} data-scroll-reveal="" data-disclosure-panel="" className={`${styles.module} ${required || selected ? styles.selected : ""}`}>
     <div className={styles.moduleTop}>
@@ -157,7 +161,8 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
 export function SupportPricingSection() {
   const { snapshot, updateSnapshot } = usePricing();
   const configurationRef = useRef<HTMLDivElement>(null);
-  const summaryRevealRef = useScrollReveal<HTMLElement>({ distance: 0 });
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const summaryRevealRef = useScrollReveal<HTMLElement>({ blur: false, after: headingRef });
   const [workplaces, setWorkplaces] = useState(1);
   const [additionalModules, setAdditionalModules] = useState<RkeeperAdditionalModuleId[]>([]);
   const [onsiteSelection, setOnsiteSelection] = useState<OnsiteLocationSelection>();
@@ -227,23 +232,25 @@ export function SupportPricingSection() {
   return <section id="pricing" className={`${ui.section} ${styles.section} section-atmosphere-host`} aria-labelledby="support-pricing-title">
     <div className={ui.shell}>
       <div className={ui.sectionHeader}>
-        <SectionReveal effect="fade-blur" sectionEntryViewportFraction={0.4} className={styles.fullHeading}>
+        <SectionReveal sectionEntryViewportFraction={0.4} className={styles.fullHeading}>
           <p className={ui.eyebrow}>Тарифы · r_keeper</p>
-          <h2 className={ui.heading} id="support-pricing-title">Расчет сопровождения</h2>
+          <h2 ref={headingRef} className={ui.heading} id="support-pricing-title">Расчет сопровождения</h2>
         </SectionReveal>
       </div>
       <div className={styles.calculator}>
         <div ref={configurationRef} className={styles.configuration}>
-          <SectionReveal distance={12} className={styles.countControl}>
+          <SectionReveal blur={false} after={headingRef} className={styles.countControl}>
             <WorkplaceCount value={workplaces} disabled={loading} onChange={(value) => { setWorkplaces(value); resetFeedback(); }} />
           </SectionReveal>
           <div className={styles.modules}>
-            <ModuleCard {...RKEEPER_TARIFF.baseModule} price={rkeeper.baseModule.monthlyPrice} selected required disabled={loading} />
-            {RKEEPER_TARIFF.additionalModules.map((module) => {
+            <ModuleCard {...RKEEPER_TARIFF.baseModule} revealAfter={headingRef} price={rkeeper.baseModule.monthlyPrice} selected required disabled={loading} />
+            {RKEEPER_TARIFF.additionalModules.map((module, index) => {
               const onsite = module.id === onsiteModuleId;
               return <ModuleCard
                 key={module.id}
                 {...module}
+                revealAfter={headingRef}
+                entranceIndex={index + 1}
                 price={onsite && onsiteByRequest ? null : getRkeeperModulePrice(workplaces, snapshot.config, module.id)}
                 selected={onsite ? Boolean(onsiteSelection) : modules.includes(module.id)}
                 onChange={() => toggleModule(module.id)}
@@ -260,7 +267,16 @@ export function SupportPricingSection() {
                 </div>}
               </ModuleCard>;
             })}
-            <ModuleCard anchorId="it-pricing" {...IT_ADMINISTRATION_TARIFF.module} price={getItAdministrationModulePrice(workplaces, snapshot.config)} selected={itIncluded} onChange={() => { setItIncluded((current) => !current); resetFeedback(); }} disabled={loading} />
+            <ModuleCard
+              anchorId="it-pricing"
+              {...IT_ADMINISTRATION_TARIFF.module}
+              revealAfter={headingRef}
+              entranceIndex={RKEEPER_TARIFF.additionalModules.length + 1}
+              price={getItAdministrationModulePrice(workplaces, snapshot.config)}
+              selected={itIncluded}
+              onChange={() => { setItIncluded((current) => !current); resetFeedback(); }}
+              disabled={loading}
+            />
           </div>
         </div>
         <div className={styles.summaryColumn}>

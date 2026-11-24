@@ -1,10 +1,14 @@
 /* Keep the local surface above the shared marketing section in any CSS load order. */
 .section.section { padding-block: calc(var(--section-space) / 2); background: var(--neutral); }
-.fullHeading { grid-column: 1 / -1; }
+.fullHeading {
+  --entrance-fade-duration: 320ms;
+  --entrance-fade-stagger: 65ms;
+  grid-column: 1 / -1;
+}
 .updatedAt { color: var(--text-body); font-size: var(--font-small); line-height: 1.6; text-align: right; }
 .updatedAt span { color: var(--ink); white-space: nowrap; }
 .toggle, .details summary { letter-spacing: var(--control-letter-spacing); font-variation-settings: normal; font-optical-sizing: auto; }
-.calculator { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px 32px; align-items: start; }
+.calculator { --entrance-fade-duration: 340ms; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px 32px; align-items: start; }
 .configuration, .summaryColumn { display: contents; }
 .countControl { grid-area: 1 / 1; min-width: 0; }
 .calculator .updatedAt { grid-area: 1 / 2; align-self: end; }
@@ -25,7 +29,7 @@
   .stepper input:enabled:hover:not(:focus) { background: var(--neutral); }
 }
 .modules { display: grid; grid-area: 2 / 1; gap: 20px; min-width: 0; overflow-anchor: none; }
-.module { border: 0; background: var(--milk); color: var(--ink); border-radius: 24px; padding: 28px; }
+.module { --entrance-bottom-inset: 48px; border: 0; background: var(--milk); color: var(--ink); border-radius: 24px; padding: 28px; }
 .module[id] { scroll-margin-top: 104px; }
 .selected { background: var(--milk); color: var(--ink); }
 .moduleTop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
@@ -106,6 +110,7 @@
 .summary > button:disabled { background: var(--surface-selected); color: var(--text-muted); cursor: not-allowed; }
 @media (max-width: 1120px) { .calculator { grid-template-columns: minmax(0, 1fr) 340px; column-gap: 24px; } .summary { padding: 24px; } .module { padding: 20px; } .workplaceRow { padding-inline: 20px; } }
 @media (max-width: 900px) {
+  .module { --entrance-bottom-inset: 136px; }
   .calculator { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .configuration, .summaryColumn { display: grid; min-width: 0; }
   .configuration { gap: 16px; }

@@ -9,16 +9,16 @@ import { UiIcon } from "./ui-icon";
 import ui from "./marketing.module.css";
 
 export function ClientsSection() {
-  const logoGridRef = useScrollReveal<HTMLDivElement>({ distance: 12, rows: true });
+  const logoGridRef = useScrollReveal<HTMLDivElement>({ rows: true, blur: false });
   return (
     <section className="clients-section font-[family-name:var(--font-inter)]" aria-labelledby="clients-title" data-header-surface="dark">
       <div className="clients-inner">
         <div className={`${ui.sectionHeader} clients-heading`}>
-          <SectionReveal distance={22}>
+          <SectionReveal>
             <p className={ui.eyebrow}>Наши клиенты</p>
             <h2 className={ui.heading} id="clients-title">Нас выбирают<br /><span className={ui.muted}>сильные команды</span></h2>
           </SectionReveal>
-          <SectionReveal distance={18} delay={0.12}><p className={ui.lead}>С этими заведениями мы давно работаем на постоянной основе. Помогаем решать технические задачи, чтобы их команды могли сосредоточиться на гостях.</p></SectionReveal>
+          <SectionReveal delay={0.12}><p className={ui.lead}>С этими заведениями мы давно работаем на постоянной основе. Помогаем решать технические задачи, чтобы их команды могли сосредоточиться на гостях.</p></SectionReveal>
         </div>
         <p className="clients-link-hint">Логотипы ведут на сайты заведений <UiIcon name="arrow-up-right" size={14} /></p>
         <div className="clients-layout" data-header-surface="light">
@@ -44,7 +44,7 @@ export function ClientsSection() {
               </a>
             ))}
           </div>
-          <SectionReveal className="clients-stats-card" distance={22} delay={0.12}>
+          <SectionReveal className="clients-stats-card" blur={false} delay={0.12}>
             <ClientsStatsDots />
             <div className="clients-stat-block clients-stat-block-top">
               <p className="clients-stat-value">Более 15 лет</p>

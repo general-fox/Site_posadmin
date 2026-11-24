@@ -20,7 +20,7 @@ export function ProductsSection() {
   return <section aria-labelledby="products-title" className={`${ui.section} ${styles.section} section-atmosphere-host`} id="products">
     <div className={ui.shell}>
       <div className={ui.sectionHeader}>
-        <SectionReveal distance={22}>
+        <SectionReveal>
           <p className={ui.eyebrow}>Продукты для вашего заведения</p>
           <h2 className={ui.heading} id="products-title">
             Сделано в <SiteLogoMark className={styles.headingLogo} withDot /><span className="sr-only">Posadmin</span>
@@ -30,7 +30,7 @@ export function ProductsSection() {
       <div className={styles.productGrid}>
         <div className={styles.productAnchor}>
           <span id="rezebra" className={styles.productTarget} data-anchor-heading="rezebra-title" aria-hidden="true" />
-          <SectionReveal className={`${styles.productCard} ${styles.tabletCard}`} distance={24}>
+          <SectionReveal className={`${styles.productCard} ${styles.tabletCard}`} blur={false}>
             <div className={styles.productCopy}>
               <p className={styles.category}>{rezebra.category}</p>
               <h3 id="rezebra-title">{rezebra.name}</h3>
@@ -44,7 +44,7 @@ export function ProductsSection() {
         </div>
         <div className={styles.productAnchor}>
           <span id="flexbonusb" className={styles.productTarget} data-anchor-heading="flexbonusb-title" aria-hidden="true" />
-          <SectionReveal className={`${styles.productCard} ${styles.tabletCard}`} delay={0.1} distance={24}>
+          <SectionReveal className={`${styles.productCard} ${styles.tabletCard}`} blur={false}>
             <div className={styles.productCopy}>
               <p className={styles.category}>{flexbonus.category}</p>
               <h3 id="flexbonusb-title">{flexbonus.name}</h3>
@@ -58,7 +58,7 @@ export function ProductsSection() {
         </div>
         <div className={styles.productAnchor}>
           <span id="foxcontrol" className={styles.productTarget} data-anchor-heading="foxcontrol-title" aria-hidden="true" />
-          <SectionReveal className={`${styles.productCard} ${styles.tabletCard} ${styles.foxCard}`} distance={24}>
+          <SectionReveal className={`${styles.productCard} ${styles.tabletCard} ${styles.foxCard}`} blur={false}>
             <div className={styles.productCopy}>
               <p className={styles.category}>{foxControl.category}</p>
               <h3 id="foxcontrol-title">{foxControl.name}</h3>

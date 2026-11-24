@@ -1,7 +1,8 @@
 "use client";
 
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { ContactsSection } from "./contacts-section";
+import { UpwardScrollContext } from "./marketing-ui";
 import { SiteFooter } from "./site-footer";
 import styles from "./closing-layout.module.css";
 
@@ -22,7 +23,15 @@ export function ClosingLayout({
   page?: "home" | "services" | "contacts" | "other";
   ending?: ReactNode;
 }) {
+  const scrollingUp = useRef(false);
+
   useEffect(() => {
+    let previousScroll = Math.max(0, window.scrollY);
+    const trackScrollDirection = () => {
+      const scroll = Math.max(0, window.scrollY);
+      if (scroll !== previousScroll) scrollingUp.current = scroll < previousScroll;
+      previousScroll = scroll;
+    };
     const targetForHash = (hash: string) => {
       try { return hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null; }
       catch { return null; }
@@ -74,19 +83,23 @@ export function ClosingLayout({
     document.addEventListener("click", onClick, true);
     document.addEventListener("focusin", revealFocusedControl);
     window.addEventListener("hashchange", alignHash);
+    window.addEventListener("scroll", trackScrollDirection, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(focusFrame);
       document.removeEventListener("click", onClick, true);
       document.removeEventListener("focusin", revealFocusedControl);
       window.removeEventListener("hashchange", alignHash);
+      window.removeEventListener("scroll", trackScrollDirection);
     };
   }, []);
 
-  return <div className={styles.stack}>
-    <div className={`${styles.underlay} ${page === "home" ? styles.productUnderlay : ""}`} data-closing-underlay>{children}</div>
-    <div className={`${styles.ending} ${page !== "home" ? styles.flushEnding : ""} ${page === "services" || page === "other" ? styles.footerEnding : ""}`} data-closing-ending data-header-surface="dark">
-      {ending ?? <><ContactsSection flushTop /><SiteFooter /></>}
+  return <UpwardScrollContext.Provider value={scrollingUp}>
+    <div className={styles.stack}>
+      <div className={`${styles.underlay} ${page === "home" ? styles.productUnderlay : ""}`} data-closing-underlay>{children}</div>
+      <div className={`${styles.ending} ${page !== "home" ? styles.flushEnding : ""} ${page === "services" || page === "other" ? styles.footerEnding : ""}`} data-closing-ending data-header-surface="dark">
+        {ending ?? <><ContactsSection flushTop /><SiteFooter /></>}
+      </div>
     </div>
-  </div>;
+  </UpwardScrollContext.Provider>;
 }

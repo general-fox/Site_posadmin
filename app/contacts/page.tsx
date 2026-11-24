@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Breadcrumbs, ServiceArrow, ServicePageFrame } from "@/components/service-page-frame";
 import { ContactsSection } from "@/components/contacts-section";
 import { JsonLd } from "@/components/json-ld";
+import { SectionReveal } from "@/components/marketing-ui";
 import { buildPageMetadata, SITE_URL } from "@/lib/seo";
 import { ONSITE_GEOGRAPHY } from "@/lib/onsite-support";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
@@ -29,7 +30,7 @@ export default function ContactsPage() {
       })),
     ] }} />
     <div className={styles.shell}>
-      <header className={styles.intro} data-scroll-reveal="">
+      <header className={`${styles.intro} ${styles.contactIntro}`}>
         <Breadcrumbs items={[{ name: "Главная", path: "/" }, { name: "Контакты", path: "/contacts" }]} />
         <p className={styles.eyebrow}>На связи с вашим заведением</p>
         <h1 className={styles.title}>Контакты Posadmin</h1>
@@ -40,9 +41,11 @@ export default function ContactsPage() {
         </div>
       </header>
       <section className={styles.contactNote} aria-labelledby="onsite-geography">
-        <h2 id="onsite-geography">Где доступно выездное сопровождение</h2>
-        <p>{ONSITE_GEOGRAPHY.join(", ")}.</p>
-        <Link className={styles.textLink} href="/#pricing">Тарифы и выездное сопровождение <ServiceArrow /></Link>
+        <SectionReveal>
+          <h2 id="onsite-geography">Где доступно выездное сопровождение</h2>
+          <p>{ONSITE_GEOGRAPHY.join(", ")}.</p>
+          <Link className={styles.textLink} href="/#pricing">Тарифы и выездное сопровождение <ServiceArrow /></Link>
+        </SectionReveal>
       </section>
     </div>
   </ServicePageFrame>;

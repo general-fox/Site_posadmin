@@ -3,7 +3,6 @@ import Link from "next/link";
 import { SiteHeader } from "./site-header";
 import { SiteFooter } from "./site-footer";
 import { ClosingLayout } from "./closing-layout";
-import { SectionReveal } from "./marketing-ui";
 import { JsonLd } from "./json-ld";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import styles from "./service-pages.module.css";
@@ -20,7 +19,7 @@ export function ServicePageFrame({
   return <div className={styles.page} data-header-surface="light">
     <SiteHeader page={page} />
     <ClosingLayout page={page} ending={<>{closing}<SiteFooter /></>}>
-      <main><SectionReveal distance={14}>{children}</SectionReveal></main>
+      <main>{children}</main>
     </ClosingLayout>
   </div>;
 }

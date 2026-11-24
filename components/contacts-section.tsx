@@ -26,7 +26,7 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
               Давайте найдём<br /><span className={styles.muted}>решение</span>
             </h2>
           </SectionReveal>
-          <SectionReveal delay={0.08}>
+          <SectionReveal delay={0.2}>
             <p className={`${ui.lead} ${styles.lead}`}>
               Расскажите о своей задаче — поможем с запуском,
               сопровождением или развитием вашего бизнеса.
@@ -35,7 +35,7 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
         </div>
 
         <div className={styles.grid}>
-          <SectionReveal className={styles.direct} distance={16}>
+          <SectionReveal className={styles.direct} blur={false}>
             <div>
               <h3 className={styles.label}>Связаться с командой</h3>
               <a className={styles.phone} href={SITE_CONTACTS.phoneHref}>
@@ -64,7 +64,7 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
 
           <div className={styles.offices}>
             {SITE_CONTACTS.offices.map((office, index) => (
-              <SectionReveal key={office.city} className={styles.office} delay={index * 0.07}>
+              <SectionReveal key={office.city} className={styles.office} blur={false} delay={index === 0 ? 0.1 : 0}>
                 <div className={styles.officeTop}>
                   <span className={styles.label}>{office.region}</span>
                   <span className={styles.officeNumber} aria-hidden="true">0{index + 1}</span>

@@ -10,29 +10,29 @@ export function useMarketingReducedMotion() {
 
 type ScrollRevealOptions = {
   delay?: number;
-  distance?: number;
   rows?: boolean;
-  effect?: "fade-blur";
+  blur?: boolean;
+  scaleIn?: boolean;
+  after?: RefObject<HTMLElement | null>;
   sectionEntryViewportFraction?: number;
 };
 
 export const UpwardScrollContext = createContext<RefObject<boolean> | null>(null);
 
 /**
- * Progressive enhancement: content is visible in SSR and without JavaScript.
- * Text groups reveal in sequence; large compositions reveal their smaller parts.
- * Separate entry/exit boundaries prevent the animation from retriggering itself.
- * Never hide content already on screen or cancel an entrance at the viewport edge.
+ * Reveal offscreen groups once as the reader scrolls down.
+ * Content already in view, focused, or reached while scrolling up is shown immediately.
  */
 export function useScrollReveal<T extends HTMLElement>({
   delay = 0,
-  distance = 16,
   rows = false,
-  effect,
+  blur = true,
+  scaleIn = false,
+  after,
   sectionEntryViewportFraction = 0,
 }: ScrollRevealOptions = {}) {
   const ref = useRef<T>(null);
-  const visits = useRef(new WeakMap<HTMLElement, number>());
+  const revealed = useRef(new WeakSet<HTMLElement>());
   const [layoutRevision, setLayoutRevision] = useState(0);
   const reduced = useMarketingReducedMotion();
   const scrollingUp = useContext(UpwardScrollContext);
@@ -82,61 +82,50 @@ export function useScrollReveal<T extends HTMLElement>({
       }
     };
     const computedRoot = getComputedStyle(element);
-    const fadeBlur = effect === "fade-blur";
-    const easingToken = fadeBlur ? "--entrance-fade-ease" : "--entrance-ease";
-    const entranceEase = computedRoot.getPropertyValue(easingToken).trim() || "ease-in-out";
+    const entranceEase = scaleIn
+      ? "cubic-bezier(.22, .61, .36, 1)"
+      : computedRoot.getPropertyValue("--entrance-fade-ease").trim() || "ease-out";
     const blurRadius = computedRoot.getPropertyValue("--entrance-blur").trim() || "1.5px";
-    const entranceDuration = fadeBlur
-      ? Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-duration")) || 600
-      : 720;
-    const entranceStagger = fadeBlur
-      ? Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-stagger")) || 100
-      : 45;
+    const entranceDuration = scaleIn
+      ? 460
+      : Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-duration")) || 600;
+    const entranceStagger = Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-stagger")) || 100;
     const hasSurface = computedRoot.backgroundColor !== "rgba(0, 0, 0, 0)" ||
       Number.parseFloat(computedRoot.borderTopWidth) > 0;
     const children = Array.from(element.children).filter(
       (child): child is HTMLElement => child instanceof HTMLElement,
     );
-    if (rows) targets.push(...children);
+    if (scaleIn) targets.push(element);
+    else if (rows) targets.push(...children);
     else if (hasSurface || children.length === 0) collect(element);
     else children.forEach((child) => collect(child));
 
-    type RevealTarget = { node: HTMLElement; opacity: number; canTranslate: boolean };
+    type RevealTarget = { node: HTMLElement; opacity: number; filter: string };
     type RevealGroup = {
       targets: RevealTarget[];
       anchor: HTMLElement;
       order: number;
-      count: number;
       phase: "waiting" | "entering" | "settled";
-      outside: boolean;
-      returning: boolean;
       animations: Animation[];
     };
     const groups: RevealGroup[] = [];
     const rowGroups = new Map<number, RevealGroup>();
     targets.forEach((target) => {
       const computed = getComputedStyle(target);
-      const positioned = (node: Element) => ["sticky", "fixed"].includes(getComputedStyle(node).position);
       const item: RevealTarget = {
         node: target,
-        opacity: Number.parseFloat(computed.opacity) || 1,
-        canTranslate: computed.translate === "none" && !positioned(target) &&
-          !Array.from(target.querySelectorAll("*")).some(positioned),
+        opacity: Number(computed.opacity),
+        filter: computed.filter,
       };
       target.dataset.revealTarget = "";
-      target.dataset.revealVisits = String(visits.current.get(target) ?? 0);
       const row = Math.round(target.offsetTop);
       let group = rows ? rowGroups.get(row) : undefined;
       if (!group) {
-        group = {
-          targets: [], anchor: target, order: groups.length,
-          count: 0, phase: "settled", outside: false, returning: false, animations: [],
-        };
+        group = { targets: [], anchor: target, order: groups.length, phase: "waiting", animations: [] };
         groups.push(group);
         if (rows) rowGroups.set(row, group);
       }
       group.targets.push(item);
-      group.count = Math.max(group.count, visits.current.get(target) ?? 0);
     });
 
     const states = new Map(groups.map((group) => [group.anchor, group]));
@@ -147,41 +136,26 @@ export function useScrollReveal<T extends HTMLElement>({
       });
       group.animations = [];
     };
-    const stamp = (group: RevealGroup) => {
+    const markRevealed = (group: RevealGroup, phase: "entering" | "settled") => {
+      group.phase = phase;
       group.targets.forEach(({ node }) => {
-        visits.current.set(node, group.count);
-        node.dataset.revealVisits = String(group.count);
-        node.dataset.revealState = group.phase;
+        revealed.current.add(node);
+        node.dataset.revealState = phase;
       });
-      element.dataset.revealVisits = String(Math.max(
-        Number(element.dataset.revealVisits ?? 0), group.count,
-      ));
     };
     const settle = (group: RevealGroup) => {
       clearAnimations(group);
-      group.phase = "settled";
-      group.count = Math.max(1, group.count);
-      stamp(group);
+      markRevealed(group, "settled");
     };
-    const startFrame = (group: RevealGroup, target: RevealTarget): Keyframe => ({
-      opacity: target.opacity * (group.returning ? 0.72 : 0),
-      ...(!group.returning && fadeBlur ? { filter: `blur(${blurRadius})` } : {}),
-      ...(!group.returning && !fadeBlur && distance > 0 && target.canTranslate
-        ? { translate: `0 ${Math.min(distance, 8)}px` } : {}),
+    const startFrame = (target: RevealTarget): Keyframe => ({
+      opacity: 0,
+      ...(scaleIn ? { scale: "0.95" } : {}),
+      ...(!scaleIn && blur && target.filter === "none" ? { filter: `blur(${blurRadius})` } : {}),
     });
     const prepare = (group: RevealGroup) => {
-      const bounds = group.anchor.getBoundingClientRect();
-      // On the homepage, an item left above the viewport is already visible on return.
-      if (scrollingUp && bounds.bottom <= 0) {
-        settle(group);
-        return;
-      }
-      clearAnimations(group);
-      group.phase = "waiting";
-      group.returning = group.count > 0 || bounds.bottom <= 0;
       // Prepare only offscreen. No visible -> hidden flash at the entry threshold.
       group.animations = group.targets.map((target) => {
-        const frame = startFrame(group, target);
+        const frame = startFrame(target);
         const animation = target.node.animate([frame, frame], { duration: 1, fill: "both" });
         animation.pause();
         animation.currentTime = 0;
@@ -191,27 +165,25 @@ export function useScrollReveal<T extends HTMLElement>({
     };
     const play = (group: RevealGroup) => {
       if (group.phase !== "waiting") return;
-      if (document.hidden || group.targets.some(({ node }) => node.closest("[inert]") ||
+      if (scrollingUp?.current || document.hidden || group.targets.some(({ node }) => node.closest("[inert]") ||
         node.contains(document.activeElement))) {
         settle(group);
         return;
       }
       clearAnimations(group);
-      group.phase = "entering";
-      group.count += 1;
-      stamp(group);
+      markRevealed(group, "entering");
       const sharedStart = document.timeline.currentTime;
       let remaining = group.targets.length;
       group.animations = group.targets.map((target) => {
-        const from = startFrame(group, target);
+        const from = startFrame(target);
         const to: Keyframe = {
           opacity: target.opacity,
-          ...(from.translate ? { translate: "0 0" } : {}),
+          ...(from.scale ? { scale: "1" } : {}),
           ...(from.filter ? { filter: "none" } : {}),
         };
         const animation = target.node.animate([from, to], {
-          duration: group.returning ? 480 : entranceDuration,
-          delay: group.returning ? 0 : Math.min(Math.max(delay, 0) * 1000 + group.order * entranceStagger, 120),
+          duration: entranceDuration,
+          delay: Math.max(delay, 0) * 1000 + Math.min(group.order, 2) * entranceStagger,
           easing: entranceEase,
           fill: "both",
         });
@@ -221,62 +193,63 @@ export function useScrollReveal<T extends HTMLElement>({
           remaining -= 1;
           if (remaining > 0) return;
           settle(group);
-          if (group.outside) prepare(group);
         };
         return animation;
       });
     };
 
     groups.forEach((group) => {
-      const bounds = group.anchor.getBoundingClientRect();
-      if (bounds.bottom > 0 && bounds.top < window.innerHeight) settle(group);
+      if (group.anchor.getBoundingClientRect().top < window.innerHeight ||
+          group.targets.some(({ node }) => revealed.current.has(node) || node.contains(document.activeElement))) settle(group);
       else prepare(group);
     });
 
     const entrySection = sectionEntryViewportFraction > 0 ? element.closest("section") : null;
-    const revealOnEntry = (group: RevealGroup) => {
-      // An instant jump can skip the exit observer's boundary entirely.
-      if (scrollingUp?.current && group.phase === "waiting") settle(group);
-      else play(group);
-    };
+    const resizeEntry = Boolean(entrySection || scaleIn);
     let entryObserver: IntersectionObserver | undefined;
     const observeEntry = () => {
       entryObserver?.disconnect();
       // IntersectionObserver resolves percentage margins against the viewport width.
-      const bottomInset = entrySection ? Math.round(window.innerHeight * sectionEntryViewportFraction) : 0;
+      const cardInset = scaleIn
+        ? Number.parseFloat(getComputedStyle(element).getPropertyValue("--entrance-bottom-inset")) || 0
+        : 0;
+      const bottomInset = entrySection
+        ? Math.round(window.innerHeight * sectionEntryViewportFraction)
+        : Math.min(cardInset, Math.round(window.innerHeight * 0.4));
       const observer = new IntersectionObserver((entries) => {
         if (entryObserver !== observer) return;
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
           if (entrySection) {
-            groups.forEach(revealOnEntry);
-            return;
+            groups.forEach(play);
+          } else {
+            const group = states.get(entry.target as HTMLElement);
+            if (group) play(group);
           }
-          const group = states.get(entry.target as HTMLElement);
-          if (group) revealOnEntry(group);
+          observer.unobserve(entry.target);
         });
       }, { rootMargin: `0px 0px -${bottomInset}px 0px` });
       entryObserver = observer;
       if (entrySection) observer.observe(entrySection);
-      else groups.forEach((group) => observer.observe(group.anchor));
-    };
-    observeEntry();
-    if (entrySection) window.addEventListener("resize", observeEntry);
-    const exitObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        const group = states.get(entry.target as HTMLElement);
-        if (!group) return;
-        group.outside = !entry.isIntersecting;
-        // 96px of hysteresis is larger than any entrance movement. Scrolling a few
-        // pixels back and forth cannot rearm the animation or change its opacity.
-        if (group.outside && (group.phase === "settled" ||
-          (group.phase === "waiting" && !group.returning && entry.boundingClientRect.bottom <= 0))) {
-          prepare(group);
-        }
+      else groups.forEach((group) => {
+        if (group.phase === "waiting") observer.observe(group.anchor);
       });
-    }, { rootMargin: "96px 0px", threshold: 0 });
-    groups.forEach((group) => exitObserver.observe(group.anchor));
-
+    };
+    const precedingElement = after?.current;
+    let precedingObserver: MutationObserver | undefined;
+    const startObserving = () => {
+      const state = precedingElement?.dataset.revealState;
+      if (state === "waiting" || state === "entering") return;
+      precedingObserver?.disconnect();
+      observeEntry();
+    };
+    if (precedingElement) {
+      // Keep each card's own viewport trigger, but arm it only after the heading.
+      precedingObserver = new MutationObserver(startObserving);
+      precedingObserver.observe(precedingElement, { attributeFilter: ["data-reveal-state"] });
+    }
+    startObserving();
+    if (resizeEntry) window.addEventListener("resize", startObserving);
     const settleAll = () => groups.forEach(settle);
     const onVisibilityChange = () => { if (document.hidden) settleAll(); };
     element.addEventListener("focusin", settleAll);
@@ -284,15 +257,18 @@ export function useScrollReveal<T extends HTMLElement>({
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       entryObserver?.disconnect();
-      exitObserver.disconnect();
-      if (entrySection) window.removeEventListener("resize", observeEntry);
-      settleAll();
+      precedingObserver?.disconnect();
+      if (resizeEntry) window.removeEventListener("resize", startObserving);
+      groups.forEach(clearAnimations);
       element.removeEventListener("focusin", settleAll);
       element.removeEventListener("pointerdown", settleAll);
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      targets.forEach((target) => { delete target.dataset.revealTarget; });
+      targets.forEach((target) => {
+        delete target.dataset.revealTarget;
+        delete target.dataset.revealState;
+      });
     };
-  }, [delay, distance, rows, effect, sectionEntryViewportFraction, layoutRevision, reduced, scrollingUp]);
+  }, [delay, rows, blur, scaleIn, after, sectionEntryViewportFraction, layoutRevision, reduced, scrollingUp]);
 
   return ref;
 }
@@ -302,16 +278,17 @@ export function SectionReveal({
   id,
   className,
   delay = 0,
-  distance = 16,
   rows = false,
-  effect,
+  blur = true,
+  scaleIn = false,
+  after,
   sectionEntryViewportFraction,
 }: {
   children: ReactNode;
   id?: string;
   className?: string;
 } & ScrollRevealOptions) {
-  const ref = useScrollReveal<HTMLDivElement>({ delay, distance, rows, effect, sectionEntryViewportFraction });
+  const ref = useScrollReveal<HTMLDivElement>({ delay, rows, blur, scaleIn, after, sectionEntryViewportFraction });
   return <div ref={ref} id={id} className={className} data-scroll-reveal="">{children}</div>;
 }
 

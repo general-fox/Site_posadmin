@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { SiteLogoMark } from "./site-logo-mark";
 import styles from "./site-footer.module.css";
-import { ArrowRight } from "./marketing-ui";
+import { ArrowRight, SectionReveal } from "./marketing-ui";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { HOME_NAVIGATION, PRODUCT_NAVIGATION } from "@/lib/site-navigation";
 
@@ -11,7 +11,7 @@ export function SiteFooter() {
   return (
     <footer className={styles.footer} data-header-surface="dark">
       <div className={styles.reveal}>
-      <div className={styles.inner}>
+      <SectionReveal className={styles.inner} rows>
         <div className={styles.brand}>
           <Link className={styles.logo} href="/" aria-label="Posadmin — на главную">
             <SiteLogoMark className="h-[30px] w-auto" withDot />
@@ -38,7 +38,7 @@ export function SiteFooter() {
           <a className={styles.telegram} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" aria-label="Написать менеджеру в Telegram, откроется в новой вкладке">Написать в Telegram<ArrowRight diagonal /></a>
           <p className={styles.support}>Техническая поддержка — 24/7</p>
         </div>
-      </div>
+      </SectionReveal>
       <div className={styles.bottom}>
         <p>© 2026 Posadmin</p>
         <Link className={styles.locations} href="/contacts">Люберцы <span aria-hidden="true">·</span> Новороссийск</Link>
