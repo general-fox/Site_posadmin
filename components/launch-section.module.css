@@ -379,6 +379,7 @@
   .progressStep { padding: 8px 6px; font-size: 12px; }
   .stepNumber { width: 18px; height: 18px; font-size: 11px; }
   .progressCaption { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .wizard .actions > button { gap: 8px; padding-inline: 12px; font-size: 14px; white-space: nowrap; }
   .concepts, .workList { gap: 8px; }
   .concept, .work { padding: 11px; gap: 8px; }
   .wizard .registers { gap: 4px 8px; }

@@ -15,6 +15,13 @@ const screens = [
 
 const tabletWidth = 1536;
 const tabletHeight = 1024;
+const tabletImageSources = [
+  "/products/rezebra-tablet-384.webp 384w",
+  "/products/rezebra-tablet-672.webp 672w",
+  "/products/rezebra-tablet-960.webp 960w",
+  "/products/rezebra-tablet-1536.webp 1536w",
+].join(", ");
+const tabletImageSizes = "(max-width: 360px) calc(96vw - 69px), (max-width: 767px) and (orientation: portrait) calc(96vw - 81px), (max-width: 1256px) 54vw, 672px";
 // Display outline in the source image, including the camera cutout.
 const screenOutline = "M312 99 769 75Q773 76 775 82Q777 87 783 87L816 85Q825 85 830 79Q834 74 841 72L1391 43Q1414 42 1408 65L1212 894Q1205 925 1186 921L65 843Q43 842 51 820L279 123Q287 100 312 99Z";
 
@@ -100,15 +107,18 @@ export function ReZebraPreview() {
         onFocus={() => setPaused(true)}
         onKeyDown={handleKeys}
       >
-        <Image
-          className={styles.deviceImage}
-          src="/products/rezebra-tablet.png"
-          alt=""
-          width={tabletWidth}
-          height={tabletHeight}
-          sizes="(max-width: 767px) 90vw, 670px"
-          draggable={false}
-        />
+        <picture>
+          <source type="image/webp" srcSet={tabletImageSources} sizes={tabletImageSizes} />
+          <Image
+            className={styles.deviceImage}
+            src="/products/rezebra-tablet.png"
+            alt=""
+            width={tabletWidth}
+            height={tabletHeight}
+            draggable={false}
+            unoptimized
+          />
+        </picture>
         <svg className={styles.screenBase} viewBox={`0 0 ${tabletWidth} ${tabletHeight}`} aria-hidden="true">
           <path d={screenOutline} fill="#303030" />
         </svg>

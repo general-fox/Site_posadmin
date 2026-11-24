@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { FoxControlAlertCard, foxControlAlertSamples } from "./fox-control-alert-card";
 import styles from "./fox-control-telegram.module.css";
 
@@ -12,6 +11,18 @@ const sceneAlerts = [
   { kind: "payment", position: styles.farAlert, shortTitle: "Изменения после оплаты", inChat: true },
   { kind: "deletion", position: styles.middleAlert, shortTitle: "Удаление позиции", inChat: false },
 ] as const;
+
+const phoneFrameSizes = "auto, (max-width: 767px) and (orientation: portrait) min(calc(35vw - 28px), 208px), 208px";
+const phoneFrameAvif = [
+  "/products/fox-control-iphone-240.avif 240w",
+  "/products/fox-control-iphone-420.avif 420w",
+  "/products/fox-control-iphone-590.avif 590w",
+].join(", ");
+const phoneFrameWebp = [
+  "/products/fox-control-iphone-240.webp 240w",
+  "/products/fox-control-iphone-420.webp 420w",
+  "/products/fox-control-iphone-590.webp 590w",
+].join(", ");
 
 function FoxMark() {
   return (
@@ -68,15 +79,24 @@ function ReportMessage() {
 function PhoneChat() {
   return (
     <div className={styles.phone}>
-      <Image
-        className={styles.phoneCase}
-        src="/products/fox-control-iphone.svg"
-        alt=""
-        width={590}
-        height={1308}
-        unoptimized
-        draggable={false}
-      />
+      <svg className={styles.phoneCaseFallback} viewBox="0 0 590 1308" aria-hidden="true" focusable="false">
+        <path d="M95 19L474 5C534 1 573 31 584 103V1190C582 1252 546 1294 474 1304L100 1290C39 1287 8 1247 8 1185V132C9 61 39 26 95 19Z" fill="#17191C" />
+      </svg>
+      <picture className={styles.phoneCase}>
+        <source type="image/avif" srcSet={phoneFrameAvif} sizes={phoneFrameSizes} />
+        {/* Static responsive sources also work without Next's image optimizer. */}
+        <img
+          src="/products/fox-control-iphone-420.webp"
+          srcSet={phoneFrameWebp}
+          sizes={phoneFrameSizes}
+          alt=""
+          width={590}
+          height={1308}
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+        />
+      </picture>
       <div className={styles.screenMask}>
         <div className={styles.chat}>
           <div className={styles.chatTop}>

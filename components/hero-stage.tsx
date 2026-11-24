@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, type PointerEvent } from "react";
+import type { PointerEvent } from "react";
 import { SITE_PRODUCTS } from "@/lib/site-navigation";
 import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
 import { HeroActions } from "./hero-actions";
@@ -22,48 +22,6 @@ export function GlowLayer() {
 
 function HeroProducts() {
   const reduced = useHydratedReducedMotion();
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel) return;
-
-    const touchMotion = window.matchMedia("(hover: none) and (pointer: coarse) and (prefers-reduced-motion: no-preference)");
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      const { top, bottom, height } = panel.getBoundingClientRect();
-      const viewport = window.innerHeight;
-      if (bottom <= 0 || top >= viewport) return;
-
-      const phase = ((viewport - top) / (viewport + height)) * Math.PI * 2;
-      const x = Math.sin(phase * 2.1) * 10 + Math.sin(phase * 4) * 3;
-      const y = Math.sin(phase * 1.3) * 9 + Math.sin(phase * 3 + 1) * 4;
-      panel.style.setProperty("--glow-scroll-x", `${x}%`);
-      panel.style.setProperty("--glow-scroll-y", `${y}%`);
-    };
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
-    const stop = () => {
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      cancelAnimationFrame(frame);
-      frame = 0;
-    };
-    const sync = () => {
-      stop();
-      if (!touchMotion.matches) return;
-      window.addEventListener("scroll", schedule, { passive: true });
-      window.addEventListener("resize", schedule);
-      schedule();
-    };
-
-    sync();
-    touchMotion.addEventListener("change", sync);
-    return () => {
-      touchMotion.removeEventListener("change", sync);
-      stop();
-    };
-  }, []);
 
   function moveGlow(event: PointerEvent<HTMLDivElement>) {
     if (reduced || event.pointerType === "touch") return;
@@ -74,7 +32,6 @@ function HeroProducts() {
   }
 
   return <div
-    ref={panelRef}
     className={`${styles.visual} ${entry.visual}`}
     aria-label="Собственные продукты Posadmin"
     onPointerEnter={moveGlow}

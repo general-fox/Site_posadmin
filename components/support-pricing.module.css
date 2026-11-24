@@ -113,7 +113,17 @@
   .countControl, .modules, .calculator .updatedAt, .summary { grid-area: auto; }
   .summary { position: static; }
 }
-@media (max-width: 767px) { .calculator { gap: 20px; } .modules { gap: 12px; } .details { margin-top: 12px; } }
+@media (max-width: 767px) {
+  .calculator { gap: 20px; }
+  .modules { gap: 12px; }
+  .details { margin-top: 12px; }
+  .countControl .workplaceRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    gap: 10px;
+  }
+}
 @media (max-width: 440px) {
   .moduleName { flex-basis: 100%; max-width: none; font-size: 16px; }
   .modulePricing { width: 100%; margin: 0; justify-content: space-between; gap: 8px 12px; }

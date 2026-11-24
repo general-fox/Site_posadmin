@@ -113,6 +113,10 @@ select:not([multiple]) { font: inherit; color: var(--ink); }
   outline: 1px solid var(--action-focus);
   outline-offset: 3px;
 }
+/* In-page navigation moves the reading position to a heading or landmark. */
+:where(h1, h2, h3, h4, h5, h6, main, section, aside)[tabindex="-1"]:focus {
+  outline: none;
+}
 @supports (appearance: base-select) {
   select:not([multiple]), select:not([multiple])::picker(select) { appearance: base-select; }
   select:not([multiple]):not([size]) {
