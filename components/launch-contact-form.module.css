@@ -318,9 +318,13 @@
   .form .actions { margin-top: auto; }
 }
 
-@media (max-width: 359px) {
-  .form .actions { flex-direction: column; align-items: stretch; }
-  .form .actions > button { margin-inline-end: 0; }
+@media (max-width: 374px) {
+  .form .actions { flex-wrap: nowrap; gap: 6px; }
+  .form .actions > .submit { min-width: 0; gap: 6px; white-space: normal; }
+}
+
+@media (max-width: 339px) {
+  .form .actions > .submit { padding-inline: 15px; }
 }
 
 @container (min-width: 420px) {

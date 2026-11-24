@@ -138,15 +138,13 @@
 .concepts,
 .workList {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
 }
-
-.concepts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.workList { grid-template-columns: minmax(0, 1fr); }
 
 .concept,
 .work {
@@ -379,16 +377,20 @@
   .progressStep { padding: 8px 6px; font-size: 12px; }
   .stepNumber { width: 18px; height: 18px; font-size: 11px; }
   .progressCaption { flex-direction: column; align-items: flex-start; gap: 4px; }
-  .wizard .actions > button { gap: 8px; padding-inline: 12px; font-size: 14px; white-space: nowrap; }
+  .wizard .actions > button {
+    gap: 8px;
+    padding-inline: clamp(16px, calc(8vw - 13px), 24px);
+    font-size: 14px;
+    white-space: nowrap;
+  }
   .concepts, .workList { gap: 8px; }
   .concept, .work { padding: 11px; gap: 8px; }
-  .wizard .registers { gap: 4px 8px; }
-  .wizard .registers > div:first-child { flex-basis: 76px; }
-  .wizard .registers > div:last-of-type { grid-template-columns: 44px 36px 44px; }
 }
 
-@media (max-width: 365px) {
-  .concepts { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 374px) {
+  .wizard .actions > .back { flex: 0 0 48px; align-self: center; height: 48px; padding: 0; }
+  .back > svg { width: 18px; height: 18px; }
+  .backLabel { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

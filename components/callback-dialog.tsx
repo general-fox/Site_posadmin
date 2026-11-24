@@ -41,7 +41,6 @@ type CallbackDialogProps = {
 export function CallbackDialog({ onClose, open, calculation, projectEstimate, chooseSpecialist = false }: CallbackDialogProps) {
   const { snapshot, updateSnapshot } = usePricing();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const phoneInputRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const submittingRef = useRef(false);
   const titleId = useId();
@@ -102,10 +101,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
       setSelectedDate(nextSlot.date);
       setSelectedTime(nextSlot.time);
       dialog.showModal();
-      const frame = window.requestAnimationFrame(() => {
-        if (chooseSpecialist) titleRef.current?.focus({ preventScroll: true });
-        else phoneInputRef.current?.focus({ preventScroll: true });
-      });
+      const frame = window.requestAnimationFrame(() => titleRef.current?.focus({ preventScroll: true }));
       return () => window.cancelAnimationFrame(frame);
     }
 
@@ -355,7 +351,6 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                     );
                   }}
                   pattern={"\\+7 \\(\\d{3}\\) \\d{3}-\\d{2}-\\d{2}"}
-                  ref={phoneInputRef}
                   required
                   title="Введите российский номер полностью: +7 (999) 123-45-67"
                   type="tel"

@@ -258,8 +258,9 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
             {fieldError("personalDataConsent")}
           </div>
           <div className={`${wizard.actions} ${styles.actions}`}>
-            <button className={`${ui.secondary} ${wizard.back}`} disabled={submitting} type="button" onClick={onBack}>
-              <UiIcon name="chevron-down" size={16} className="rotate-90" /> Назад
+            <button className={`${ui.secondary} ${wizard.back}`} aria-label="Назад" disabled={submitting} type="button" onClick={onBack}>
+              <UiIcon name="chevron-down" size={16} className="rotate-90" />
+              <span className={wizard.backLabel}>Назад</span>
             </button>
             <button className={`${ui.primary} ${styles.submit}`} disabled={submitting} type="submit">
               {submitting ? "Отправляем…" : "Отправить анкету"} <UiIcon name="arrow-right" />

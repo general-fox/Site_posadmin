@@ -236,7 +236,10 @@ export function LaunchSection() {
                 </div>
               </fieldset>
               <div className={styles.actions}>
-                <button type="button" className={`${ui.secondary} ${styles.back}`} onClick={() => goToStep(0)}><UiIcon name="chevron-down" size={16} className="rotate-90" /> Назад</button>
+                <button type="button" className={`${ui.secondary} ${styles.back}`} aria-label="Назад" onClick={() => goToStep(0)}>
+                  <UiIcon name="chevron-down" size={16} className="rotate-90" />
+                  <span className={styles.backLabel}>Назад</span>
+                </button>
                 <button type="button" className={ui.primary} onClick={() => goToStep(2)}>Далее <UiIcon name="arrow-right" /></button>
               </div>
             </section>
