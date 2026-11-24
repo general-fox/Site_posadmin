@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SiteLogoMark } from "@/components/site-logo-mark";
@@ -196,7 +196,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
 
   return (
     <header ref={headerRef} className={`site-header ${styles.header}`} data-surface={surface} data-page={page}>
-      <div className={styles.headerInner}>
+      <div className={styles.headerInner} style={{ "--header-nav-length": HOME_NAVIGATION.length } as CSSProperties}>
         <nav key={pathname} ref={navRef} className={`site-nav ${styles.nav}`} aria-label="Основное меню"
           onMouseLeave={() => setPreviewSection(undefined)}
           onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPreviewSection(undefined); }}>
@@ -204,9 +204,10 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
             onMouseEnter={() => setPreviewSection(null)} onFocus={() => setPreviewSection(null)}>
             <SiteLogoMark className="site-logo-mark" withDot />
           </Link>
-          {HOME_NAVIGATION.map((item) => (
+          {HOME_NAVIGATION.map((item, index) => (
             <Link key={item.id} href={item.href}
               className={`${styles.navItem} ${styles.desktopLink}`} aria-current={currentSection === item.id ? "location" : undefined}
+              style={{ "--header-item-index": index } as CSSProperties}
               data-highlighted={highlightedSection === item.id ? "true" : undefined}
               onMouseEnter={() => setPreviewSection(item.id)} onFocus={() => setPreviewSection(item.id)}>
               <span className="nav-link">{item.label}</span>
@@ -231,7 +232,9 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
             </svg>
           </summary>
           <nav id="mobile-site-navigation" aria-label="Мобильное меню" className={`site-mobile-menu ${styles.mobileMenu}`} data-lenis-prevent>
-            {HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href} className={styles.mobileItem} aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
+            {HOME_NAVIGATION.map((item, index) => <Link key={item.id} href={item.href} className={styles.mobileItem}
+              style={{ "--header-item-index": index } as CSSProperties}
+              aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
             <div className={styles.mobileContact}>
               <a className={styles.mobilePhone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
                 <PhoneIcon /><span><small>Позвонить нам</small><span>{SITE_CONTACTS.phone}</span></span>

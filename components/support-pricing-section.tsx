@@ -227,7 +227,7 @@ export function SupportPricingSection() {
   return <section id="pricing" className={`${ui.section} ${styles.section} section-atmosphere-host`} aria-labelledby="support-pricing-title">
     <div className={ui.shell}>
       <div className={ui.sectionHeader}>
-        <SectionReveal distance={22} className={styles.fullHeading}>
+        <SectionReveal effect="fade-blur" className={styles.fullHeading}>
           <p className={ui.eyebrow}>Тарифы · r_keeper</p>
           <h2 className={ui.heading} id="support-pricing-title">Расчет сопровождения</h2>
         </SectionReveal>

@@ -12,6 +12,7 @@ type ScrollRevealOptions = {
   delay?: number;
   distance?: number;
   rows?: boolean;
+  effect?: "fade-blur";
 };
 
 export const UpwardScrollContext = createContext<RefObject<boolean> | null>(null);
@@ -26,6 +27,7 @@ export function useScrollReveal<T extends HTMLElement>({
   delay = 0,
   distance = 16,
   rows = false,
+  effect,
 }: ScrollRevealOptions = {}) {
   const ref = useRef<T>(null);
   const visits = useRef(new WeakMap<HTMLElement, number>());
@@ -78,6 +80,12 @@ export function useScrollReveal<T extends HTMLElement>({
       }
     };
     const computedRoot = getComputedStyle(element);
+    const entranceEase = computedRoot.getPropertyValue("--entrance-ease").trim() || "ease-in-out";
+    const fadeBlur = effect === "fade-blur";
+    const blurRadius = computedRoot.getPropertyValue("--entrance-blur").trim() || "2px";
+    const entranceDuration = fadeBlur
+      ? Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-duration")) || 300
+      : 720;
     const hasSurface = computedRoot.backgroundColor !== "rgba(0, 0, 0, 0)" ||
       Number.parseFloat(computedRoot.borderTopWidth) > 0;
     const children = Array.from(element.children).filter(
@@ -151,8 +159,9 @@ export function useScrollReveal<T extends HTMLElement>({
     };
     const startFrame = (group: RevealGroup, target: RevealTarget): Keyframe => ({
       opacity: target.opacity * (group.returning ? 0.72 : 0),
-      ...(!group.returning && distance > 0 && target.canTranslate
-        ? { translate: `0 ${Math.min(distance, 14)}px` } : {}),
+      ...(!group.returning && fadeBlur ? { filter: `blur(${blurRadius})` } : {}),
+      ...(!group.returning && !fadeBlur && distance > 0 && target.canTranslate
+        ? { translate: `0 ${Math.min(distance, 8)}px` } : {}),
     });
     const prepare = (group: RevealGroup) => {
       const bounds = group.anchor.getBoundingClientRect();
@@ -189,11 +198,15 @@ export function useScrollReveal<T extends HTMLElement>({
       let remaining = group.targets.length;
       group.animations = group.targets.map((target) => {
         const from = startFrame(group, target);
-        const to: Keyframe = { opacity: target.opacity, ...(from.translate ? { translate: "0 0" } : {}) };
+        const to: Keyframe = {
+          opacity: target.opacity,
+          ...(from.translate ? { translate: "0 0" } : {}),
+          ...(from.filter ? { filter: "none" } : {}),
+        };
         const animation = target.node.animate([from, to], {
-          duration: group.returning ? 440 : 640,
+          duration: group.returning ? 480 : entranceDuration,
           delay: group.returning ? 0 : Math.min(Math.max(delay, 0) * 1000 + group.order * 45, 120),
-          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          easing: entranceEase,
           fill: "both",
         });
         // Every logo in a visual row shares exactly the same animation clock.
@@ -256,7 +269,7 @@ export function useScrollReveal<T extends HTMLElement>({
       document.removeEventListener("visibilitychange", onVisibilityChange);
       targets.forEach((target) => { delete target.dataset.revealTarget; });
     };
-  }, [delay, distance, rows, layoutRevision, reduced, scrollingUp]);
+  }, [delay, distance, rows, effect, layoutRevision, reduced, scrollingUp]);
 
   return ref;
 }
@@ -268,12 +281,13 @@ export function SectionReveal({
   delay = 0,
   distance = 16,
   rows = false,
+  effect,
 }: {
   children: ReactNode;
   id?: string;
   className?: string;
 } & ScrollRevealOptions) {
-  const ref = useScrollReveal<HTMLDivElement>({ delay, distance, rows });
+  const ref = useScrollReveal<HTMLDivElement>({ delay, distance, rows, effect });
   return <div ref={ref} id={id} className={className} data-scroll-reveal="">{children}</div>;
 }
 
