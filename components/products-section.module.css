@@ -4,11 +4,22 @@
 .headingLogo path { stroke: var(--neutral); stroke-width: .62px; stroke-linejoin: round; }
 .productGrid {
   --product-card-height: min(560px, calc(100svh - 104px));
+  --product-sticky-top: 92px;
+  --product-stack-shadow: 0 6px 12px rgb(29 29 31 / 7%);
+  position: relative;
   display: grid;
   gap: 24px;
 }
 
-.productAnchor { min-width: 0; scroll-margin-top: 92px; }
+.productAnchor { position: relative; min-width: 0; }
+.productTarget {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 1px;
+  height: 1px;
+  scroll-margin-top: calc(var(--product-sticky-top) + var(--product-stack-offset, 0px));
+  pointer-events: none;
+}
 .productCard {
   display: grid;
   gap: clamp(20px, 3.3vw, 48px);
@@ -46,19 +57,16 @@
 @media (min-width: 900px) and (min-height: 650px) and (prefers-reduced-motion: no-preference) {
   .productGrid {
     --product-card-height: min(560px, calc(100svh - 132px));
-    --product-sticky-top: 92px;
     --product-stack-step: 12px;
     grid-template: repeat(3, var(--product-card-height)) / minmax(0, 1fr);
     isolation: isolate;
     /* Shadow the combined silhouette so overlapping cards cast one shadow. */
-    filter: drop-shadow(0 6px 12px rgb(29 29 31 / 7%));
+    filter: drop-shadow(var(--product-stack-shadow));
   }
 
   /* Each hash links to a flow position while its card sticks within the remaining rows. */
   .productAnchor {
-    position: relative;
     grid-column: 1;
-    scroll-margin-top: calc(var(--product-sticky-top) + var(--product-stack-offset, 0px));
     pointer-events: none;
   }
 
@@ -77,8 +85,7 @@
 }
 
 @media (max-width: 767px) {
-  .productGrid { gap: 16px; }
-  .productAnchor { scroll-margin-top: 76px; }
+  .productGrid { --product-sticky-top: 76px; gap: 16px; }
   .productCard { gap: 20px; padding: 22px; border-radius: 24px; }
   .productCopy { max-width: none; }
   .productCopy h3 { font-size: clamp(32px, 8vw, 44px); }
@@ -110,8 +117,37 @@
   .foxCard .productVisual { height: auto; container-type: normal; }
 }
 
+@media (max-width: 767px) and (min-height: 650px) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
+  .productGrid {
+    --product-sticky-top: 80px;
+    --product-stack-step: 8px;
+    grid-template-columns: minmax(0, 1fr);
+    isolation: isolate;
+    filter: drop-shadow(var(--product-stack-shadow));
+  }
+
+  /* The stationary hash target and sticky card share the same auto-sized grid row. */
+  .productAnchor { display: contents; }
+  .productAnchor:nth-child(1) { --product-row: 1; }
+  .productAnchor:nth-child(2) { --product-row: 2; --product-stack-offset: var(--product-stack-step); }
+  .productAnchor:nth-child(3) { --product-row: 3; --product-stack-offset: calc(var(--product-stack-step) * 2); }
+  .productAnchor > :is(.productTarget, .productCard) { grid-area: var(--product-row) / 1; }
+
+  .productAnchor > .productCard {
+    position: relative;
+    z-index: var(--product-row);
+    box-shadow: inset 0 1px 0 rgb(29 29 31 / 6%);
+  }
+  .productAnchor:not(:last-child) > .productCard {
+    position: sticky;
+    top: calc(var(--product-sticky-top) + var(--product-stack-offset, 0px));
+    min-height: min(600px, calc(100svh - 104px));
+  }
+  .productCard:has(:is(a, button, [tabindex="0"]):focus-visible) { z-index: 4; }
+}
+
 @media (max-height: 540px) and (orientation: landscape) {
-  .productAnchor { scroll-margin-top: 66px; }
+  .productGrid { --product-sticky-top: 66px; }
   .tabletCard { grid-template-rows: minmax(256px, 1fr); gap: 20px; padding: 16px 20px; height: auto; min-height: calc(100svh - 72px); }
   .tabletCard h3 { font-size: 32px; }
   .tabletCard .category { margin-bottom: 4px; }

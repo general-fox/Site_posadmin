@@ -14,7 +14,7 @@ export function SiteFooter() {
       <div className={styles.inner}>
         <div className={styles.brand}>
           <Link className={styles.logo} href="/" aria-label="Posadmin — на главную">
-            <SiteLogoMark className="h-auto w-[164px]" />
+            <SiteLogoMark className="h-[30px] w-auto" withDot />
           </Link>
           <p className={styles.tagline}>Технологии работают.<br />Вы занимаетесь своим делом.</p>
           <p className={styles.caption}>Автоматизация, сопровождение<br />и развитие ресторанного бизнеса.</p>

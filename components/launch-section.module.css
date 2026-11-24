@@ -75,11 +75,13 @@
 .stepNumber {
   display: grid;
   place-items: center;
-  flex: 0 0 22px;
+  flex: none;
   width: 22px;
   height: 22px;
   border-radius: 50%;
   font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
   background: var(--surface-selected);
 }
 
@@ -136,13 +138,15 @@
 .concepts,
 .workList {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
 }
+
+.concepts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.workList { grid-template-columns: minmax(0, 1fr); }
 
 .concept,
 .work {
@@ -358,6 +362,7 @@
 
 @media (min-width: 650px) {
   .concepts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .workList { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (min-width: 768px) {
@@ -365,22 +370,24 @@
   .stage > .actions { margin-top: auto; }
 }
 
+@media (max-width: 767px) {
+  .stage[inert] { display: none; }
+}
+
 @media (max-width: 480px) {
   .progressList { gap: 5px; }
   .progressStep { padding: 8px 6px; font-size: 12px; }
-  .stepNumber { flex-basis: 18px; width: 18px; height: 18px; font-size: 11px; }
+  .stepNumber { width: 18px; height: 18px; font-size: 11px; }
   .progressCaption { flex-direction: column; align-items: flex-start; gap: 4px; }
   .concepts, .workList { gap: 8px; }
   .concept, .work { padding: 11px; gap: 8px; }
-  .work { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
   .wizard .registers { gap: 4px 8px; }
   .wizard .registers > div:first-child { flex-basis: 76px; }
   .wizard .registers > div:last-of-type { grid-template-columns: 44px 36px 44px; }
 }
 
 @media (max-width: 365px) {
-  .concepts, .workList { grid-template-columns: minmax(0, 1fr); }
-  .work { display: flex; }
+  .concepts { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {

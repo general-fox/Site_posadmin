@@ -4,7 +4,7 @@
 .amount p { font-size: 20px; font-weight: 500; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .amount p span { color: var(--milk); font-size: 14px; font-weight: 400; white-space: nowrap; }
 .amount p.empty { max-width: 190px; font-size: 14px; line-height: 1.5; }
-.link { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; min-height: 44px; gap: 8px; padding: 10px 14px; border: 0; border-radius: 999px; background: var(--action); color: var(--action-ink); font-size: 14px; font-weight: 400; transition: background .2s ease, color .2s ease; }
+.link { display: inline-grid; flex-shrink: 0; grid-auto-flow: column; place-content: center; place-items: center; min-height: 44px; gap: 8px; padding: 10px 14px; border: 0; border-radius: 999px; background: var(--action); color: var(--action-ink); font-size: 14px; font-weight: 400; line-height: 1; white-space: nowrap; transition: background .2s ease, color .2s ease; }
 .link:hover, .link:focus-visible { outline: none; border: 0; text-decoration: none; background: var(--milk); color: var(--ink); }
 :global(body:has(dialog[open])) .bar,
 :global(body:has(input:focus:not([type="radio"]), textarea:focus, select:focus)) .bar { display: none; }

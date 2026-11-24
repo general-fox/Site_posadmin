@@ -38,7 +38,9 @@ export function ClosingLayout({
       if (!url.hash && url.pathname !== "/") return;
       event.preventDefault();
       if (url.href !== location.href) history.pushState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
-      const destination = target?.querySelector<HTMLElement>("h1, h2, h3") ?? target;
+      const headingId = target?.dataset.anchorHeading;
+      const heading = headingId ? document.getElementById(headingId) : null;
+      const destination = heading ?? target?.querySelector<HTMLElement>("h1, h2, h3") ?? target;
       if (destination) {
         if (!destination.hasAttribute("tabindex")) {
           destination.setAttribute("tabindex", "-1");

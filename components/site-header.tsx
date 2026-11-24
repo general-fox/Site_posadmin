@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SiteLogoMark } from "@/components/site-logo-mark";
@@ -50,14 +50,13 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
   const pathname = usePathname();
   const [surface, setSurface] = useState<HeaderSurface>(page === "home" ? "dark" : "light");
   const [activeSection, setActiveSection] = useState<Section | null>(null);
+  const [previewSection, setPreviewSection] = useState<Section | null>();
   const headerRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
-  const logoRef = useRef<HTMLAnchorElement>(null);
-  const linkRefs = useRef<Partial<Record<Section, HTMLAnchorElement | null>>>({});
   const mobileDisclosureRef = useRef<HTMLDetailsElement>(null);
   const mobileTriggerRef = useRef<HTMLElement>(null);
-  const [capsule, setCapsule] = useState({ x: 0, width: 145 });
   const currentSection = page === "home" ? activeSection : page === "contacts" ? "contact" : page === "services" ? "launch" : null;
+  const highlightedSection = previewSection === undefined ? currentSection : previewSection;
 
   const closeMenus = useCallback(() => {
     const menu = mobileDisclosureRef.current;
@@ -195,41 +194,22 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
     };
   }, [page, pathname]);
 
-  const placeCapsule = useCallback((element: HTMLElement) => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const bounds = element.getBoundingClientRect();
-    setCapsule({ x: bounds.left - nav.getBoundingClientRect().left, width: bounds.width });
-  }, []);
-
-  const resetCapsule = useCallback(() => {
-    const active = currentSection ? linkRefs.current[currentSection] : logoRef.current;
-    const visible = active?.offsetWidth ? active : logoRef.current;
-    if (visible) placeCapsule(visible);
-  }, [currentSection, placeCapsule]);
-
-  useLayoutEffect(() => {
-    resetCapsule();
-    const nav = navRef.current;
-    if (!nav) return;
-    const observer = new ResizeObserver(resetCapsule);
-    observer.observe(nav);
-    return () => observer.disconnect();
-  }, [pathname, resetCapsule]);
-
   return (
     <header ref={headerRef} className={`site-header ${styles.header}`} data-surface={surface} data-page={page}>
       <div className={styles.headerInner}>
-        <nav key={pathname} ref={navRef} className={`site-nav ${styles.nav}`} aria-label="Основное меню" onMouseLeave={resetCapsule} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) resetCapsule(); }}>
-          <span aria-hidden="true" className={`site-nav-chip ${styles.chip}`} style={{ transform: `translateX(${capsule.x}px)`, width: Math.max(0, capsule.width - 6) }} />
-          <Link ref={logoRef} href="/" aria-label="posadmin, на главную" className={styles.logo} onMouseEnter={(event) => placeCapsule(event.currentTarget)} onFocus={(event) => placeCapsule(event.currentTarget)}>
+        <nav key={pathname} ref={navRef} className={`site-nav ${styles.nav}`} aria-label="Основное меню"
+          onMouseLeave={() => setPreviewSection(undefined)}
+          onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPreviewSection(undefined); }}>
+          <Link href="/" aria-label="posadmin, на главную" className={styles.logo} data-highlighted={highlightedSection === null ? "true" : undefined}
+            onMouseEnter={() => setPreviewSection(null)} onFocus={() => setPreviewSection(null)}>
             <SiteLogoMark className="site-logo-mark" withDot />
           </Link>
           {HOME_NAVIGATION.map((item) => (
-            <Link key={item.id} ref={(element) => { linkRefs.current[item.id] = element; }} href={item.href}
+            <Link key={item.id} href={item.href}
               className={`${styles.navItem} ${styles.desktopLink}`} aria-current={currentSection === item.id ? "location" : undefined}
-              onMouseEnter={(event) => placeCapsule(event.currentTarget)} onFocus={(event) => placeCapsule(event.currentTarget)}>
-              <span className="nav-link" data-active={currentSection === item.id ? "true" : undefined}>{item.label}</span>
+              data-highlighted={highlightedSection === item.id ? "true" : undefined}
+              onMouseEnter={() => setPreviewSection(item.id)} onFocus={() => setPreviewSection(item.id)}>
+              <span className="nav-link">{item.label}</span>
             </Link>
           ))}
         </nav>

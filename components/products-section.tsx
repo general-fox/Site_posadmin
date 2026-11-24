@@ -28,11 +28,12 @@ export function ProductsSection() {
         </SectionReveal>
       </div>
       <div className={styles.productGrid}>
-        <div id="rezebra" className={styles.productAnchor}>
+        <div className={styles.productAnchor}>
+          <span id="rezebra" className={styles.productTarget} data-anchor-heading="rezebra-title" aria-hidden="true" />
           <SectionReveal className={`${styles.productCard} ${styles.tabletCard}`} distance={24}>
             <div className={styles.productCopy}>
               <p className={styles.category}>{rezebra.category}</p>
-              <h3>{rezebra.name}</h3>
+              <h3 id="rezebra-title">{rezebra.name}</h3>
               <p className={styles.description}>Ведите бронирования и рассаживайте гостей на плане зала. Хостес сразу видит, какие столы свободны и когда придут следующие гости.</p>
               <a href="https://rezebra.ru/" target="_blank" rel="noreferrer" className={ui.primary}>На сайт {rezebra.name} <UiIcon name="arrow-up-right" /></a>
             </div>
@@ -41,11 +42,12 @@ export function ProductsSection() {
             </div>
           </SectionReveal>
         </div>
-        <div id="flexbonusb" className={styles.productAnchor}>
+        <div className={styles.productAnchor}>
+          <span id="flexbonusb" className={styles.productTarget} data-anchor-heading="flexbonusb-title" aria-hidden="true" />
           <SectionReveal className={`${styles.productCard} ${styles.tabletCard}`} delay={0.1} distance={24}>
             <div className={styles.productCopy}>
               <p className={styles.category}>{flexbonus.category}</p>
-              <h3>{flexbonus.name}</h3>
+              <h3 id="flexbonusb-title">{flexbonus.name}</h3>
               <p className={styles.description}>Предлагайте гостям бонусы, скидки и сертификаты. В дашборде видно, как часто гости возвращаются и сколько тратят.</p>
               <button type="button" className={ui.primary} onClick={() => setCallbackOpen(true)}>Узнать о подключении <UiIcon name="arrow-right" /></button>
             </div>
@@ -54,11 +56,12 @@ export function ProductsSection() {
             </div>
           </SectionReveal>
         </div>
-        <div id="foxcontrol" className={styles.productAnchor}>
+        <div className={styles.productAnchor}>
+          <span id="foxcontrol" className={styles.productTarget} data-anchor-heading="foxcontrol-title" aria-hidden="true" />
           <SectionReveal className={`${styles.productCard} ${styles.tabletCard} ${styles.foxCard}`} distance={24}>
             <div className={styles.productCopy}>
               <p className={styles.category}>{foxControl.category}</p>
-              <h3>{foxControl.name}</h3>
+              <h3 id="foxcontrol-title">{foxControl.name}</h3>
               <p className={styles.description}>Получайте в Telegram уведомления об удалениях, скидках и переносах в r_keeper. Ежедневные отчёты по сменам доступны для одного ресторана и всей сети.</p>
               <div className={styles.productActions}>
                 <a href="https://foxcontrol.ru/" target="_blank" rel="noopener noreferrer" className={ui.primary} aria-label="На сайт Fox Control, откроется в новой вкладке">На сайт Fox Control <UiIcon name="arrow-up-right" /></a>

@@ -196,6 +196,7 @@ select:not([multiple]) { font: inherit; color: var(--ink); }
 @media (max-width: 480px) { .hero-surface { min-height: 600px; } }
 @media (min-width: 481px) and (max-width: 600px) and (min-height: 601px) { .hero-surface { min-height: 640px; } }
 @media (min-width: 481px) and (max-height: 600px) { .hero-surface { min-height: 380px; } }
+@media (min-width: 768px) and (max-width: 1100px) and (orientation: portrait) { .hero-surface { min-height: 0; } }
 
 .section-atmosphere-host {
   position: relative;
@@ -218,11 +219,6 @@ a {
     background-color 0.3s ease,
     box-shadow 0.3s ease,
     color 0.22s ease;
-}
-
-.site-nav-chip {
-  background: var(--surface-selected);
-  transition: background-color 0.3s ease;
 }
 
 .nav-link {
@@ -262,7 +258,6 @@ a {
   background: var(--milk);
   box-shadow: none;
 }
-.site-header[data-surface="light"] .site-nav-chip { background: var(--surface-soft); }
 
 .site-mobile-menu {
   color: var(--milk);

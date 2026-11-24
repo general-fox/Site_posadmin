@@ -17,19 +17,36 @@
 .dealer { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; margin-top: 16px; padding: 8px 16px; border-radius: 999px; background: color-mix(in srgb, var(--action) 12%, var(--milk)); color: var(--ink); font-size: 14px; line-height: 1.5; }
 .dealer:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--action) 20%, var(--milk)); }
 .visual { position: relative; isolation: isolate; min-width: 0; padding: 28px; border-radius: 28px; background: var(--surface-selected); }
+.visual::before {
+  --glow-radius: clamp(150px, 20vw, 260px);
+  --glow-opacity: .14;
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle var(--glow-radius) at var(--glow-x, 50%) var(--glow-y, 50%), rgb(var(--accent-rgb) / var(--glow-opacity)), transparent);
+  opacity: 0;
+  pointer-events: none;
+  content: "";
+}
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .visual::before {
-    position: absolute;
-    z-index: -1;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(circle clamp(150px, 20vw, 260px) at var(--glow-x, 50%) var(--glow-y, 50%), rgb(var(--accent-rgb) / .14), transparent);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 200ms ease;
-    content: "";
-  }
+  .visual::before { transition: opacity 200ms ease; }
   .visual:hover::before { opacity: 1; }
+}
+@media (hover: none) and (pointer: coarse) {
+  .visual { overflow: clip; }
+  .visual::before { --glow-radius: clamp(220px, 32vw, 360px); --glow-opacity: .22; inset: -50%; opacity: 1; }
+}
+@media (hover: none) and (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  .visual::before {
+    translate: var(--glow-scroll-x, 0%) var(--glow-scroll-y, 0%);
+    animation: products-glow-drift 14s ease-in-out infinite alternate;
+  }
+}
+@keyframes products-glow-drift {
+  from { transform: translate(-18%, -17%); }
+  50% { transform: translate(10%, -3%); }
+  to { transform: translate(16%, 18%); }
 }
 .visualHeader { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
 .visualHeader h2 { font-size: 24px; font-weight: 400; line-height: 1.3; letter-spacing: -.025em; }

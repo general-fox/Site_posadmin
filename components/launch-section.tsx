@@ -104,7 +104,7 @@ export function LaunchSection() {
         <div className={ui.sectionHeader}>
           <SectionReveal distance={22}>
             <p className={ui.eyebrow}>Проект · автоматизация HoReCa</p>
-            <h2 id="launch-title" className={ui.heading}>Расчёт автоматизации</h2>
+            <h2 id="launch-title" className={ui.heading}>Расчет автоматизации</h2>
           </SectionReveal>
           <SectionReveal distance={18} delay={0.1}>
             <p className={ui.lead}>Укажите формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</p>
