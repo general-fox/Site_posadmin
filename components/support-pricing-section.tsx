@@ -107,7 +107,8 @@ function WorkplaceCount({ value, onChange, disabled }: { value: number; onChange
   </div>;
 }
 
-const moduleEntranceInterval = 0.055;
+const firstModuleEntranceDelay = 0.12;
+const moduleEntranceInterval = 0.04;
 
 function ModuleCard({ anchorId, name, features, price, selected, required, onChange, disabled, opensDialog, children, entranceIndex = 0, revealAfter }: {
   anchorId?: string;
@@ -123,7 +124,11 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
   revealAfter: RefObject<HTMLElement | null>;
   children?: ReactNode;
 }) {
-  const revealRef = useScrollReveal<HTMLElement>({ scaleIn: true, delay: entranceIndex * moduleEntranceInterval, after: revealAfter });
+  const revealRef = useScrollReveal<HTMLElement>({
+    scaleIn: true,
+    delay: firstModuleEntranceDelay + entranceIndex * moduleEntranceInterval,
+    after: revealAfter,
+  });
   const disclosureCentering = useDisclosureCentering();
   return <article id={anchorId} ref={revealRef} data-scroll-reveal="" data-disclosure-panel="" className={`${styles.module} ${required || selected ? styles.selected : ""}`}>
     <div className={styles.moduleTop}>
@@ -162,7 +167,7 @@ export function SupportPricingSection() {
   const { snapshot, updateSnapshot } = usePricing();
   const configurationRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const summaryRevealRef = useScrollReveal<HTMLElement>({ blur: false, after: headingRef });
+  const summaryRevealRef = useScrollReveal<HTMLElement>({ scaleIn: true, after: headingRef });
   const [workplaces, setWorkplaces] = useState(1);
   const [additionalModules, setAdditionalModules] = useState<RkeeperAdditionalModuleId[]>([]);
   const [onsiteSelection, setOnsiteSelection] = useState<OnsiteLocationSelection>();
@@ -239,7 +244,7 @@ export function SupportPricingSection() {
       </div>
       <div className={styles.calculator}>
         <div ref={configurationRef} className={styles.configuration}>
-          <SectionReveal blur={false} after={headingRef} className={styles.countControl}>
+          <SectionReveal scaleIn after={headingRef} className={styles.countControl}>
             <WorkplaceCount value={workplaces} disabled={loading} onChange={(value) => { setWorkplaces(value); resetFeedback(); }} />
           </SectionReveal>
           <div className={styles.modules}>

@@ -83,11 +83,11 @@ export function useScrollReveal<T extends HTMLElement>({
     };
     const computedRoot = getComputedStyle(element);
     const entranceEase = scaleIn
-      ? "cubic-bezier(.22, .61, .36, 1)"
+      ? "cubic-bezier(.26, .48, .32, 1)"
       : computedRoot.getPropertyValue("--entrance-fade-ease").trim() || "ease-out";
     const blurRadius = computedRoot.getPropertyValue("--entrance-blur").trim() || "1.5px";
     const entranceDuration = scaleIn
-      ? 460
+      ? 720
       : Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-duration")) || 600;
     const entranceStagger = Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-stagger")) || 100;
     const hasSurface = computedRoot.backgroundColor !== "rgba(0, 0, 0, 0)" ||
@@ -149,7 +149,7 @@ export function useScrollReveal<T extends HTMLElement>({
     };
     const startFrame = (target: RevealTarget): Keyframe => ({
       opacity: 0,
-      ...(scaleIn ? { scale: "0.95" } : {}),
+      ...(scaleIn ? { scale: "0.92", translate: "0 12px" } : {}),
       ...(!scaleIn && blur && target.filter === "none" ? { filter: `blur(${blurRadius})` } : {}),
     });
     const prepare = (group: RevealGroup) => {
@@ -178,7 +178,7 @@ export function useScrollReveal<T extends HTMLElement>({
         const from = startFrame(target);
         const to: Keyframe = {
           opacity: target.opacity,
-          ...(from.scale ? { scale: "1" } : {}),
+          ...(scaleIn ? { scale: "1", translate: "0 0" } : {}),
           ...(from.filter ? { filter: "none" } : {}),
         };
         const animation = target.node.animate([from, to], {
@@ -251,9 +251,18 @@ export function useScrollReveal<T extends HTMLElement>({
     startObserving();
     if (resizeEntry) window.addEventListener("resize", startObserving);
     const settleAll = () => groups.forEach(settle);
-    const onVisibilityChange = () => { if (document.hidden) settleAll(); };
+    const onPointerDown = (event: PointerEvent) => {
+      // A touch can start a scroll over a card that is still appearing.
+      if (!scaleIn || event.pointerType !== "touch") settleAll();
+    };
+    const onVisibilityChange = () => {
+      if (!document.hidden) return;
+      if (scaleIn) groups.filter((group) => group.phase === "entering").forEach(settle);
+      else settleAll();
+    };
     element.addEventListener("focusin", settleAll);
-    element.addEventListener("pointerdown", settleAll);
+    element.addEventListener("pointerdown", onPointerDown);
+    if (scaleIn) element.addEventListener("click", settleAll);
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       entryObserver?.disconnect();
@@ -261,7 +270,8 @@ export function useScrollReveal<T extends HTMLElement>({
       if (resizeEntry) window.removeEventListener("resize", startObserving);
       groups.forEach(clearAnimations);
       element.removeEventListener("focusin", settleAll);
-      element.removeEventListener("pointerdown", settleAll);
+      element.removeEventListener("pointerdown", onPointerDown);
+      if (scaleIn) element.removeEventListener("click", settleAll);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       targets.forEach((target) => {
         delete target.dataset.revealTarget;
