@@ -125,7 +125,7 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
   children?: ReactNode;
 }) {
   const revealRef = useScrollReveal<HTMLElement>({
-    scaleIn: true,
+    motion: "scale",
     delay: firstModuleEntranceDelay + entranceIndex * moduleEntranceInterval,
     after: revealAfter,
   });
@@ -167,7 +167,7 @@ export function SupportPricingSection() {
   const { snapshot, updateSnapshot } = usePricing();
   const configurationRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const summaryRevealRef = useScrollReveal<HTMLElement>({ scaleIn: true, after: headingRef });
+  const summaryRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", after: headingRef });
   const [workplaces, setWorkplaces] = useState(1);
   const [additionalModules, setAdditionalModules] = useState<RkeeperAdditionalModuleId[]>([]);
   const [onsiteSelection, setOnsiteSelection] = useState<OnsiteLocationSelection>();
@@ -244,7 +244,7 @@ export function SupportPricingSection() {
       </div>
       <div className={styles.calculator}>
         <div ref={configurationRef} className={styles.configuration}>
-          <SectionReveal scaleIn after={headingRef} className={styles.countControl}>
+          <SectionReveal motion="scale" after={headingRef} className={styles.countControl}>
             <WorkplaceCount value={workplaces} disabled={loading} onChange={(value) => { setWorkplaces(value); resetFeedback(); }} />
           </SectionReveal>
           <div className={styles.modules}>

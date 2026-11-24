@@ -12,7 +12,7 @@ type ScrollRevealOptions = {
   delay?: number;
   rows?: boolean;
   blur?: boolean;
-  scaleIn?: boolean;
+  motion?: "fade" | "scale" | "lift";
   after?: RefObject<HTMLElement | null>;
   sectionEntryViewportFraction?: number;
 };
@@ -27,7 +27,7 @@ export function useScrollReveal<T extends HTMLElement>({
   delay = 0,
   rows = false,
   blur = true,
-  scaleIn = false,
+  motion = "fade",
   after,
   sectionEntryViewportFraction = 0,
 }: ScrollRevealOptions = {}) {
@@ -82,7 +82,10 @@ export function useScrollReveal<T extends HTMLElement>({
       }
     };
     const computedRoot = getComputedStyle(element);
-    const entranceEase = scaleIn
+    const cardMotion = motion !== "fade";
+    const scaleIn = motion === "scale";
+    const offsetY = scaleIn ? 12 : motion === "lift" ? 6 : 0;
+    const entranceEase = cardMotion
       ? "cubic-bezier(.26, .48, .32, 1)"
       : computedRoot.getPropertyValue("--entrance-fade-ease").trim() || "ease-out";
     const blurRadius = computedRoot.getPropertyValue("--entrance-blur").trim() || "1.5px";
@@ -95,7 +98,7 @@ export function useScrollReveal<T extends HTMLElement>({
     const children = Array.from(element.children).filter(
       (child): child is HTMLElement => child instanceof HTMLElement,
     );
-    if (scaleIn) targets.push(element);
+    if (cardMotion) targets.push(element);
     else if (rows) targets.push(...children);
     else if (hasSurface || children.length === 0) collect(element);
     else children.forEach((child) => collect(child));
@@ -149,8 +152,9 @@ export function useScrollReveal<T extends HTMLElement>({
     };
     const startFrame = (target: RevealTarget): Keyframe => ({
       opacity: 0,
-      ...(scaleIn ? { scale: "0.92", translate: "0 12px" } : {}),
-      ...(!scaleIn && blur && target.filter === "none" ? { filter: `blur(${blurRadius})` } : {}),
+      ...(scaleIn ? { scale: "0.92" } : {}),
+      ...(offsetY ? { translate: `0 ${offsetY}px` } : {}),
+      ...(!cardMotion && blur && target.filter === "none" ? { filter: `blur(${blurRadius})` } : {}),
     });
     const prepare = (group: RevealGroup) => {
       // Prepare only offscreen. No visible -> hidden flash at the entry threshold.
@@ -173,17 +177,21 @@ export function useScrollReveal<T extends HTMLElement>({
       clearAnimations(group);
       markRevealed(group, "entering");
       const sharedStart = document.timeline.currentTime;
+      const responsiveDelay = motion === "lift"
+        ? Number.parseFloat(getComputedStyle(element).getPropertyValue("--entrance-delay")) || 0
+        : 0;
       let remaining = group.targets.length;
       group.animations = group.targets.map((target) => {
         const from = startFrame(target);
         const to: Keyframe = {
           opacity: target.opacity,
-          ...(scaleIn ? { scale: "1", translate: "0 0" } : {}),
+          ...(scaleIn ? { scale: "1" } : {}),
+          ...(offsetY ? { translate: "0 0" } : {}),
           ...(from.filter ? { filter: "none" } : {}),
         };
         const animation = target.node.animate([from, to], {
           duration: entranceDuration,
-          delay: Math.max(delay, 0) * 1000 + Math.min(group.order, 2) * entranceStagger,
+          delay: Math.max(delay, 0) * 1000 + responsiveDelay + Math.min(group.order, 2) * entranceStagger,
           easing: entranceEase,
           fill: "both",
         });
@@ -205,12 +213,12 @@ export function useScrollReveal<T extends HTMLElement>({
     });
 
     const entrySection = sectionEntryViewportFraction > 0 ? element.closest("section") : null;
-    const resizeEntry = Boolean(entrySection || scaleIn);
+    const resizeEntry = Boolean(entrySection || cardMotion);
     let entryObserver: IntersectionObserver | undefined;
     const observeEntry = () => {
       entryObserver?.disconnect();
       // IntersectionObserver resolves percentage margins against the viewport width.
-      const cardInset = scaleIn
+      const cardInset = cardMotion
         ? Number.parseFloat(getComputedStyle(element).getPropertyValue("--entrance-bottom-inset")) || 0
         : 0;
       const bottomInset = entrySection
@@ -253,16 +261,16 @@ export function useScrollReveal<T extends HTMLElement>({
     const settleAll = () => groups.forEach(settle);
     const onPointerDown = (event: PointerEvent) => {
       // A touch can start a scroll over a card that is still appearing.
-      if (!scaleIn || event.pointerType !== "touch") settleAll();
+      if (!cardMotion || event.pointerType !== "touch") settleAll();
     };
     const onVisibilityChange = () => {
       if (!document.hidden) return;
-      if (scaleIn) groups.filter((group) => group.phase === "entering").forEach(settle);
+      if (cardMotion) groups.filter((group) => group.phase === "entering").forEach(settle);
       else settleAll();
     };
     element.addEventListener("focusin", settleAll);
     element.addEventListener("pointerdown", onPointerDown);
-    if (scaleIn) element.addEventListener("click", settleAll);
+    if (cardMotion) element.addEventListener("click", settleAll);
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       entryObserver?.disconnect();
@@ -271,14 +279,14 @@ export function useScrollReveal<T extends HTMLElement>({
       groups.forEach(clearAnimations);
       element.removeEventListener("focusin", settleAll);
       element.removeEventListener("pointerdown", onPointerDown);
-      if (scaleIn) element.removeEventListener("click", settleAll);
+      if (cardMotion) element.removeEventListener("click", settleAll);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       targets.forEach((target) => {
         delete target.dataset.revealTarget;
         delete target.dataset.revealState;
       });
     };
-  }, [delay, rows, blur, scaleIn, after, sectionEntryViewportFraction, layoutRevision, reduced, scrollingUp]);
+  }, [delay, rows, blur, motion, after, sectionEntryViewportFraction, layoutRevision, reduced, scrollingUp]);
 
   return ref;
 }
@@ -290,7 +298,7 @@ export function SectionReveal({
   delay = 0,
   rows = false,
   blur = true,
-  scaleIn = false,
+  motion,
   after,
   sectionEntryViewportFraction,
 }: {
@@ -298,7 +306,7 @@ export function SectionReveal({
   id?: string;
   className?: string;
 } & ScrollRevealOptions) {
-  const ref = useScrollReveal<HTMLDivElement>({ delay, rows, blur, scaleIn, after, sectionEntryViewportFraction });
+  const ref = useScrollReveal<HTMLDivElement>({ delay, rows, blur, motion, after, sectionEntryViewportFraction });
   return <div ref={ref} id={id} className={className} data-scroll-reveal="">{children}</div>;
 }
 
