@@ -1,58 +1,33 @@
 /* The default styles are visible. Browsers can play the entrance without React. */
-.titleInk { display: block; }
-.titleHaze { display: none; }
-
 @media (prefers-reduced-motion: no-preference) {
   .sequence {
     --title-delay: var(--hero-heading-start);
-    --title-duration: 650ms;
-    --lead-start: calc(var(--title-delay) + 155ms);
-    --systems-start: calc(var(--lead-start) + 235ms);
-    --system-interval: 32ms;
-    --dealer-start: calc(var(--systems-start) + var(--system-count) * var(--system-interval) + 20ms);
-    --board-start: calc(var(--dealer-start) + 110ms);
-    --products-start: calc(var(--board-start) + 115ms);
-    --product-interval: 70ms;
+    --step: var(--entrance-fade-stagger);
+    --lead-start: calc(var(--title-delay) + var(--step));
+    --actions-start: calc(var(--lead-start) + var(--step));
+    --systems-start: calc(var(--actions-start) + 2 * var(--step));
+    --system-interval: calc(var(--step) / 2);
+    --dealer-start: calc(var(--systems-start) + (var(--system-count) - 1) * var(--system-interval) + var(--step));
+    --board-start: calc(var(--dealer-start) + var(--step));
+    --products-start: calc(var(--board-start) + var(--step));
   }
-  .titleInk {
-    animation: fade-in var(--title-duration) cubic-bezier(.36, 0, .32, 1) var(--title-delay) backwards;
-  }
-  /* Rasterize the soft outline once; only the two layers' opacity changes. */
-  .titleHaze {
-    display: block;
-    position: absolute;
-    inset: 0;
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-    user-select: none;
-    filter: blur(1.5px);
-    animation: title-haze var(--title-duration) ease-in-out var(--title-delay) backwards;
-  }
-  .lead, .actions > a, .system, .dealer, .board, .boardHeading, .product, .boardFooter {
+  .title, .lead, .actions > a, .system, .dealer, .boardHeading, .product, .boardFooter {
     animation: var(--entrance-fade);
   }
-  .lead, .board, .boardHeading, .product, .boardFooter {
-    animation-duration: 440ms;
-  }
+  .title { animation-delay: var(--title-delay); }
   .lead { animation-delay: var(--lead-start); }
-  .actions > a { animation-delay: calc(var(--lead-start) + 85ms); }
-  .actions > a + a { animation-delay: calc(var(--lead-start) + 150ms); }
+  .actions > a { animation-delay: var(--actions-start); }
+  .actions > a + a { animation-delay: calc(var(--actions-start) + var(--step)); }
   .system { animation-delay: calc(var(--systems-start) + var(--entry-index) * var(--system-interval)); }
   .dealer { animation-delay: var(--dealer-start); }
-  .board { animation-name: fade-in; animation-delay: var(--board-start); }
-  .boardHeading { animation-delay: calc(var(--board-start) + 65ms); }
-  .product { animation-delay: calc(var(--products-start) + var(--entry-index) * var(--product-interval)); }
-  .boardFooter { animation-delay: calc(var(--products-start) + var(--product-count) * var(--product-interval)); }
+  .board { animation: fade-in 750ms var(--entrance-fade-ease) var(--board-start) backwards; }
+  .boardHeading { animation-delay: var(--board-start); }
+  .product { animation-delay: calc(var(--products-start) + var(--entry-index) * var(--step)); }
+  .boardFooter { animation-delay: calc(var(--products-start) + var(--product-count) * var(--step)); }
 
   .actions > a:focus-visible, .dealer:focus-visible, .product:focus-visible, .boardFooter:focus-within {
     animation-name: none;
   }
-}
-
-@keyframes title-haze {
-  from, to { opacity: 0; visibility: visible; }
-  35% { opacity: .24; }
 }
 
 @keyframes fade-in {

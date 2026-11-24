@@ -13,6 +13,7 @@ type ScrollRevealOptions = {
   distance?: number;
   rows?: boolean;
   effect?: "fade-blur";
+  sectionEntryViewportFraction?: number;
 };
 
 export const UpwardScrollContext = createContext<RefObject<boolean> | null>(null);
@@ -28,6 +29,7 @@ export function useScrollReveal<T extends HTMLElement>({
   distance = 16,
   rows = false,
   effect,
+  sectionEntryViewportFraction = 0,
 }: ScrollRevealOptions = {}) {
   const ref = useRef<T>(null);
   const visits = useRef(new WeakMap<HTMLElement, number>());
@@ -80,12 +82,16 @@ export function useScrollReveal<T extends HTMLElement>({
       }
     };
     const computedRoot = getComputedStyle(element);
-    const entranceEase = computedRoot.getPropertyValue("--entrance-ease").trim() || "ease-in-out";
     const fadeBlur = effect === "fade-blur";
-    const blurRadius = computedRoot.getPropertyValue("--entrance-blur").trim() || "2px";
+    const easingToken = fadeBlur ? "--entrance-fade-ease" : "--entrance-ease";
+    const entranceEase = computedRoot.getPropertyValue(easingToken).trim() || "ease-in-out";
+    const blurRadius = computedRoot.getPropertyValue("--entrance-blur").trim() || "1.5px";
     const entranceDuration = fadeBlur
-      ? Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-duration")) || 300
+      ? Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-duration")) || 600
       : 720;
+    const entranceStagger = fadeBlur
+      ? Number.parseFloat(computedRoot.getPropertyValue("--entrance-fade-stagger")) || 100
+      : 45;
     const hasSurface = computedRoot.backgroundColor !== "rgba(0, 0, 0, 0)" ||
       Number.parseFloat(computedRoot.borderTopWidth) > 0;
     const children = Array.from(element.children).filter(
@@ -205,7 +211,7 @@ export function useScrollReveal<T extends HTMLElement>({
         };
         const animation = target.node.animate([from, to], {
           duration: group.returning ? 480 : entranceDuration,
-          delay: group.returning ? 0 : Math.min(Math.max(delay, 0) * 1000 + group.order * 45, 120),
+          delay: group.returning ? 0 : Math.min(Math.max(delay, 0) * 1000 + group.order * entranceStagger, 120),
           easing: entranceEase,
           fill: "both",
         });
@@ -227,16 +233,35 @@ export function useScrollReveal<T extends HTMLElement>({
       else prepare(group);
     });
 
-    const entryObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        const group = states.get(entry.target as HTMLElement);
-        if (!group || !entry.isIntersecting) return;
-        // An instant jump can skip the exit observer's boundary entirely.
-        if (scrollingUp?.current && group.phase === "waiting") settle(group);
-        else play(group);
-        // Leaving the viewport never interrupts an entrance already in progress.
-      });
-    }, { threshold: 0 });
+    const entrySection = sectionEntryViewportFraction > 0 ? element.closest("section") : null;
+    const revealOnEntry = (group: RevealGroup) => {
+      // An instant jump can skip the exit observer's boundary entirely.
+      if (scrollingUp?.current && group.phase === "waiting") settle(group);
+      else play(group);
+    };
+    let entryObserver: IntersectionObserver | undefined;
+    const observeEntry = () => {
+      entryObserver?.disconnect();
+      // IntersectionObserver resolves percentage margins against the viewport width.
+      const bottomInset = entrySection ? Math.round(window.innerHeight * sectionEntryViewportFraction) : 0;
+      const observer = new IntersectionObserver((entries) => {
+        if (entryObserver !== observer) return;
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          if (entrySection) {
+            groups.forEach(revealOnEntry);
+            return;
+          }
+          const group = states.get(entry.target as HTMLElement);
+          if (group) revealOnEntry(group);
+        });
+      }, { rootMargin: `0px 0px -${bottomInset}px 0px` });
+      entryObserver = observer;
+      if (entrySection) observer.observe(entrySection);
+      else groups.forEach((group) => observer.observe(group.anchor));
+    };
+    observeEntry();
+    if (entrySection) window.addEventListener("resize", observeEntry);
     const exitObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         const group = states.get(entry.target as HTMLElement);
@@ -250,10 +275,7 @@ export function useScrollReveal<T extends HTMLElement>({
         }
       });
     }, { rootMargin: "96px 0px", threshold: 0 });
-    groups.forEach((group) => {
-      entryObserver.observe(group.anchor);
-      exitObserver.observe(group.anchor);
-    });
+    groups.forEach((group) => exitObserver.observe(group.anchor));
 
     const settleAll = () => groups.forEach(settle);
     const onVisibilityChange = () => { if (document.hidden) settleAll(); };
@@ -261,15 +283,16 @@ export function useScrollReveal<T extends HTMLElement>({
     element.addEventListener("pointerdown", settleAll);
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
-      entryObserver.disconnect();
+      entryObserver?.disconnect();
       exitObserver.disconnect();
+      if (entrySection) window.removeEventListener("resize", observeEntry);
       settleAll();
       element.removeEventListener("focusin", settleAll);
       element.removeEventListener("pointerdown", settleAll);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       targets.forEach((target) => { delete target.dataset.revealTarget; });
     };
-  }, [delay, distance, rows, effect, layoutRevision, reduced, scrollingUp]);
+  }, [delay, distance, rows, effect, sectionEntryViewportFraction, layoutRevision, reduced, scrollingUp]);
 
   return ref;
 }
@@ -282,12 +305,13 @@ export function SectionReveal({
   distance = 16,
   rows = false,
   effect,
+  sectionEntryViewportFraction,
 }: {
   children: ReactNode;
   id?: string;
   className?: string;
 } & ScrollRevealOptions) {
-  const ref = useScrollReveal<HTMLDivElement>({ delay, distance, rows, effect });
+  const ref = useScrollReveal<HTMLDivElement>({ delay, distance, rows, effect, sectionEntryViewportFraction });
   return <div ref={ref} id={id} className={className} data-scroll-reveal="">{children}</div>;
 }
 

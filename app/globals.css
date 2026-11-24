@@ -67,9 +67,11 @@
   --control-font-weight: 400;
   --control-letter-spacing: normal;
   --entrance-ease: cubic-bezier(.32, .04, .28, 1);
-  --entrance-blur: 2px;
-  --entrance-fade-duration: 300ms;
-  --entrance-fade: entrance-fade var(--entrance-fade-duration) var(--entrance-ease) backwards;
+  --entrance-blur: 1.5px;
+  --entrance-fade-duration: 600ms;
+  --entrance-fade-ease: ease-out;
+  --entrance-fade-stagger: 100ms;
+  --entrance-fade: entrance-fade var(--entrance-fade-duration) var(--entrance-fade-ease) backwards;
   --hero-heading-start: 520ms;
   --accent-pulse: accent-pulse 3.8s ease-in-out infinite;
 }

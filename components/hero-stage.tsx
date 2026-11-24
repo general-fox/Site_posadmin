@@ -17,7 +17,6 @@ const products = [
   { id: "foxcontrol", preview: "foxcontrol", ...SITE_PRODUCTS.foxControl, description: "Контроль кассовых операций" },
 ] as const;
 const systems = ["r_keeper", "1С", "ЕГАИС", "ККТ", "Честный знак", "Меркурий", "IT-инфраструктура"];
-const heroTitle = <>Автоматизация и <span className={styles.unbroken}>IT-сопровождение</span> HoReCa</>;
 
 export function GlowLayer() {
   return <div className="hero-glow-board pointer-events-none absolute inset-0" aria-hidden="true" />;
@@ -76,10 +75,7 @@ export function HeroStage() {
     style={{ "--system-count": systems.length, "--product-count": products.length } as CSSProperties}
   >
     <div className={styles.copy}>
-      <h1 className={styles.title}>
-        <span className={entry.titleInk}>{heroTitle}</span>
-        <span className={entry.titleHaze} aria-hidden="true">{heroTitle}</span>
-      </h1>
+      <h1 className={`${styles.title} ${entry.title}`}>Автоматизация и <span className={styles.unbroken}>IT-сопровождение</span> HoReCa</h1>
       <p className={`${styles.lead} ${entry.lead}`}>Разрабатываем решения для вашего заведения и берём на себя технический контур — от касс до IT-инфраструктуры.</p>
       <HeroActions />
       <ul className={styles.systems} role="list" aria-label="Направления работы">
