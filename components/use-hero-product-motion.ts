@@ -8,9 +8,10 @@ function trackRetreat(element: HTMLElement, isCard: boolean) {
   const measure = () => {
     const rect = element.getBoundingClientRect();
     const top = rect.top + window.scrollY;
+    const viewportHeight = window.innerHeight;
     const trigger = isCard
-      ? top + rect.height / 2 - window.innerHeight / 2
-      : top - window.innerHeight + 48;
+      ? top + rect.height / 2 - viewportHeight * 0.8
+      : top - viewportHeight + 48;
     return Math.max(8, trigger);
   };
   let threshold = measure();
@@ -23,7 +24,7 @@ function trackRetreat(element: HTMLElement, isCard: boolean) {
   return {
     measure() { threshold = measure(); },
     update(scroll: number) {
-      // Reversing a few pixels near the midpoint should not flicker the preview.
+      // Reversing a few pixels near the trigger should not flicker the preview.
       const next = scroll >= (isCard && open ? Math.max(4, threshold - 14) : threshold);
       if (next === open) return;
       open = next;
