@@ -154,13 +154,44 @@ test("project selections preserve context, include required works and ignore for
     { id: "pos", quantity: 3, total: 18_000 },
     { id: "kitchen", quantity: 1, total: 8_000 },
   ]);
-  assert.deepEqual(result.selection, { conceptId: "restaurant", registers: 3, selectedWorkIds: ["design", "pos", "kitchen"], selectedCapabilityIds: [] });
+  assert.deepEqual(result.selection, {
+    conceptId: "restaurant", registers: 3, waiterStations: 0, receiptPrinters: 0, labelPrinters: 0, kitchenScreens: 0,
+    selectedWorkIds: ["design", "pos", "kitchen"], selectedCapabilityIds: [],
+  });
   assert.deepEqual(result.estimate.capabilities, []);
   assert.deepEqual(input.selectedWorkIds, ["kitchen"]);
   assert.equal(getProjectCalculation({ ...input, registers: MAX_ONLINE_WORKPLACES }).estimate.registers, MAX_ONLINE_WORKPLACES);
-  for (const registers of [undefined, null, 0, -1, MAX_ONLINE_WORKPLACES + 1, 1.5, "3", NaN, Infinity]) assert.equal(getProjectCalculation({ ...input, registers }), null);
+  assert.equal(getProjectCalculation({ ...input, registers: 0 }).estimate.registers, 0);
+  for (const registers of [undefined, null, -1, MAX_ONLINE_WORKPLACES + 1, 1.5, "3", NaN, Infinity]) assert.equal(getProjectCalculation({ ...input, registers }), null);
   for (const selectedWorkIds of [undefined, null, "kitchen", {}, ["unknown"], ["kitchen", "kitchen"], Array(100).fill("pos")]) assert.equal(getProjectCalculation({ ...input, selectedWorkIds }), null);
   for (const conceptId of [undefined, null, "__proto__", "<b>forged</b>", {}, 1]) assert.equal(getProjectCalculation({ ...input, conceptId }), null);
+});
+
+test("expanded project equipment counts survive normalization without altering legacy unit prices", () => {
+  const input = {
+    conceptId: "restaurant", registers: 20, waiterStations: 20, receiptPrinters: 20, labelPrinters: 10, kitchenScreens: 20,
+    selectedWorkIds: ["kitchen"],
+  };
+  const result = getProjectCalculation(input);
+  assert.deepEqual(result.selection, { ...input, selectedWorkIds: ["design", "pos", "kitchen"], selectedCapabilityIds: [] });
+  assert.equal(result.estimate.total, 140_000);
+  for (const key of ["registers", "waiterStations", "receiptPrinters", "labelPrinters", "kitchenScreens"]) {
+    assert.equal(getProjectCalculation({ ...input, [key]: 0 }).selection[key], 0);
+    for (const value of [-1, 0.5, "2", null, NaN, Infinity, key === "labelPrinters" ? 11 : 21]) {
+      assert.equal(getProjectCalculation({ ...input, [key]: value }), null, `${key}: ${String(value)}`);
+    }
+  }
+});
+
+test("questionnaire-only service IDs cannot be reinterpreted as legacy priced work", async () => {
+  const projectEstimate = { conceptId: "cafe", registers: 1, selectedWorkIds: [] };
+  const before = deliveries.length;
+  for (const id of ["rkeeper", "equipment", "dictionaries", "training"]) {
+    const invalid = { ...projectEstimate, selectedWorkIds: [id] };
+    assert.equal(getProjectCalculation(invalid), null);
+    assert.equal((await post({ ...validRequest, projectEstimate: invalid })).status, 400);
+  }
+  assert.equal(deliveries.length, before);
 });
 
 test("callback delivers the server-recalculated project through the same manager form", async () => {
@@ -178,23 +209,42 @@ test("callback delivers the server-recalculated project through the same manager
   assert.doesNotMatch(message, /Дополнительные возможности/);
 });
 
+test("project callbacks accept zero equipment and reject out-of-range hardware before delivery", async () => {
+  const projectEstimate = {
+    conceptId: "cafe", registers: 0, waiterStations: 0, receiptPrinters: 0, labelPrinters: 0, kitchenScreens: 0,
+    selectedWorkIds: [],
+  };
+  const before = deliveries.length;
+  assert.equal((await post({ ...validRequest, projectEstimate })).status, 200);
+  assert.equal(deliveries.length, before + 1);
+  assert.match(deliveries.at(-1).text, /Кассовых мест:<\/b> 0/);
+  assert.match(deliveries.at(-1).text, /Итого:<\/b> 12\s000 ₽ \(разово\)/);
+  for (const [field, value] of [
+    ["registers", 21], ["waiterStations", 21], ["receiptPrinters", 21], ["labelPrinters", 11], ["kitchenScreens", 21],
+    ["waiterStations", -1], ["receiptPrinters", 1.5], ["labelPrinters", "1"], ["kitchenScreens", null],
+  ]) {
+    assert.equal((await post({ ...validRequest, projectEstimate: { ...projectEstimate, [field]: value } })).status, 400);
+  }
+  assert.equal(deliveries.length, before + 1);
+});
+
 test("additional capabilities survive normalization and manager delivery without changing the priced estimate", async () => {
   const projectEstimate = {
     conceptId: "restaurant", registers: 3, selectedWorkIds: ["kitchen"],
-    selectedCapabilityIds: ["custom-integration", "egais", "telephony"],
+    selectedCapabilityIds: ["guest-wifi", "egais", "telephony"],
     capabilities: [{ title: "<b>forged</b>", price: 1 }], total: 1,
   };
   const summary = getProjectCalculation(projectEstimate);
-  assert.deepEqual(summary.selection.selectedCapabilityIds, ["egais", "telephony", "custom-integration"]);
-  assert.deepEqual(summary.estimate.capabilities.map(({ title }) => title), ["ЕГАИС", "IP-телефония", "Индивидуальная интеграция"]);
-  assert.deepEqual(projectEstimate.selectedCapabilityIds, ["custom-integration", "egais", "telephony"]);
+  assert.deepEqual(summary.selection.selectedCapabilityIds, ["egais", "telephony", "guest-wifi"]);
+  assert.deepEqual(summary.estimate.capabilities.map(({ title }) => title), ["ЕГАИС", "IP-телефония", "Гостевой Wi-Fi"]);
+  assert.deepEqual(projectEstimate.selectedCapabilityIds, ["guest-wifi", "egais", "telephony"]);
   assert.equal(summary.estimate.total, 38_000);
   const before = deliveries.length;
   assert.equal((await post({ ...validRequest, projectEstimate })).status, 200);
   assert.equal(deliveries.length, before + 1);
   const message = deliveries.at(-1).text;
   assert.match(message, /Итого:<\/b> 38\s000 ₽ \(разово\)/);
-  assert.match(message, /Дополнительные возможности — индивидуальный расчёт:<\/b>\n• ЕГАИС\n• IP-телефония\n• Индивидуальная интеграция/);
+  assert.match(message, /Дополнительные возможности — индивидуальный расчёт:<\/b>\n• ЕГАИС\n• IP-телефония\n• Гостевой Wi-Fi/);
   assert.match(message, /Стоимость не включена в сумму расчёта\./);
   assert.doesNotMatch(message, /forged|Маркировка|Меркурий|Видеонаблюдение/);
 });
@@ -213,7 +263,7 @@ test("invalid additional capabilities fail validation and cannot reach the manag
 test("invalid or ambiguous project callbacks do not deliver a lead", async () => {
   const before = deliveries.length;
   const projectEstimate = { conceptId: "cafe", registers: 2, selectedWorkIds: [] };
-  for (const invalid of [null, {}, [], { ...projectEstimate, registers: 0 }, { ...projectEstimate, conceptId: "unknown" }, { ...projectEstimate, selectedWorkIds: ["pos", "pos"] }]) {
+  for (const invalid of [null, {}, [], { ...projectEstimate, registers: 21 }, { ...projectEstimate, conceptId: "unknown" }, { ...projectEstimate, selectedWorkIds: ["pos", "pos"] }]) {
     assert.equal((await post({ ...validRequest, projectEstimate: invalid })).status, 400);
   }
   assert.equal((await post({ ...validRequest, projectEstimate, calculation: selection })).status, 400);

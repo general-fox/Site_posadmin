@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
-import { getProjectScope, PROJECT_REGISTER_LIMIT_NOTE, PROJECT_REGISTER_MAX, type ProjectEstimateSelection } from "@/lib/project-scope";
+import { getProjectScope, PROJECT_EQUIPMENT, PROJECT_REGISTER_LIMIT_NOTE, type ProjectEstimateSelection } from "@/lib/project-scope";
 import {
   normalizeProjectEmail,
   normalizeProjectMessengerPhone,
@@ -64,7 +64,10 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
   const taskId = useId();
   const errorId = useId();
   const taskHintId = useId();
-  const showRegisterHint = selection.registers === PROJECT_REGISTER_MAX;
+  const equipmentAtLimit = PROJECT_EQUIPMENT.filter(({ id, max }) => selection[id] === max);
+  const equipmentLimitNote = equipmentAtLimit.some(({ id }) => id !== "registers" && id !== "waiterStations")
+    ? "Если оборудования нужно больше указанного лимита, напишите количество в комментарии."
+    : equipmentAtLimit.length > 0 ? PROJECT_REGISTER_LIMIT_NOTE : null;
   const phoneChannel = channel.type === "tel";
   const scope = getProjectScope(selection);
 
@@ -210,7 +213,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                   <label htmlFor={taskId} className="sr-only">Комментарий к проекту</label>
                   <textarea
                     id={taskId}
-                    aria-describedby={[showRegisterHint && taskHintId, error?.field === "task" && errorId].filter(Boolean).join(" ") || undefined}
+                    aria-describedby={[equipmentLimitNote && taskHintId, error?.field === "task" && errorId].filter(Boolean).join(" ") || undefined}
                     aria-invalid={error?.field === "task" || undefined}
                     className={`${shared.fieldControl} ${styles.input} ${styles.textarea}`}
                     disabled={submitting}
@@ -220,20 +223,27 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                   />
                   {fieldError("task")}
                 </details>
-                {showRegisterHint && <p id={taskHintId} className={styles.registerHint}>{PROJECT_REGISTER_LIMIT_NOTE}</p>}
+                {equipmentLimitNote && <p id={taskHintId} className={styles.equipmentHint}>{equipmentLimitNote}</p>}
               </div>
             </div>
             {scope && (
               <aside className={styles.scope} aria-labelledby={scopeTitleId}>
                 <h4 id={scopeTitleId}>Ваш проект</h4>
-                <p className={styles.scopeMeta}>{scope.concept.label} <span>· Рабочих мест: {scope.selection.registers}</span></p>
+                <p className={styles.scopeMeta}>{scope.concept.label}</p>
+                <dl className={styles.equipmentSummary}>
+                  {scope.equipment.map(({ id, label, quantity }) => (
+                    <div key={id}><dt>{label}</dt><dd>{quantity} шт.</dd></div>
+                  ))}
+                </dl>
                 <details className={`${styles.comment} ${styles.scopeDetails}`}>
                   <summary>
                     <span>Состав проекта</span>
                     <span className={styles.scopeCount}>{scope.works.length + scope.capabilities.length}</span>
                     <UiIcon name="chevron-down" size={16} />
                   </summary>
-                  <ul>{scope.works.map(({ id, title }) => <li key={id}>{title}</li>)}</ul>
+                  {scope.works.length > 0
+                    ? <ul>{scope.works.map(({ id, title }) => <li key={id}>{title}</li>)}</ul>
+                    : <p className={styles.scopeMeta}>Услуги пока не выбраны — уточним состав при обсуждении проекта.</p>}
                   {scope.capabilities.length > 0 && <div className={styles.scopeExtras}>
                     <p>Дополнительные возможности</p>
                     <ul>{scope.capabilities.map(({ id, title }) => <li key={id}>{title}</li>)}</ul>

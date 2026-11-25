@@ -3,10 +3,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { LAUNCH_CONCEPTS, type LaunchConcept } from "@/lib/launch-concepts";
 import {
-  PROJECT_CAPABILITIES, PROJECT_REGISTER_LIMIT_NOTE, PROJECT_SCOPE_WORKS,
+  PROJECT_CAPABILITIES, PROJECT_EQUIPMENT, PROJECT_REGISTER_LIMIT_NOTE, PROJECT_SCOPE_WORKS,
   getDefaultProjectSelection, type ProjectCapabilityId, type ProjectWorkId,
 } from "@/lib/project-scope";
-import { BaseBadge } from "./base-badge";
 import { LaunchContactForm } from "./launch-contact-form";
 import { SectionReveal, useScrollReveal } from "./marketing-ui";
 import { UiIcon } from "./ui-icon";
@@ -77,7 +76,7 @@ export function LaunchSection() {
             <h2 ref={headingRef} id="launch-title" className={ui.heading}>Расчет автоматизации</h2>
           </SectionReveal>
           <SectionReveal delay={0.12}>
-            <p className={ui.lead}>Укажите формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</p>
+            <p className={ui.lead}>Укажите оборудование, формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</p>
           </SectionReveal>
         </div>
 
@@ -127,27 +126,46 @@ export function LaunchSection() {
           <div className={styles.panels}>
             <section id="launch-step-0" ref={formatRevealRef} className={`${styles.stage} ${styles.formatStage}`} inert={step !== 0} aria-labelledby="launch-step-title-0" data-scroll-reveal="">
               <h3 id="launch-step-title-0" className={styles.stageTitle} tabIndex={-1}>Каким будет ваше заведение?</h3>
-              <WorkplaceCount
-                id={countId}
-                value={selection.registers}
-                description="Кассы и станции официантов"
-                limitNote={PROJECT_REGISTER_LIMIT_NOTE}
-                onChange={(registers) => setSelection((current) => ({ ...current, registers }))}
-                revealItem
-              />
-              <fieldset className={styles.concepts}>
-                <legend className={styles.srOnly}>Формат заведения</legend>
-                {LAUNCH_CONCEPTS.map((concept) => (
-                  <label key={concept.id} className={styles.concept} data-reveal-item="">
-                    <input type="radio" name="launch-concept" value={concept.id} checked={concept.id === selection.conceptId} onChange={() => changeConcept(concept.id)} aria-labelledby={`${countId}-${concept.id}-name`} aria-describedby={`${countId}-${concept.id}-hint`} />
-                    <span className={styles.radioMark} aria-hidden="true" />
-                    <span className={styles.optionCopy}>
-                      <span className={styles.optionTitle} id={`${countId}-${concept.id}-name`}>{concept.label}</span>
-                      <span className={styles.optionHint} id={`${countId}-${concept.id}-hint`}>{concept.hint}</span>
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
+              <div className={styles.setupGrid}>
+                <fieldset className={styles.setupGroup} aria-describedby={`${countId}-equipment-hint`}>
+                  <legend>Оборудование</legend>
+                  <p id={`${countId}-equipment-hint`} className={styles.setupHint}>Укажите количество.</p>
+                  <div className={styles.equipmentList}>
+                    {PROJECT_EQUIPMENT.map(({ id, label, hint, min, max }) => (
+                      <WorkplaceCount
+                        key={id}
+                        id={`${countId}-${id}`}
+                        name={id}
+                        className={styles.equipmentRow}
+                        label={label}
+                        description={hint}
+                        value={selection[id]}
+                        min={min}
+                        max={max}
+                        limitNote={id === "registers" || id === "waiterStations" ? PROJECT_REGISTER_LIMIT_NOTE : undefined}
+                        onChange={(quantity) => setSelection((current) => ({ ...current, [id]: quantity }))}
+                        revealItem
+                      />
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset className={styles.setupGroup}>
+                  <legend>Формат заведения</legend>
+                  <p className={styles.setupHint}>Выберите концепцию — учтём её при подготовке сметы.</p>
+                  <div className={styles.concepts}>
+                    {LAUNCH_CONCEPTS.map((item) => (
+                      <label key={item.id} className={styles.concept} data-reveal-item="">
+                        <input type="radio" name="launch-concept" value={item.id} checked={item.id === selection.conceptId} onChange={() => changeConcept(item.id)} aria-labelledby={`${countId}-${item.id}-name`} aria-describedby={`${countId}-${item.id}-hint`} />
+                        <span className={styles.radioMark} aria-hidden="true" />
+                        <span className={styles.optionCopy}>
+                          <span className={styles.optionTitle} id={`${countId}-${item.id}-name`}>{item.label}</span>
+                          <span className={styles.optionHint} id={`${countId}-${item.id}-hint`}>{item.hint}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              </div>
               <div className={styles.actions}>
                 <button type="button" className={ui.primary} onClick={() => goToStep(1)}>Далее <UiIcon name="arrow-right" /></button>
               </div>
@@ -158,13 +176,13 @@ export function LaunchSection() {
               <fieldset className={styles.workList}>
                 <legend className={styles.srOnly}>Работы по автоматизации заведения</legend>
                 {PROJECT_SCOPE_WORKS.map((work) => {
-                  const checked = work.required || selection.selectedWorkIds.includes(work.id);
+                  const checked = selection.selectedWorkIds.includes(work.id);
                   return (
-                    <label key={work.id} className={styles.work} data-required={work.required}>
-                      <input type="checkbox" name="project-work" value={work.id} checked={checked} disabled={work.required} onChange={(event) => toggleWork(work.id, event.target.checked)} aria-labelledby={`${countId}-${work.id}-name`} aria-describedby={`${countId}-${work.id}-description`} />
+                    <label key={work.id} className={styles.work}>
+                      <input type="checkbox" name="project-work" value={work.id} checked={checked} onChange={(event) => toggleWork(work.id, event.target.checked)} aria-labelledby={`${countId}-${work.id}-name`} aria-describedby={`${countId}-${work.id}-description`} />
                       <span className={styles.checkMark} aria-hidden="true">{checked && <UiIcon name="check" />}</span>
                       <span className={styles.optionCopy}>
-                        <span className={styles.optionTitle} id={`${countId}-${work.id}-name`}>{work.title}{work.required && <BaseBadge className={styles.included} label="Базовая услуга" />}</span>
+                        <span className={styles.optionTitle} id={`${countId}-${work.id}-name`}>{work.title}</span>
                         <span className={styles.optionHint} id={`${countId}-${work.id}-description`}>{work.description}</span>
                       </span>
                     </label>
