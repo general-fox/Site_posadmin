@@ -36,12 +36,7 @@ const locations = Object.entries(catalog).flatMap(([region, cities]) => [
   reversed: place.region ? normalize(`${place.region} ${place.name}`) : "",
 }));
 
-const confirmedLabels = new Set(locations.map(({ place }) => formatRussianLocation(place)));
 const collator = new Intl.Collator("ru");
-
-export function findRussianLocationLabel(label: string): boolean {
-  return confirmedLabels.has(label);
-}
 
 export function searchRussianLocations(value: string): RussianLocation[] {
   const query = normalize(value);

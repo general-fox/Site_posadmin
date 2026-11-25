@@ -1,4 +1,11 @@
+.intro {
+  --entrance-fade-duration: 320ms;
+  --entrance-fade-stagger: 65ms;
+}
+
 .wizard {
+  --entrance-fade-duration: 380ms;
+  --entrance-bottom-inset: 48px;
   --wizard-focus-color: var(--text-muted);
 
   width: 100%;
@@ -125,6 +132,12 @@
 
 .stage[inert] { visibility: hidden; }
 
+.formatStage {
+  --entrance-fade-duration: 190ms;
+  --entrance-fade-stagger: 190ms;
+  --entrance-bottom-inset: 32px;
+}
+
 .stageTitle {
   margin: 0;
   font-size: clamp(21px, 2.8vw, 28px);
@@ -205,24 +218,6 @@
   border-radius: 50%;
   background: var(--action-ink);
   content: "";
-}
-
-.registers { position: relative; }
-
-.registers .registerLimit {
-  position: absolute;
-  z-index: 4;
-  bottom: calc(100% + 6px);
-  right: 0;
-  width: min(330px, 100%);
-  padding: 12px 14px;
-  margin: 0;
-  border-radius: 12px;
-  background: var(--ink);
-  color: var(--milk);
-  font-size: 14px;
-  line-height: 1.5;
-  pointer-events: none;
 }
 
 .work[data-required="true"] { cursor: default; }

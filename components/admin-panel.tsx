@@ -6,6 +6,7 @@ import { SiteLogoMark } from "@/components/site-logo-mark";
 import { UiIcon } from "./ui-icon";
 import { getSchedulePrice, scheduleToFormula, validatePricingConfig, type PricingConfig, type PriceSchedule } from "@/lib/pricing-config";
 import { getFormulaIssue } from "@/lib/pricing-formula";
+import { isOnlineWorkplaceCount, MAX_ONLINE_WORKPLACES, MIN_ONLINE_WORKPLACES, ONLINE_WORKPLACE_LIMIT_NOTE } from "@/lib/workplace-count";
 import styles from "./admin-panel.module.css";
 
 const OWNER_EMAIL = "a230495k@gmail.com";
@@ -255,7 +256,8 @@ function PricingEditor({ snapshot: initialSnapshot, initialHistory, preservedDra
   const dirty = JSON.stringify(draft) !== JSON.stringify(toDraft(snapshot.config));
   const active = modules.find(({ id }) => id === activeModule)!;
   const count = /^\d+$/.test(workplaces) ? Number(workplaces) : NaN;
-  const previewCountValid = Number.isSafeInteger(count) && count >= 1 && count <= 10000;
+  const previewCountValid = isOnlineWorkplaceCount(count);
+  const previewAtLimit = count >= MAX_ONLINE_WORKPLACES;
   const parsed = fromDraft(draft);
   const checkingFormulas = modules.some(({ id }) => validation?.draft[id] !== draft[id]);
   const invalidModules = modules.filter(({ id }) => validation?.draft[id] === draft[id] && validation.issues[id]);
@@ -388,13 +390,14 @@ function PricingEditor({ snapshot: initialSnapshot, initialHistory, preservedDra
               <p className={styles.formulaHint} id="formula-hint"><strong>N</strong> — количество рабочих мест. Можно вставить формулу из Excel: <strong>D$4</strong> также обозначает количество мест.</p>
             </fieldset>
             <div id={`formula-status-${activeModule}`} className={styles.formulaStatus} data-error={Boolean(activeFormulaIssue)} aria-live="polite">{!activeFormulaReady ? "Проверяем формулу…" : activeFormulaIssue || "Формула проверена. Сверьте стоимость ниже."}</div>
-            <details className={styles.formulaHelp}><summary>Какие формулы подходят</summary><p>Используйте IF или ЕСЛИ, условия сравнения и действия + − * /. Аргументы можно разделять запятой или точкой с запятой. Дробные числа записываются через точку.</p><p>Например, для удалённого сопровождения:</p><code>=ЕСЛИ(N&lt;=6;3000+N*1000;10000+(N-7)*500)</code><p>Результат — положительная целая сумма в рублях. Изменения появятся на сайте только после сохранения.</p></details>
+            <details className={styles.formulaHelp}><summary>Какие формулы подходят</summary><p>Используйте IF или ЕСЛИ, условия сравнения и действия + − * /. Аргументы можно разделять запятой или точкой с запятой. Дробные числа записываются через точку.</p><p>Например, для удалённого сопровождения:</p><code>=ЕСЛИ(N&lt;=4;4000+N*1000;8500+(N-5)*500)</code><p>Результат — положительная целая сумма в рублях. Изменения появятся на сайте только после сохранения.</p></details>
             <table className={styles.formulaTable}><caption>Проверка расчёта</caption><thead><tr><th scope="col">Мест</th><th scope="col">₽ / мес.</th><th scope="col">Мест</th><th scope="col">₽ / мес.</th></tr></thead><tbody>{previewRows.map(([left, right]) => <tr key={left}><td>{left}</td><td>{previewPrice(activeModule, left)}</td><td>{right}</td><td>{previewPrice(activeModule, right)}</td></tr>)}</tbody></table>
           </div>
         </section>
         <aside className={styles.preview} aria-labelledby="preview-title"><span className={styles.eyebrow}>Предпросмотр</span><h2 id="preview-title">Как увидит клиент</h2><p>Стоимость каждого пакета с учётом ваших изменений.</p>
-          <label className={styles.field}><span>Рабочих мест</span><input type="text" inputMode="numeric" maxLength={5} value={workplaces} onChange={(event) => { if (/^\d*$/.test(event.target.value)) setWorkplaces(event.target.value); }} aria-describedby={!previewCountValid ? "preview-error" : undefined} aria-invalid={!previewCountValid} /></label>
-          {!previewCountValid && <small id="preview-error" className={styles.inlineError}>Введите число от 1 до 10 000.</small>}
+          <label className={styles.field}><span>Рабочих мест</span><input type="text" inputMode="numeric" maxLength={5} value={workplaces} onChange={(event) => { if (/^\d*$/.test(event.target.value)) setWorkplaces(event.target.value); }} aria-describedby={!previewCountValid ? "preview-error" : previewAtLimit ? "preview-workplace-limit" : undefined} aria-invalid={!previewCountValid} /></label>
+          {!previewCountValid && <small id="preview-error" className={styles.inlineError}>Введите число от {MIN_ONLINE_WORKPLACES} до {MAX_ONLINE_WORKPLACES}.</small>}
+          {previewAtLimit && <small id="preview-workplace-limit">{ONLINE_WORKPLACE_LIMIT_NOTE}</small>}
           <dl className={styles.previewPrices}>{modules.map(({ id, tab }) => {
             return <div key={id} data-active={activeModule === id}><dt>{tab}</dt><dd>{previewCountValid ? previewPrice(id, count) : "—"}<span>/ мес.</span></dd></div>;
           })}</dl>

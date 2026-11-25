@@ -1,7 +1,9 @@
 import { LAUNCH_CONCEPTS, type LaunchConcept } from "@/lib/launch-concepts";
+import { isOnlineWorkplaceCount, MAX_ONLINE_WORKPLACES, MIN_ONLINE_WORKPLACES } from "@/lib/workplace-count";
 
-export const PROJECT_REGISTER_MIN = 1;
-export const PROJECT_REGISTER_MAX = 10;
+export const PROJECT_REGISTER_MIN = MIN_ONLINE_WORKPLACES;
+export const PROJECT_REGISTER_MAX = MAX_ONLINE_WORKPLACES;
+export const PROJECT_REGISTER_LIMIT_NOTE = `Если рабочих мест больше ${PROJECT_REGISTER_MAX}, укажите их количество в комментарии к проекту.`;
 
 export const PROJECT_CAPABILITIES = [
   { id: "egais", title: "ЕГАИС" },
@@ -61,7 +63,7 @@ export function getProjectScope(input: unknown) {
   if (!input || typeof input !== "object" || Array.isArray(input)) return null;
   const { conceptId, registers, selectedWorkIds, selectedCapabilityIds = [] } = input as Record<string, unknown>;
   const concept = LAUNCH_CONCEPTS.find(({ id }) => id === conceptId);
-  if (!concept || typeof registers !== "number" || !Number.isInteger(registers) || registers < PROJECT_REGISTER_MIN || registers > PROJECT_REGISTER_MAX) return null;
+  if (!concept || !isOnlineWorkplaceCount(registers)) return null;
 
   const workIds = readSelectedIds(selectedWorkIds, PROJECT_SCOPE_WORKS);
   const capabilityIds = readSelectedIds(selectedCapabilityIds, PROJECT_CAPABILITIES);

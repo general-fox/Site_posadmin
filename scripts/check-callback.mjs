@@ -58,6 +58,7 @@ function load(relativePath) {
 
 const { getCalculationSummary } = load("lib/calculation-request.ts");
 const { ONSITE_CITY_MAX_LENGTH } = load("lib/onsite-support.ts");
+const { MAX_ONLINE_WORKPLACES } = load("lib/workplace-count.ts");
 const { getProjectCalculation } = load("lib/project-calculation.ts");
 const { getCallbackSlots, getMoscowDateTime, getNextCallbackSlot, validateCallbackSchedule } = load("lib/callback-schedule.ts");
 const { POST } = load("app/api/callback/route.ts");
@@ -84,17 +85,17 @@ test("calculator selections preserve selected services, city and recompute every
   const result = getCalculationSummary({ ...selection, monthlyTotal: 1, modules: [{ name: "<b>forged</b>", monthlyPrice: 1 }] });
   assert.equal(result.monthlyTotal, 12_000);
   assert.equal(result.locationLabel, "Москва");
-  assert.deepEqual(result.modules.map((item) => item.monthlyPrice), [6_000, 6_000]);
+  assert.deepEqual(result.modules.map((item) => item.monthlyPrice), [7_000, 5_000]);
   assert.deepEqual(result.selection, selection);
-  assert.equal(getCalculationSummary({ product: "it_administration", workplaceCount: 3, selectedModules: ["system-administration"] }).monthlyTotal, 9_000);
+  assert.equal(getCalculationSummary({ product: "it_administration", workplaceCount: 3, selectedModules: ["system-administration"] }).monthlyTotal, 6_000);
 });
 
 test("invalid counts, duplicate/unknown modules and unavailable onsite support are rejected", () => {
-  for (const count of [0, -1, 1.5, "3", 10_001, NaN, Infinity]) assert.equal(getCalculationSummary({ ...selection, workplaceCount: count }), null);
+  for (const count of [0, -1, 1.5, "3", MAX_ONLINE_WORKPLACES + 1, 10_001, NaN, Infinity]) assert.equal(getCalculationSummary({ ...selection, workplaceCount: count }), null);
   for (const location of [undefined, "other", "unlisted-city", null]) assert.equal(getCalculationSummary({ ...selection, location }), null);
   for (const selectedAdditionalModules of [["unknown"], ["onsite-hardware-support", "onsite-hardware-support"], null, "onsite-hardware-support"]) assert.equal(getCalculationSummary({ ...selection, selectedAdditionalModules }), null);
   assert.equal(getCalculationSummary({ product: "it_administration", workplaceCount: 1, selectedModules: [] }), null);
-  assert.equal(getCalculationSummary({ ...selection, selectedAdditionalModules: [], location: "other" }).monthlyTotal, 6_000);
+  assert.equal(getCalculationSummary({ ...selection, selectedAdditionalModules: [], location: "other" }).monthlyTotal, 7_000);
 });
 
 test("a custom onsite city survives normalization and reaches the manager without an online charge", async () => {
@@ -103,7 +104,7 @@ test("a custom onsite city survives normalization and reaches the manager withou
   assert.equal(result.locationLabel, "Казань, Республика Татарстан");
   assert.equal(result.selection.otherCity, result.locationLabel);
   assert.equal(result.onsiteByRequest, true);
-  assert.equal(result.monthlyTotal, 6_000);
+  assert.equal(result.monthlyTotal, 7_000);
   assert.equal(result.modules.length, 1);
 
   const response = await post({ ...validRequest, calculation });
@@ -111,7 +112,7 @@ test("a custom onsite city survives normalization and reaches the manager withou
   const message = deliveries.at(-1).text;
   assert.match(message, /Специалист:<\/b> менеджер/);
   assert.match(message, /Город \/ регион:<\/b> Казань, Республика Татарстан/);
-  assert.match(message, /Итого:<\/b> 6\s000 ₽\/мес\./);
+  assert.match(message, /Итого:<\/b> 7\s000 ₽\/мес\./);
   assert.match(message, /Выездное сопровождение:<\/b> по запросу\. Стоимость уточняется отдельно и не включена в расчёт\./);
   assert.doesNotMatch(message, /• Выездное аппаратно-техническое сопровождение/);
 });
@@ -120,7 +121,7 @@ test("invalid or inconsistent custom city fields cannot reach the manager", asyn
   const calculation = { ...selection, location: "other", selectedAdditionalModules: [] };
   const before = deliveries.length;
   for (const invalid of [
-    ...["", "   ", "12", null, "Новый\nУренгой", "Владимир\u202E", "а".repeat(ONSITE_CITY_MAX_LENGTH + 1)].map((otherCity) => ({ ...calculation, otherCity })),
+    ...["", "   ", null, "Новый\nУренгой", "Владимир\u202E", "а".repeat(ONSITE_CITY_MAX_LENGTH + 1)].map((otherCity) => ({ ...calculation, otherCity })),
     { ...selection, otherCity: "Казань" },
     { ...calculation, location: undefined, otherCity: "Казань" },
     { ...calculation, selectedAdditionalModules: ["onsite-hardware-support"], otherCity: "Казань" },
@@ -129,14 +130,18 @@ test("invalid or inconsistent custom city fields cannot reach the manager", asyn
     assert.equal(getCalculationSummary(invalid), null);
     assert.equal((await post({ ...validRequest, calculation: invalid })).status, 400);
   }
-  for (const otherCity of ["Несуществующий пункт", "Казань <центр> & район"]) {
-    const response = await post({ ...validRequest, calculation: { ...calculation, otherCity } });
-    assert.equal(response.status, 400);
-    assert.match((await response.json()).error, /город или регион из списка/);
-  }
   assert.equal(deliveries.length, before);
   assert.equal((await post({ ...validRequest, calculation })).status, 200);
   assert.match(deliveries.at(-1).text, /Город \/ регион:<\/b> Другой город/);
+});
+
+test("free-text onsite locations reach the manager as escaped text", async () => {
+  const calculation = { ...selection, location: "other", selectedAdditionalModules: [] };
+  for (const [otherCity, escaped] of [["Несуществующий пункт", "Несуществующий пункт"], ["12", "12"], ["Казань <центр> & район", "Казань &lt;центр&gt; &amp; район"]]) {
+    const response = await post({ ...validRequest, calculation: { ...calculation, otherCity } });
+    assert.equal(response.status, 200);
+    assert.ok(deliveries.at(-1).text.includes(`<b>Город / регион:</b> ${escaped}\n`));
+  }
 });
 
 test("project selections preserve context, include required works and ignore forged prices", () => {
@@ -152,7 +157,8 @@ test("project selections preserve context, include required works and ignore for
   assert.deepEqual(result.selection, { conceptId: "restaurant", registers: 3, selectedWorkIds: ["design", "pos", "kitchen"], selectedCapabilityIds: [] });
   assert.deepEqual(result.estimate.capabilities, []);
   assert.deepEqual(input.selectedWorkIds, ["kitchen"]);
-  for (const registers of [undefined, null, 0, -1, 11, 1.5, "3", NaN, Infinity]) assert.equal(getProjectCalculation({ ...input, registers }), null);
+  assert.equal(getProjectCalculation({ ...input, registers: MAX_ONLINE_WORKPLACES }).estimate.registers, MAX_ONLINE_WORKPLACES);
+  for (const registers of [undefined, null, 0, -1, MAX_ONLINE_WORKPLACES + 1, 1.5, "3", NaN, Infinity]) assert.equal(getProjectCalculation({ ...input, registers }), null);
   for (const selectedWorkIds of [undefined, null, "kitchen", {}, ["unknown"], ["kitchen", "kitchen"], Array(100).fill("pos")]) assert.equal(getProjectCalculation({ ...input, selectedWorkIds }), null);
   for (const conceptId of [undefined, null, "__proto__", "<b>forged</b>", {}, 1]) assert.equal(getProjectCalculation({ ...input, conceptId }), null);
 });

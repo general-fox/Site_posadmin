@@ -5,6 +5,7 @@ import type { Content, TDocumentDefinitions } from "pdfmake/interfaces";
 import type { RkeeperCalculation } from "@/lib/rkeeper-pricing";
 import type { ItAdministrationCalculation } from "@/lib/it-administration-pricing";
 import { CALCULATION_PDF_CONFIG } from "@/lib/calculation-pdf-config";
+import { MAX_ONLINE_WORKPLACES, ONLINE_WORKPLACE_LIMIT_NOTE } from "@/lib/workplace-count";
 
 // Opaque equivalents of the website colors for screen and print.
 const COLORS = {
@@ -182,7 +183,10 @@ function pageOneContent(data: OverviewPageData): Content[] {
   let cursor = 341;
   content.push(textAt(PAGE_LEFT, cursor, "Условия расчёта", { font: "InterMedium", fontSize: 15 }));
   cursor += 29;
-  for (const condition of CALCULATION_PDF_CONFIG.conditions) {
+  const conditions = data.workplaceCount === MAX_ONLINE_WORKPLACES
+    ? [...CALCULATION_PDF_CONFIG.conditions, ONLINE_WORKPLACE_LIMIT_NOTE]
+    : CALCULATION_PDF_CONFIG.conditions;
+  for (const condition of conditions) {
     content.push(dotAt(PAGE_LEFT + 2, cursor + 6), textAt(PAGE_LEFT + 13, cursor, condition, { width: 510, fontSize: 9.5 }));
     cursor += linesFor(condition, 510, 9.5) * 12.9 + 6;
   }

@@ -31,18 +31,26 @@ const clone = () => structuredClone(DEFAULT_PRICING);
 const additionalModules = ["menu-and-dictionaries", "onsite-hardware-support"];
 const allModuleIds = ["remote-technical-support", ...additionalModules];
 
-test("default prices preserve both original formulas for all 1–10000 workplaces", () => {
+test("defaults match all four workbook tariffs throughout the internal workplace range", () => {
+  const firstSixPrices = [
+    [5_000, 6_000, 7_000, 8_000, 8_500, 9_000],
+    [3_000, 3_500, 4_000, 5_000, 6_000, 7_000],
+    [3_000, 4_000, 5_000, 5_500, 6_000, 6_500],
+    [4_000, 5_000, 6_000, 6_500, 7_000, 7_500],
+  ];
   for (let count = 1; count <= 10_000; count++) {
-    const previousRkeeper = count <= 6 ? 3_000 + count * 1_000 : 9_500 + (count - 6) * 500;
-    const previousIt = count <= 3 ? 3_000 + count * 2_000 : count <= 6 ? 6_000 + count * 1_000 : 12_000 + (count - 6) * 500;
-    for (const id of allModuleIds) assert.equal(getRkeeperModulePrice(count, DEFAULT_PRICING, id), previousRkeeper);
-    assert.equal(getRkeeperModulePrice(count), previousRkeeper);
-    assert.equal(getItAdministrationModulePrice(count), previousIt);
-    assert.equal(calculateRkeeperPricing(count, additionalModules, "moscow").monthlyTotal, previousRkeeper * 3);
-    assert.equal(calculateItAdministrationPricing(count, ["system-administration"]).monthlyTotal, previousIt);
+    const [base, menu, onsite, it] = firstSixPrices.map((prices) => count <= 6 ? prices[count - 1] : prices[5] + (count - 6) * 500);
+    assert.deepEqual(allModuleIds.map((id) => getRkeeperModulePrice(count, DEFAULT_PRICING, id)), [base, menu, onsite]);
+    assert.equal(getRkeeperModulePrice(count), base);
+    assert.equal(getItAdministrationModulePrice(count), it);
+    assert.equal(calculateRkeeperPricing(count, additionalModules, "moscow").monthlyTotal, base + menu + onsite);
+    assert.equal(calculateItAdministrationPricing(count, ["system-administration"]).monthlyTotal, it);
   }
-  assert.deepEqual([6, 7, 8].map((count) => getRkeeperModulePrice(count)), [9_000, 10_000, 10_500]);
-  assert.deepEqual([3, 4, 6, 7].map((count) => getItAdministrationModulePrice(count)), [9_000, 10_000, 12_000, 12_500]);
+  for (const [count, workbookTotal] of [[10, 38_000], [20, 58_000]]) {
+    const rkeeper = calculateRkeeperPricing(count, additionalModules, "moscow");
+    const it = calculateItAdministrationPricing(count, ["system-administration"]);
+    assert.equal(rkeeper.monthlyTotal + it.monthlyTotal, workbookTotal);
+  }
 });
 
 test("all four modules use independent schedules and totals sum the selected module prices", () => {
@@ -77,7 +85,7 @@ test("custom prices preserve selection, onsite availability and duplicate filter
   }
   const result = calculateRkeeperPricing(1, ["onsite-hardware-support", "onsite-hardware-support"], "moscow", pricing);
   assert.equal(result.additionalModules.length, 1);
-  assert.equal(result.monthlyTotal, 24_000);
+  assert.equal(result.monthlyTotal, 25_000);
 });
 
 test("validator accepts exact complete config and returns a detached copy", () => {
@@ -87,8 +95,8 @@ test("validator accepts exact complete config and returns a detached copy", () =
   assert.deepEqual(result.value, DEFAULT_PRICING);
   input.rkeeper.base.firstSix[0] = 1;
   result.value.rkeeper.menu.firstSix[0] = 2;
-  assert.equal(result.value.rkeeper.base.firstSix[0], 4_000);
-  assert.equal(DEFAULT_PRICING.rkeeper.menu.firstSix[0], 4_000);
+  assert.equal(result.value.rkeeper.base.firstSix[0], 5_000);
+  assert.equal(DEFAULT_PRICING.rkeeper.menu.firstSix[0], 3_000);
   assert.notEqual(DEFAULT_PRICING.rkeeper.base, DEFAULT_PRICING.rkeeper.menu);
 });
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPricingSnapshot } from "@/lib/pricing-store";
+import { isOnlineWorkplaceCount, MAX_ONLINE_WORKPLACES } from "@/lib/workplace-count";
 import {
   calculateItAdministrationPricing,
   isItAdministrationModuleId,
@@ -29,13 +30,9 @@ function parseRequest(body: ItAdministrationPdfRequest) {
   if (body.product !== IT_ADMINISTRATION_PRODUCT_ID) {
     throw new CalculationPdfInputError("Некорректное направление услуг");
   }
-  if (
-    !Number.isSafeInteger(body.workplaceCount) ||
-    Number(body.workplaceCount) < 1 ||
-    Number(body.workplaceCount) > 10_000
-  ) {
+  if (!isOnlineWorkplaceCount(body.workplaceCount)) {
     throw new CalculationPdfInputError(
-      "Некорректное количество рабочих мест",
+      `Укажите целое количество рабочих мест от 1 до ${MAX_ONLINE_WORKPLACES}.`,
     );
   }
   if (!Array.isArray(body.selectedModules)) {
@@ -60,7 +57,7 @@ function parseRequest(body: ItAdministrationPdfRequest) {
   }
 
   return {
-    workplaceCount: Number(body.workplaceCount),
+    workplaceCount: body.workplaceCount,
     selectedModules: selectedModules as ItAdministrationModuleId[],
   };
 }

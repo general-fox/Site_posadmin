@@ -54,16 +54,10 @@
   line-height: 1.35;
 }
 
-.region,
-.noSuggestions {
+.region {
   color: var(--text-body);
   font-size: 13px;
   line-height: 1.45;
-}
-
-.noSuggestions {
-  margin: 0;
-  padding: 12px 14px;
 }
 
 .placeholder {

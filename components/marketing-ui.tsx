@@ -11,6 +11,7 @@ export function useMarketingReducedMotion() {
 type ScrollRevealOptions = {
   delay?: number;
   rows?: boolean;
+  sequence?: boolean;
   blur?: boolean;
   motion?: "fade" | "scale" | "lift";
   after?: RefObject<HTMLElement | null>;
@@ -26,6 +27,7 @@ export const UpwardScrollContext = createContext<RefObject<boolean> | null>(null
 export function useScrollReveal<T extends HTMLElement>({
   delay = 0,
   rows = false,
+  sequence = false,
   blur = true,
   motion = "fade",
   after,
@@ -98,7 +100,8 @@ export function useScrollReveal<T extends HTMLElement>({
     const children = Array.from(element.children).filter(
       (child): child is HTMLElement => child instanceof HTMLElement,
     );
-    if (cardMotion) targets.push(element);
+    if (sequence) targets.push(...element.querySelectorAll<HTMLElement>("[data-reveal-item]"));
+    else if (cardMotion) targets.push(element);
     else if (rows) targets.push(...children);
     else if (hasSurface || children.length === 0) collect(element);
     else children.forEach((child) => collect(child));
@@ -167,6 +170,7 @@ export function useScrollReveal<T extends HTMLElement>({
         return animation;
       });
     };
+    let nextSequenceStart = 0;
     const play = (group: RevealGroup) => {
       if (group.phase !== "waiting") return;
       if (scrollingUp?.current || document.hidden || group.targets.some(({ node }) => node.closest("[inert]") ||
@@ -177,6 +181,13 @@ export function useScrollReveal<T extends HTMLElement>({
       clearAnimations(group);
       markRevealed(group, "entering");
       const sharedStart = document.timeline.currentTime;
+      let staggerDelay = Math.min(group.order, 2) * entranceStagger;
+      if (sequence && typeof sharedStart === "number") {
+        // Space the cards that enter together, without delaying later cards that scroll in alone.
+        const start = Math.max(sharedStart, nextSequenceStart);
+        staggerDelay = start - sharedStart;
+        nextSequenceStart = start + entranceStagger;
+      }
       const responsiveDelay = motion === "lift"
         ? Number.parseFloat(getComputedStyle(element).getPropertyValue("--entrance-delay")) || 0
         : 0;
@@ -191,7 +202,7 @@ export function useScrollReveal<T extends HTMLElement>({
         };
         const animation = target.node.animate([from, to], {
           duration: entranceDuration,
-          delay: Math.max(delay, 0) * 1000 + responsiveDelay + Math.min(group.order, 2) * entranceStagger,
+          delay: Math.max(delay, 0) * 1000 + responsiveDelay + staggerDelay,
           easing: entranceEase,
           fill: "both",
         });
@@ -226,6 +237,15 @@ export function useScrollReveal<T extends HTMLElement>({
         : Math.min(cardInset, Math.round(window.innerHeight * 0.4));
       const observer = new IntersectionObserver((entries) => {
         if (entryObserver !== observer) return;
+        if (sequence) {
+          const visible = new Set(entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target));
+          groups.forEach((group) => {
+            if (!visible.has(group.anchor)) return;
+            play(group);
+            observer.unobserve(group.anchor);
+          });
+          return;
+        }
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
           if (entrySection) {
@@ -246,47 +266,57 @@ export function useScrollReveal<T extends HTMLElement>({
     const precedingElement = after?.current;
     let precedingObserver: MutationObserver | undefined;
     const startObserving = () => {
-      const state = precedingElement?.dataset.revealState;
-      if (state === "waiting" || state === "entering") return;
+      if (precedingElement && precedingElement.dataset.revealState !== "settled") return;
       precedingObserver?.disconnect();
       observeEntry();
     };
     if (precedingElement) {
-      // Keep each card's own viewport trigger, but arm it only after the heading.
+      // Nested cards can register before their parent initializes its reveal.
       precedingObserver = new MutationObserver(startObserving);
       precedingObserver.observe(precedingElement, { attributeFilter: ["data-reveal-state"] });
     }
     startObserving();
     if (resizeEntry) window.addEventListener("resize", startObserving);
     const settleAll = () => groups.forEach(settle);
+    const settleInteraction = (event: Event) => {
+      if (!sequence) {
+        settleAll();
+        return;
+      }
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      groups.forEach((group) => {
+        if (group.anchor.contains(target)) settle(group);
+      });
+    };
     const onPointerDown = (event: PointerEvent) => {
       // A touch can start a scroll over a card that is still appearing.
-      if (!cardMotion || event.pointerType !== "touch") settleAll();
+      if (!cardMotion || event.pointerType !== "touch") settleInteraction(event);
     };
     const onVisibilityChange = () => {
       if (!document.hidden) return;
       if (cardMotion) groups.filter((group) => group.phase === "entering").forEach(settle);
       else settleAll();
     };
-    element.addEventListener("focusin", settleAll);
+    element.addEventListener("focusin", settleInteraction);
     element.addEventListener("pointerdown", onPointerDown);
-    if (cardMotion) element.addEventListener("click", settleAll);
+    if (cardMotion) element.addEventListener("click", settleInteraction);
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       entryObserver?.disconnect();
       precedingObserver?.disconnect();
       if (resizeEntry) window.removeEventListener("resize", startObserving);
       groups.forEach(clearAnimations);
-      element.removeEventListener("focusin", settleAll);
+      element.removeEventListener("focusin", settleInteraction);
       element.removeEventListener("pointerdown", onPointerDown);
-      if (cardMotion) element.removeEventListener("click", settleAll);
+      if (cardMotion) element.removeEventListener("click", settleInteraction);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       targets.forEach((target) => {
         delete target.dataset.revealTarget;
         delete target.dataset.revealState;
       });
     };
-  }, [delay, rows, blur, motion, after, sectionEntryViewportFraction, layoutRevision, reduced, scrollingUp]);
+  }, [delay, rows, sequence, blur, motion, after, sectionEntryViewportFraction, layoutRevision, reduced, scrollingUp]);
 
   return ref;
 }
@@ -297,6 +327,7 @@ export function SectionReveal({
   className,
   delay = 0,
   rows = false,
+  sequence,
   blur = true,
   motion,
   after,
@@ -306,7 +337,7 @@ export function SectionReveal({
   id?: string;
   className?: string;
 } & ScrollRevealOptions) {
-  const ref = useScrollReveal<HTMLDivElement>({ delay, rows, blur, motion, after, sectionEntryViewportFraction });
+  const ref = useScrollReveal<HTMLDivElement>({ delay, rows, sequence, blur, motion, after, sectionEntryViewportFraction });
   return <div ref={ref} id={id} className={className} data-scroll-reveal="">{children}</div>;
 }
 

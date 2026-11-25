@@ -5,7 +5,6 @@ import { getProjectCalculation } from "@/lib/project-calculation";
 import { validateCallbackSchedule } from "@/lib/callback-schedule";
 import { parseCallbackSpecialist } from "@/lib/callback-specialist";
 import { getPricingSnapshot } from "@/lib/pricing-store";
-import { findRussianLocationLabel } from "@/lib/russian-locations";
 import { deliverTelegramLead, getTelegramCallbackConfig } from "@/lib/telegram-leads";
 
 export const runtime = "nodejs";
@@ -141,14 +140,6 @@ export async function POST(request: Request) {
   if ((body.calculation !== undefined && !calculation) || (body.projectEstimate !== undefined && !projectSummary)) {
     return NextResponse.json(
       { error: "Не удалось проверить расчёт. Закройте форму и выберите услуги заново." },
-      { status: 400 },
-    );
-  }
-
-  const onsiteCity = calculation?.selection.product === "r_keeper" ? calculation.selection.otherCity : undefined;
-  if (onsiteCity && !findRussianLocationLabel(onsiteCity)) {
-    return NextResponse.json(
-      { error: "Выберите город или регион из списка и отправьте заявку ещё раз." },
       { status: 400 },
     );
   }

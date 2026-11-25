@@ -17,6 +17,7 @@ import {
   type OnsiteSupportLocation,
 } from "@/lib/onsite-support";
 import { DEFAULT_PRICING, type PricingConfig } from "@/lib/pricing-config";
+import { isOnlineWorkplaceCount } from "@/lib/workplace-count";
 
 export type CalculationSelection =
   | {
@@ -48,7 +49,7 @@ export function getCalculationSummary(input: unknown, pricing: PricingConfig = D
   if (!input || typeof input !== "object" || Array.isArray(input)) return null;
   const value = input as Record<string, unknown>;
   const count = value.workplaceCount;
-  if (typeof count !== "number" || !Number.isInteger(count) || count < 1 || count > 10_000) return null;
+  if (!isOnlineWorkplaceCount(count)) return null;
   if (value.otherCity !== undefined && (value.product !== "r_keeper" || value.location !== "other")) return null;
   const includeItSupport = value.includeItSupport;
   if (includeItSupport !== undefined && (value.product !== "r_keeper" || typeof includeItSupport !== "boolean")) {

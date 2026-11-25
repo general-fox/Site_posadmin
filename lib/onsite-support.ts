@@ -37,7 +37,7 @@ export const ONSITE_SUPPORT_BY_REQUEST_MESSAGE =
 export function normalizeOnsiteCity(value: unknown): string | null {
   if (typeof value !== "string" || /[\p{Cc}\p{Zl}\p{Zp}\p{Bidi_Control}]/u.test(value)) return null;
   const city = value.trim().replace(/\s+/gu, " ");
-  return city.length <= ONSITE_CITY_MAX_LENGTH && /\p{L}/u.test(city) ? city : null;
+  return city && city.length <= ONSITE_CITY_MAX_LENGTH ? city : null;
 }
 
 export function isOnsiteSupportAvailable(value: unknown): boolean {

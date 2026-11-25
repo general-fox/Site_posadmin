@@ -20,6 +20,7 @@ import { usePricing } from "./pricing-provider";
 import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import type { CallbackSpecialist } from "@/lib/callback-specialist";
 import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
+import { MAX_ONLINE_WORKPLACES } from "@/lib/workplace-count";
 import { formatRussianPhone, RUSSIAN_PHONE_PREFIX } from "@/lib/russian-phone";
 import {
   CALLBACK_HOURS_LABEL,
@@ -317,6 +318,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                     <p className={styles.calculationTotal}>{preview.total}{preview.period && <span>{preview.period}</span>}</p>
                   </div>
                   <p className={styles.calculationMeta}>{preview.meta}</p>
+                  {summary?.workplaceCount === MAX_ONLINE_WORKPLACES && <p className={styles.calculationMeta}>Если рабочих мест больше {MAX_ONLINE_WORKPLACES}, назовите их количество менеджеру во время звонка.</p>}
                   <details className={styles.calculationDetails}>
                     <summary><UiIcon name="chevron-down" size={14} />{projectSummary ? "Состав работ" : "Состав услуг"}</summary>
                     <ul>{preview.items.map((item) => (

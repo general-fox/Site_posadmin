@@ -15,13 +15,13 @@ import {
 } from "@/lib/calculation-pdf-api";
 import { createRkeeperPdf } from "@/lib/rkeeper-pdf";
 import { getPricingSnapshot } from "@/lib/pricing-store";
+import { isOnlineWorkplaceCount, MAX_ONLINE_WORKPLACES } from "@/lib/workplace-count";
 import {
   isOnsiteSupportAvailable,
   isOnsiteSupportLocation,
   normalizeOnsiteCity,
   ONSITE_SUPPORT_BY_REQUEST_MESSAGE,
 } from "@/lib/onsite-support";
-import { findRussianLocationLabel } from "@/lib/russian-locations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,13 +40,9 @@ function parseRequest(body: RkeeperPdfRequest) {
   if (body.product !== RKEEPER_PRODUCT_ID) {
     throw new CalculationPdfInputError("Некорректный программный продукт");
   }
-  if (
-    !Number.isSafeInteger(body.workplaceCount) ||
-    Number(body.workplaceCount) < 1 ||
-    Number(body.workplaceCount) > 10_000
-  ) {
+  if (!isOnlineWorkplaceCount(body.workplaceCount)) {
     throw new CalculationPdfInputError(
-      "Некорректное количество рабочих мест",
+      `Укажите целое количество рабочих мест от 1 до ${MAX_ONLINE_WORKPLACES}.`,
     );
   }
   if (!Array.isArray(body.selectedAdditionalModules)) {
@@ -82,8 +78,8 @@ function parseRequest(body: RkeeperPdfRequest) {
   }
   if (body.otherCity !== undefined) {
     const otherCity = normalizeOnsiteCity(body.otherCity);
-    if (location !== "other" || !otherCity || !findRussianLocationLabel(otherCity)) {
-      throw new CalculationPdfInputError("Выберите город или регион из списка");
+    if (location !== "other" || !otherCity) {
+      throw new CalculationPdfInputError("Некорректный город или регион");
     }
   }
   if (
@@ -96,7 +92,7 @@ function parseRequest(body: RkeeperPdfRequest) {
   }
 
   return {
-    workplaceCount: Number(body.workplaceCount),
+    workplaceCount: body.workplaceCount,
     selectedModules: selectedModules as RkeeperAdditionalModuleId[],
     includeItSupport,
     location,

@@ -52,15 +52,13 @@ function HeroProducts() {
             className={`${styles.area} ${entry.product}`}
             style={{ "--entry-index": index } as CSSProperties}
           >
-            <div className={styles.areaHeader}>
+            <div className={styles.areaCopy}>
               <span className={styles.areaCategory}>{category}</span>
               <h3>{name}</h3>
               <span className={styles.productArrow}><UiIcon name="arrow-up-right" size={16} /></span>
-            </div>
-            <div className={styles.cardBody}>
               <p className={styles.description}>{description}</p>
-              <HeroProductPreview product={preview} />
             </div>
+            <div className={styles.cardArt}><HeroProductPreview product={preview} /></div>
           </Link>
         </div>
       )}

@@ -62,6 +62,7 @@ const {
   normalizeProjectEmail, normalizeProjectMessengerPhone, buildProjectRequestMessage,
 } = load("lib/project-request.ts");
 const { LAUNCH_CONCEPTS, getLaunchScope, buildLaunchBrief } = load("lib/launch-concepts.ts");
+const { PROJECT_REGISTER_MAX } = load("lib/project-scope.ts");
 const { POST } = load("app/api/project-request/route.ts");
 const validRequest = { projectStage: "new", contactMethod: "phone", contact: "+7 (999) 123-45-67", personalDataConsent: true };
 const questionnaire = {
@@ -250,12 +251,25 @@ test("the automation questionnaire sends chosen services and contact to the mana
   }
 });
 
+test("a questionnaire at the register limit delivers the actual count from the comment", async () => {
+  const task = "Фактически нужно 24 рабочих места.";
+  const response = await post({
+    ...questionnaire,
+    projectSelection: { ...questionnaire.projectSelection, registers: PROJECT_REGISTER_MAX },
+    task,
+  });
+  assert.equal(response.status, 200);
+  const message = deliveries.at(-1);
+  assert.match(message, /Рабочих мест:<\/b> 20\n/);
+  assert.ok(message.includes(task));
+});
+
 test("invalid questionnaire selections and missing manager routing never reach delivery", async () => {
   const before = deliveries.length;
   for (const projectSelection of [
     null,
     { ...questionnaire.projectSelection, conceptId: "invalid" },
-    { ...questionnaire.projectSelection, registers: 11 },
+    { ...questionnaire.projectSelection, registers: PROJECT_REGISTER_MAX + 1 },
     { ...questionnaire.projectSelection, selectedWorkIds: ["kitchen", "kitchen"] },
     { ...questionnaire.projectSelection, selectedCapabilityIds: ["unknown"] },
   ]) {

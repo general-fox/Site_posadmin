@@ -103,7 +103,7 @@ test("cash-register quantities affect per-place work only, including both bounda
 
 test("invalid counts, unknown concepts and unknown work cannot return misleading totals", () => {
   const valid = getDefaultProjectSelection();
-  for (const registers of [0, -1, 11, 1.5, "2", NaN, Infinity, undefined]) assert.throws(() => calculateProjectEstimate({ ...valid, registers }));
+  for (const registers of [0, -1, PROJECT_REGISTER_MAX + 1, 1.5, "2", NaN, Infinity, undefined]) assert.throws(() => calculateProjectEstimate({ ...valid, registers }));
   for (const selectedWorkIds of [["unknown"], null, {}, "fiscal"]) assert.throws(() => calculateProjectEstimate({ ...valid, selectedWorkIds }));
   assert.throws(() => calculateProjectEstimate({ ...valid, conceptId: "unknown" }));
   assert.throws(() => getDefaultProjectSelection("unknown"));
@@ -128,7 +128,7 @@ test("additional capabilities are optional requests for a separate quote, never 
   assert.deepEqual(calculateProjectEstimate({ conceptId: "cafe", registers: 1, selectedWorkIds: [] }).capabilities, []);
   base.selectedCapabilityIds.push("egais");
   assert.deepEqual(getDefaultProjectSelection().selectedCapabilityIds, []);
-  const full = calculateProjectEstimate({ ...base, registers: 10, selectedWorkIds: PROJECT_WORKS.map(({ id }) => id), selectedCapabilityIds: PROJECT_CAPABILITIES.map(({ id }) => id) });
+  const full = calculateProjectEstimate({ ...base, registers: PROJECT_REGISTER_MAX, selectedWorkIds: PROJECT_WORKS.map(({ id }) => id), selectedCapabilityIds: PROJECT_CAPABILITIES.map(({ id }) => id) });
   assert.ok(buildProjectEstimateBrief(full).length <= PROJECT_TASK_MAX_LENGTH);
 });
 
@@ -149,12 +149,13 @@ test("Russian formatters show rubles, grouped amounts, and correct register unit
   assert.equal(formatCashRegisters(4), "4 кассовых места");
   assert.equal(formatCashRegisters(5), "5 кассовых мест");
   assert.equal(formatCashRegisters(10), "10 кассовых мест");
+  assert.equal(formatCashRegisters(PROJECT_REGISTER_MAX), "20 кассовых мест");
 });
 
 test("every optional combination fits the request contract with room for client notes", () => {
   const optional = PROJECT_WORKS.filter(({ required }) => !required);
   for (const concept of LAUNCH_CONCEPTS) {
-    for (const registers of [1, 10]) {
+    for (const registers of [PROJECT_REGISTER_MIN, PROJECT_REGISTER_MAX]) {
       for (let mask = 0; mask < 2 ** optional.length; mask += 1) {
         const selectedWorkIds = optional.filter((_, index) => mask & (1 << index)).map(({ id }) => id);
         const estimate = calculateProjectEstimate({ conceptId: concept.id, registers, selectedWorkIds });

@@ -28,33 +28,34 @@ function load(relativePath) {
 const { compilePricingFormula: compile, evaluatePricingFormula: evaluate, getFormulaIssue: issue, PricingFormulaError, MAX_PRICING_FORMULA_PRICE } = load("lib/pricing-formula.ts");
 const { DEFAULT_PRICING, getSchedulePrice, scheduleToFormula, validatePricingConfig } = load("lib/pricing-config.ts");
 const { calculateRkeeperPricing } = load("lib/rkeeper-pricing.ts");
-const rkeeperSource = "=IF(D$4=1,4000,IF(D$4=2,5000,IF(D$4=3,6000,IF(D$4=4,7000,IF(D$4=5,8000,IF(D$4=6,9000,IF(D$4>=7,9500+(D$4-6)*500,0)))))))";
-const itSource = "=IF(D$4=1,5000,IF(D$4=2,7000,IF(D$4=3,9000,IF(D$4=4,10000,IF(D$4=5,11000,IF(D$4=6,12000,IF(D$4>=7,12000+(D$4-6)*500,0)))))))";
-// Independent cached values from the supplied workbook, columns D:S / rows 5:8.
-const rkeeperGolden = [4000, 5000, 6000, 7000, 8000, 9000, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500];
-const itGolden = [5000, 7000, 9000, 10000, 11000, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 16500, 17000];
+// Calculator formulas from the 24.11.2026 workbook, cells C5:C8.
+const baseSource = "=IF(C$4=1,5000,IF(C$4=2,6000,IF(C$4=3,7000,IF(C$4=4,8000,IF(C$4=5,8500,IF(C$4=6,9000,IF(C$4>=7,9000+(C$4-6)*500,0)))))))";
+const menuSource = "=IF(C$4=1,3000,IF(C$4=2,3500,IF(C$4=3,4000,IF(C$4=4,5000,IF(C$4=5,6000,IF(C$4=6,7000,IF(C$4>=7,7000+(C$4-6)*500,0)))))))";
+const onsiteSource = "=IF(C$4=1,3000,IF(C$4=2,4000,IF(C$4=3,5000,IF(C$4=4,5500,IF(C$4=5,6000,IF(C$4=6,6500,IF(C$4>=7,6500+(C$4-6)*500,0)))))))";
+const itSource = "=IF(C$4=1,4000,IF(C$4=2,5000,IF(C$4=3,6000,IF(C$4=4,6500,IF(C$4=5,7000,IF(C$4=6,7500,IF(C$4>=7,7500+(C$4-6)*500,0)))))))";
+const workbookSchedules = [
+  [baseSource, DEFAULT_PRICING.rkeeper.base, 9000],
+  [menuSource, DEFAULT_PRICING.rkeeper.menu, 7000],
+  [onsiteSource, DEFAULT_PRICING.rkeeper.onsite, 6500],
+  [itSource, DEFAULT_PRICING.itAdministration, 7500],
+];
 
-test("original workbook formulas reproduce all 64 cached prices and full supported count range", () => {
-  assert.equal(issue(rkeeperSource), null);
-  assert.equal(issue(itSource), null);
-  for (const [formula, golden] of [[rkeeperSource, rkeeperGolden], [rkeeperSource, rkeeperGolden], [rkeeperSource, rkeeperGolden], [itSource, itGolden]]) {
-    assert.deepEqual(golden.map((_, index) => evaluate(formula, index + 1)), golden);
-  }
-  for (let count = 1; count <= 10_000; count++) {
-    assert.equal(evaluate(rkeeperSource, count), count <= 6 ? 3000 + count * 1000 : 9500 + (count - 6) * 500);
-    assert.equal(evaluate(itSource, count), count <= 3 ? 3000 + count * 2000 : count <= 6 ? 6000 + count * 1000 : 12000 + (count - 6) * 500);
-  }
-});
-
-test("legacy conversion preserves every supported price and uses the workbook's branch structure", () => {
-  for (const schedule of [DEFAULT_PRICING.rkeeper.base, DEFAULT_PRICING.itAdministration]) {
-    const formula = scheduleToFormula(schedule);
-    assert.ok(formula.includes("\n"));
+test("the four workbook formulas reproduce the defaults for all supported workplace counts", () => {
+  for (const [formula, schedule] of workbookSchedules) {
     assert.equal(issue(formula), null);
     for (let count = 1; count <= 10_000; count++) assert.equal(evaluate(formula, count), getSchedulePrice(count, schedule));
   }
-  assert.match(scheduleToFormula(DEFAULT_PRICING.rkeeper.base), /IF\(N>=7,9500\+\(N-6\)\*500,0\)/);
-  assert.match(scheduleToFormula(DEFAULT_PRICING.itAdministration), /IF\(N>=7,12000\+\(N-6\)\*500,0\)/);
+  assert.equal(workbookSchedules.reduce((total, [formula]) => total + evaluate(formula, 10), 0), 38_000);
+});
+
+test("legacy conversion preserves every supported price and uses the workbook's branch structure", () => {
+  for (const [, schedule, fromSix] of workbookSchedules) {
+    const formula = scheduleToFormula(schedule);
+    assert.ok(formula.includes("\n"));
+    assert.equal(issue(formula), null);
+    assert.ok(formula.includes(`IF(N>=7,${fromSix}+(N-6)*500,0)`));
+    for (let count = 1; count <= 10_000; count++) assert.equal(evaluate(formula, count), getSchedulePrice(count, schedule));
+  }
   const spaced = "  =ЕСЛИ(N=1;4000;\n5000)  ";
   assert.equal(scheduleToFormula({ formula: spaced }), spaced);
   const arbitrary = { firstSix: [1, 2, 3, 4, 5, 6], fromSeven: 7, extraWorkplace: 10 };
@@ -100,9 +101,9 @@ test("formula schedules and legacy schedules coexist and remain independent afte
   assert.equal(result.ok, true);
   assert.deepEqual(result.value, config);
   const calculation = calculateRkeeperPricing(3, ["menu-and-dictionaries", "onsite-hardware-support"], "moscow", result.value);
-  assert.deepEqual([calculation.baseModule, ...calculation.additionalModules].map((module) => module.monthlyPrice), [6000, 1300, 2600]);
-  assert.equal(calculation.monthlyTotal, 9900);
-  assert.equal(getSchedulePrice(7, result.value.itAdministration), 12500);
+  assert.deepEqual([calculation.baseModule, ...calculation.additionalModules].map((module) => module.monthlyPrice), [7000, 1300, 2600]);
+  assert.equal(calculation.monthlyTotal, 10_900);
+  assert.equal(getSchedulePrice(7, result.value.itAdministration), 8_000);
   config.rkeeper.menu.formula = "=1";
   assert.equal(result.value.rkeeper.menu.formula, "=1000+N*100");
   for (const invalid of [{ formula: "=4000", extra: true }, { ...DEFAULT_PRICING.rkeeper.base, formula: "=4000" }, { formula: null }, { formula: "=N/2" }, { formula: "=N>1" }]) {

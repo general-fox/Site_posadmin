@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
-import { getProjectScope, PROJECT_REGISTER_MAX, type ProjectEstimateSelection } from "@/lib/project-scope";
+import { getProjectScope, PROJECT_REGISTER_LIMIT_NOTE, PROJECT_REGISTER_MAX, type ProjectEstimateSelection } from "@/lib/project-scope";
 import {
   normalizeProjectEmail,
   normalizeProjectMessengerPhone,
@@ -220,7 +220,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                   />
                   {fieldError("task")}
                 </details>
-                {showRegisterHint && <p id={taskHintId} className={styles.registerHint}>Если рабочих мест больше 10, укажите их количество в комментарии.</p>}
+                {showRegisterHint && <p id={taskHintId} className={styles.registerHint}>{PROJECT_REGISTER_LIMIT_NOTE}</p>}
               </div>
             </div>
             {scope && (

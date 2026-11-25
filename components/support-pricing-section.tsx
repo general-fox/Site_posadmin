@@ -6,6 +6,7 @@ import { BaseBadge } from "./base-badge";
 import { OnsiteLocationDialog } from "./onsite-location-dialog";
 import { MobileCalculationBar } from "./mobile-calculation-bar";
 import { UiIcon } from "./ui-icon";
+import { WorkplaceCount } from "./workplace-count";
 import { ArrowRight, SectionReveal, useScrollReveal } from "./marketing-ui";
 import { useDisclosureCentering } from "./use-disclosure-centering";
 import { calculateRkeeperPricing, getRkeeperModulePrice, RKEEPER_PRODUCT_ID, RKEEPER_TARIFF, type RkeeperAdditionalModuleId } from "@/lib/rkeeper-pricing";
@@ -16,6 +17,7 @@ import { usePricing } from "./pricing-provider";
 import { IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import { isPricingSnapshot, type PricingSnapshot } from "@/lib/pricing-snapshot";
 import { PRICING_VALIDITY_YEAR } from "@/lib/pricing-config";
+import { MIN_ONLINE_WORKPLACES, ONLINE_WORKPLACE_LIMIT_NOTE } from "@/lib/workplace-count";
 import ui from "./marketing.module.css";
 import styles from "./support-pricing.module.css";
 
@@ -86,27 +88,6 @@ async function downloadCalculationPdf(
 }
 
 
-function WorkplaceCount({ value, onChange, disabled }: { value: number; onChange: (value: number) => void; disabled: boolean }) {
-  const [draft, setDraft] = useState(String(value));
-  const inputId = "workplaces-rkeeper";
-  const descriptionId = `${inputId}-description`;
-  const commit = (raw: string) => {
-    const parsed = Number(raw);
-    const normalized = Number.isFinite(parsed) ? Math.min(10_000, Math.max(1, Math.floor(parsed))) : value;
-    setDraft(String(normalized));
-    onChange(normalized);
-  };
-  const change = (next: number) => { setDraft(String(next)); onChange(next); };
-  return <div className={`${styles.countRow} ${styles.workplaceRow}`}>
-    <div><label htmlFor={inputId}>Количество рабочих мест</label><p id={descriptionId}>Кассы, станции официантов и компьютеры сотрудников</p></div>
-    <div className={styles.stepper}>
-      <button type="button" aria-label="Уменьшить количество рабочих мест" disabled={disabled || value <= 1} onClick={() => change(value - 1)}><UiIcon name="minus" /></button>
-      <input id={inputId} aria-describedby={descriptionId} type="number" inputMode="numeric" min={1} max={10000} step={1} value={draft} disabled={disabled} onChange={(event) => { const raw = event.target.value; setDraft(raw); const n = Number(raw); if (raw && Number.isInteger(n) && n >= 1 && n <= 10000) onChange(n); }} onBlur={() => commit(draft)} onKeyDown={(event) => { if (event.key === "Enter") { commit(draft); event.currentTarget.blur(); } }} />
-      <button type="button" aria-label="Увеличить количество рабочих мест" disabled={disabled || value >= 10000} onClick={() => change(value + 1)}><UiIcon name="plus" /></button>
-    </div>
-  </div>;
-}
-
 const firstModuleEntranceDelay = 0.12;
 const moduleEntranceInterval = 0.04;
 
@@ -168,7 +149,7 @@ export function SupportPricingSection() {
   const configurationRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const summaryRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", after: headingRef });
-  const [workplaces, setWorkplaces] = useState(1);
+  const [workplaces, setWorkplaces] = useState(MIN_ONLINE_WORKPLACES);
   const [additionalModules, setAdditionalModules] = useState<RkeeperAdditionalModuleId[]>([]);
   const [onsiteSelection, setOnsiteSelection] = useState<OnsiteLocationSelection>();
   const [onsiteDialogOpen, setOnsiteDialogOpen] = useState(false);
@@ -245,7 +226,14 @@ export function SupportPricingSection() {
       <div className={styles.calculator}>
         <div ref={configurationRef} className={styles.configuration}>
           <SectionReveal motion="scale" after={headingRef} className={styles.countControl}>
-            <WorkplaceCount value={workplaces} disabled={loading} onChange={(value) => { setWorkplaces(value); resetFeedback(); }} />
+            <WorkplaceCount
+              id="workplaces-rkeeper"
+              value={workplaces}
+              description="Кассы, станции официантов и компьютеры сотрудников"
+              limitNote={ONLINE_WORKPLACE_LIMIT_NOTE}
+              disabled={loading}
+              onChange={(value) => { setWorkplaces(value); resetFeedback(); }}
+            />
           </SectionReveal>
           <div className={styles.modules}>
             <ModuleCard {...RKEEPER_TARIFF.baseModule} revealAfter={headingRef} price={rkeeper.baseModule.monthlyPrice} selected required disabled={loading} />

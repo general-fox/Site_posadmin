@@ -18,25 +18,18 @@ export type PricingConfig = {
   itAdministration: PriceSchedule;
 };
 
-function initialRkeeperSchedule(): LegacyPriceSchedule {
-  return {
-    firstSix: [4_000, 5_000, 6_000, 7_000, 8_000, 9_000],
-    fromSeven: 10_000,
-    extraWorkplace: 500,
-  };
-}
-
 export const PRICING_VALIDITY_YEAR = "2027";
 
+// Calculator cells C5:C8 on the «Тарифы r_keeper 2026» sheet of the 24.11.2026 workbook.
 export const DEFAULT_PRICING = {
   rkeeper: {
-    base: initialRkeeperSchedule(),
-    menu: initialRkeeperSchedule(),
-    onsite: initialRkeeperSchedule(),
+    base: { firstSix: [5_000, 6_000, 7_000, 8_000, 8_500, 9_000], fromSeven: 9_500, extraWorkplace: 500 },
+    menu: { firstSix: [3_000, 3_500, 4_000, 5_000, 6_000, 7_000], fromSeven: 7_500, extraWorkplace: 500 },
+    onsite: { firstSix: [3_000, 4_000, 5_000, 5_500, 6_000, 6_500], fromSeven: 7_000, extraWorkplace: 500 },
   },
   itAdministration: {
-    firstSix: [5_000, 7_000, 9_000, 10_000, 11_000, 12_000] as LegacyPriceSchedule["firstSix"],
-    fromSeven: 12_500,
+    firstSix: [4_000, 5_000, 6_000, 6_500, 7_000, 7_500],
+    fromSeven: 8_000,
     extraWorkplace: 500,
   },
 } satisfies PricingConfig;

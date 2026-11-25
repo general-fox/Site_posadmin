@@ -65,9 +65,9 @@ after(() => {
 const { DEFAULT_PRICING, validatePricingConfig } = load("lib/pricing-config.ts");
 snapshot = { config: structuredClone(DEFAULT_PRICING), revision: 3, updatedAt: "2026-09-25T12:00:00.000Z" };
 snapshot.config.rkeeper.base.firstSix[0] = 4500;
-snapshot.config.rkeeper.menu.firstSix[0] = 4200;
-snapshot.config.rkeeper.onsite.firstSix[0] = 4300;
-snapshot.config.itAdministration.firstSix[0] = 6000;
+snapshot.config.rkeeper.menu.firstSix.fill(4200, 0, 3);
+snapshot.config.rkeeper.onsite.firstSix.fill(4300, 0, 2);
+snapshot.config.itAdministration.firstSix.fill(6000, 0, 2);
 const rk = load("app/api/calculators/rkeeper/pdf/route.ts");
 const it = load("app/api/calculators/it-administration/pdf/route.ts");
 const publicPricing = load("app/api/pricing/route.ts");
@@ -75,6 +75,7 @@ const { getCalculationSummary } = load("lib/calculation-request.ts");
 const { getServiceBySlug } = load("lib/services.ts");
 const { calculateRkeeperPricing } = load("lib/rkeeper-pricing.ts");
 const { calculateItAdministrationPricing } = load("lib/it-administration-pricing.ts");
+const { MAX_ONLINE_WORKPLACES } = load("lib/workplace-count.ts");
 const callback = load("app/api/callback/route.ts");
 let serial = 0;
 const request = (body) => new Request("http://localhost/api/test", { method: "POST", headers: { "content-type": "application/json", "x-forwarded-for": `isolated-${++serial}` }, body: JSON.stringify(body) });
@@ -116,14 +117,15 @@ test("the optional r_keeper IT module validates the flag and uses the current ta
   }
   assert.equal(rkeeperPdfInputs.length, before);
 });
-test("r_keeper PDF validates a confirmed city without pricing an unsupported visit", async () => {
+test("r_keeper PDF accepts custom city text without pricing an unsupported visit", async () => {
   const otherSelection = { ...selection, location: "other", selectedAdditionalModules: [] };
   assert.equal((await rk.POST(request(otherSelection))).status, 200);
   assert.equal((await rk.POST(request({ ...otherSelection, otherCity: "Казань, Республика Татарстан" }))).status, 200);
+  assert.equal((await rk.POST(request({ ...otherSelection, otherCity: "Несуществующий пункт" }))).status, 200);
   assert.equal(rkeeperPdfInputs.at(-1).calculation.monthlyTotal, 4500);
 
   const before = rkeeperPdfInputs.length;
-  assert.equal((await rk.POST(request({ ...otherSelection, otherCity: "Несуществующий пункт" }))).status, 400);
+  assert.equal((await rk.POST(request({ ...otherSelection, otherCity: "   " }))).status, 400);
   assert.equal((await rk.POST(request({ ...selection, otherCity: "Казань, Республика Татарстан" }))).status, 400);
   assert.equal(rkeeperPdfInputs.length, before);
 });
@@ -158,7 +160,7 @@ test("custom formulas stay consistent across both calculators, summaries, PDF en
   snapshot = { config: validated.value, revision: 4, updatedAt: "2026-09-25T13:00:00.000Z" };
   try {
     assert.deepEqual(await (await publicPricing.GET()).json(), snapshot);
-    for (const count of [1, 2, 6, 7, 8, 100, 10_000]) {
+    for (const count of [1, 2, 6, 7, 8, MAX_ONLINE_WORKPLACES]) {
       const expected = [5000 + count * 1250, 1500 + count * 250, 2000 + count * 400];
       const rkSelection = { ...selection, workplaceCount: count, pricingRevision: 4, monthlyTotal: 1 };
       const calculated = calculateRkeeperPricing(count, selection.selectedAdditionalModules, "moscow", snapshot.config);
@@ -192,6 +194,22 @@ test("custom formulas stay consistent across both calculators, summaries, PDF en
     assert.match(getServiceBySlug("vyezdnoe-soprovozhdenie", snapshot.config).pricing.text, /2\s400/);
     assert.match(getServiceBySlug("it-administrirovanie", snapshot.config).pricing.text, /6\s750/);
   } finally { snapshot = original; }
+});
+
+test("both public PDF endpoints and the callback reject online calculations above the counter limit", async () => {
+  const workplaceCount = MAX_ONLINE_WORKPLACES + 1;
+  const rkeeper = { ...selection, workplaceCount };
+  const itAdministration = { product: "it_administration", workplaceCount, selectedModules: ["system-administration"], pricingRevision: snapshot.revision };
+  const generated = pdfs.length;
+  const sent = messages.length;
+  for (const [route, calculation] of [[rk, rkeeper], [it, itAdministration]]) {
+    assert.equal(getCalculationSummary(calculation, snapshot.config), null);
+    assert.equal((await route.POST(request(calculation))).status, 400);
+    const response = await callback.POST(request({ phone: "+7 (999) 123-45-67", personalDataConsent: true, contactSoon: true, calculation, pricingRevision: snapshot.revision }));
+    assert.equal(response.status, 400);
+  }
+  assert.equal(pdfs.length, generated);
+  assert.equal(messages.length, sent);
 });
 
 test("callback endpoint recomputes formula prices and rejects stale formula revisions before sending", async () => {

@@ -3,16 +3,16 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { LAUNCH_CONCEPTS, type LaunchConcept } from "@/lib/launch-concepts";
 import {
-  PROJECT_CAPABILITIES, PROJECT_REGISTER_MAX, PROJECT_REGISTER_MIN, PROJECT_SCOPE_WORKS,
+  PROJECT_CAPABILITIES, PROJECT_REGISTER_LIMIT_NOTE, PROJECT_SCOPE_WORKS,
   getDefaultProjectSelection, type ProjectCapabilityId, type ProjectWorkId,
 } from "@/lib/project-scope";
 import { BaseBadge } from "./base-badge";
 import { LaunchContactForm } from "./launch-contact-form";
-import { SectionReveal } from "./marketing-ui";
+import { SectionReveal, useScrollReveal } from "./marketing-ui";
 import { UiIcon } from "./ui-icon";
+import { WorkplaceCount } from "./workplace-count";
 import ui from "./marketing.module.css";
 import styles from "./launch-section.module.css";
-import pricingStyles from "./support-pricing.module.css";
 
 const steps = [
   { id: 0, label: "Заведение" },
@@ -27,18 +27,11 @@ export function LaunchSection() {
   const [submitting, setSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
   const [selection, setSelection] = useState(getDefaultProjectSelection);
-  const [registerDraft, setRegisterDraft] = useState(() => String(PROJECT_REGISTER_MIN));
-  const [registerLimitVisible, setRegisterLimitVisible] = useState(false);
-  const wizardRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const wizardRef = useScrollReveal<HTMLDivElement>({ motion: "lift", after: headingRef });
+  const formatRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", sequence: true, after: wizardRef });
   const moveFocus = useRef(false);
-  const registerLimitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countId = useId();
-  const registerDescriptionId = `${countId}-description`;
-  const registerLimitId = `${countId}-limit`;
-
-  useEffect(() => () => {
-    if (registerLimitTimer.current !== null) clearTimeout(registerLimitTimer.current);
-  }, []);
 
   useEffect(() => {
     const wizard = wizardRef.current;
@@ -49,36 +42,13 @@ export function LaunchSection() {
     if (wizard.getBoundingClientRect().top < 84 || (heading && heading.getBoundingClientRect().bottom > window.innerHeight)) {
       wizard.scrollIntoView({ block: "start", behavior: "instant" });
     }
-  }, [step]);
+  }, [step, wizardRef]);
 
   const goToStep = (nextStep: LaunchStep) => {
     if (nextStep === step || submitting || complete) return;
     moveFocus.current = true;
     setFurthestStep((current) => Math.max(current, nextStep));
     setStep(nextStep);
-  };
-
-  const changeRegisters = (registers: number) => {
-    if (registers > PROJECT_REGISTER_MAX) {
-      if (registerLimitTimer.current !== null) clearTimeout(registerLimitTimer.current);
-      setRegisterLimitVisible(true);
-      registerLimitTimer.current = setTimeout(() => {
-        setRegisterLimitVisible(false);
-        registerLimitTimer.current = null;
-      }, 5000);
-    } else if (registers < PROJECT_REGISTER_MAX) {
-      if (registerLimitTimer.current !== null) clearTimeout(registerLimitTimer.current);
-      registerLimitTimer.current = null;
-      setRegisterLimitVisible(false);
-    }
-    const normalized = Math.min(PROJECT_REGISTER_MAX, Math.max(PROJECT_REGISTER_MIN, Math.floor(registers)));
-    setRegisterDraft(String(normalized));
-    setSelection((current) => ({ ...current, registers: normalized }));
-  };
-
-  const commitRegisters = () => {
-    const parsed = Number(registerDraft);
-    changeRegisters(registerDraft.trim() && Number.isFinite(parsed) ? parsed : selection.registers);
   };
 
   const changeConcept = (conceptId: LaunchConcept["id"]) => {
@@ -101,17 +71,17 @@ export function LaunchSection() {
   return (
     <section id="launch" className={ui.section} aria-labelledby="launch-title">
       <div className={ui.shell}>
-        <div className={ui.sectionHeader}>
-          <SectionReveal>
+        <div className={`${ui.sectionHeader} ${styles.intro}`}>
+          <SectionReveal sectionEntryViewportFraction={0.4}>
             <p className={ui.eyebrow}>Проект · автоматизация HoReCa</p>
-            <h2 id="launch-title" className={ui.heading}>Расчет автоматизации</h2>
+            <h2 ref={headingRef} id="launch-title" className={ui.heading}>Расчет автоматизации</h2>
           </SectionReveal>
-          <SectionReveal delay={0.2}>
+          <SectionReveal delay={0.12}>
             <p className={ui.lead}>Укажите формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</p>
           </SectionReveal>
         </div>
 
-        <div className={styles.wizard} ref={wizardRef}>
+        <div className={styles.wizard} ref={wizardRef} data-scroll-reveal="">
           <div className={styles.progress}>
             <div
               className={styles.progressLabel}
@@ -155,48 +125,25 @@ export function LaunchSection() {
           </div>
 
           <div className={styles.panels}>
-            <section id="launch-step-0" className={`${styles.stage} ${styles.formatStage}`} inert={step !== 0} aria-labelledby="launch-step-title-0">
+            <section id="launch-step-0" ref={formatRevealRef} className={`${styles.stage} ${styles.formatStage}`} inert={step !== 0} aria-labelledby="launch-step-title-0" data-scroll-reveal="">
               <h3 id="launch-step-title-0" className={styles.stageTitle} tabIndex={-1}>Каким будет ваше заведение?</h3>
-              <div className={`${pricingStyles.countRow} ${pricingStyles.workplaceRow} ${styles.registers}`}>
-                <div>
-                  <label htmlFor={countId}>Количество рабочих мест</label>
-                  <p id={registerDescriptionId}>Кассы и станции официантов</p>
-                </div>
-                <div className={pricingStyles.stepper}>
-                  <button type="button" aria-label="Уменьшить количество рабочих мест" disabled={selection.registers === PROJECT_REGISTER_MIN} onClick={() => changeRegisters(selection.registers - 1)}><UiIcon name="minus" /></button>
-                  <input
-                    id={countId}
-                    type="number"
-                    inputMode="numeric"
-                    min={PROJECT_REGISTER_MIN}
-                    max={PROJECT_REGISTER_MAX}
-                    step="1"
-                    value={registerDraft}
-                    aria-describedby={registerLimitVisible ? `${registerDescriptionId} ${registerLimitId}` : registerDescriptionId}
-                    onChange={(event) => {
-                      const raw = event.target.value;
-                      setRegisterDraft(raw);
-                      const value = Number(raw);
-                      if (raw && Number.isInteger(value) && value >= PROJECT_REGISTER_MIN && value <= PROJECT_REGISTER_MAX) {
-                        setSelection((current) => ({ ...current, registers: value }));
-                      }
-                    }}
-                    onBlur={commitRegisters}
-                    onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }}
-                  />
-                  <button type="button" aria-label="Увеличить количество рабочих мест" aria-describedby={registerLimitVisible ? registerLimitId : undefined} onClick={() => changeRegisters(selection.registers + 1)}><UiIcon name="plus" /></button>
-                </div>
-                {registerLimitVisible && <p id={registerLimitId} className={styles.registerLimit} role="status">Если рабочих мест больше 10, укажите их количество в комментарии к проекту.</p>}
-              </div>
+              <WorkplaceCount
+                id={countId}
+                value={selection.registers}
+                description="Кассы и станции официантов"
+                limitNote={PROJECT_REGISTER_LIMIT_NOTE}
+                onChange={(registers) => setSelection((current) => ({ ...current, registers }))}
+                revealItem
+              />
               <fieldset className={styles.concepts}>
                 <legend className={styles.srOnly}>Формат заведения</legend>
-                {LAUNCH_CONCEPTS.map((item) => (
-                  <label key={item.id} className={styles.concept}>
-                    <input type="radio" name="launch-concept" value={item.id} checked={item.id === selection.conceptId} onChange={() => changeConcept(item.id)} aria-labelledby={`${countId}-${item.id}-name`} aria-describedby={`${countId}-${item.id}-hint`} />
+                {LAUNCH_CONCEPTS.map((concept) => (
+                  <label key={concept.id} className={styles.concept} data-reveal-item="">
+                    <input type="radio" name="launch-concept" value={concept.id} checked={concept.id === selection.conceptId} onChange={() => changeConcept(concept.id)} aria-labelledby={`${countId}-${concept.id}-name`} aria-describedby={`${countId}-${concept.id}-hint`} />
                     <span className={styles.radioMark} aria-hidden="true" />
                     <span className={styles.optionCopy}>
-                      <span className={styles.optionTitle} id={`${countId}-${item.id}-name`}>{item.label}</span>
-                      <span className={styles.optionHint} id={`${countId}-${item.id}-hint`}>{item.hint}</span>
+                      <span className={styles.optionTitle} id={`${countId}-${concept.id}-name`}>{concept.label}</span>
+                      <span className={styles.optionHint} id={`${countId}-${concept.id}-hint`}>{concept.hint}</span>
                     </span>
                   </label>
                 ))}

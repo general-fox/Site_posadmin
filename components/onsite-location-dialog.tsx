@@ -4,6 +4,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type Form
 import {
   isOnsiteSupportLocation,
   KRASNODAR_ONSITE_LABEL,
+  normalizeOnsiteCity,
   ONSITE_CITY_MAX_LENGTH,
   ONSITE_LOCATION_OPTIONS,
   type OnsiteLocationSelection,
@@ -53,8 +54,7 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
   const query = otherCity.trim();
   const showByRequestNotice = isKrasnodar || (isOtherCity && !!query);
   const suggestions = useMemo(() => query.length >= 2 && !selectedPlace ? searchRussianLocations(query) : [], [query, selectedPlace]);
-  const searching = isOtherCity && showSuggestions && query.length >= 2 && !selectedPlace;
-  const suggestionsVisible = searching && suggestions.length > 0;
+  const suggestionsVisible = isOtherCity && showSuggestions && suggestions.length > 0;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -71,7 +71,7 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
     const input = cityInputRef.current;
     const popup = popupRef.current;
     const panel = panelRef.current;
-    if (!searching || !input || !popup || !panel) return;
+    if (!suggestionsVisible || !input || !popup || !panel) return;
 
     const viewport = window.visualViewport;
     const gap = 6;
@@ -116,7 +116,7 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
       viewport?.removeEventListener("scroll", placePopup);
       if (usesPopover && popup.matches(":popover-open")) popup.hidePopover();
     };
-  }, [searching]);
+  }, [suggestionsVisible]);
 
   useEffect(() => {
     if (!suggestionsVisible || activeSuggestion < 0) return;
@@ -152,7 +152,7 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
 
   const handleSearchKeys = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.nativeEvent.isComposing) return;
-    if (event.key === "Escape" && searching) {
+    if (event.key === "Escape" && suggestionsVisible) {
       event.preventDefault();
       event.stopPropagation();
       hideSuggestions();
@@ -181,12 +181,13 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
     if (location === "krasnodar") {
       next = { location: "other", otherCity: KRASNODAR_ONSITE_LABEL };
     } else if (location === "other") {
-      if (!selectedPlace) {
+      const city = normalizeOnsiteCity(otherCity);
+      if (!city) {
         setCityError(true);
         cityInputRef.current?.focus();
         return;
       }
-      next = { location, otherCity: formatRussianLocation(selectedPlace) };
+      next = { location, otherCity: city };
     } else {
       next = { location };
     }
@@ -204,7 +205,7 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
       data-lenis-prevent
       onCancel={(event) => {
         event.preventDefault();
-        if (searching) hideSuggestions();
+        if (suggestionsVisible) hideSuggestions();
         else dismiss();
       }}
       onClick={(event) => { if (event.target === event.currentTarget) dismiss(); }}
@@ -269,8 +270,8 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
               }}
             />
           </label>
-          {searching && <div ref={popupRef} className={locationStyles.popup} popover="manual">
-            {suggestionsVisible ? <ul
+          {suggestionsVisible && <div ref={popupRef} className={locationStyles.popup} popover="manual">
+            <ul
               ref={suggestionsRef}
               className={locationStyles.suggestions}
               id={suggestionsId}
@@ -289,9 +290,7 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
                 <span className={locationStyles.name}>{place.name}</span>
                 {place.region && <span className={locationStyles.region}>{place.region}</span>}
               </li>)}
-            </ul> : <p className={locationStyles.noSuggestions} role="status">
-              Город или регион не найден. Проверьте написание.
-            </p>}
+            </ul>
           </div>}
         </>}
         <p id={hintId} className={isByRequest ? styles.hint : undefined} aria-live="polite">
@@ -300,7 +299,7 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
             {byRequestNotice}
           </span>}
         </p>
-        {cityError && <p id={errorId} className={styles.error} role="alert">Выберите город или регион из списка подсказок.</p>}
+        {cityError && <p id={errorId} className={styles.error} role="alert">Введите город или регион.</p>}
 
         <button className={`${ui.primary} ${styles.submit}`} type="submit">
           {isByRequest ? "Сохранить для заявки" : "Добавить в расчёт"} <UiIcon name="arrow-right" />
