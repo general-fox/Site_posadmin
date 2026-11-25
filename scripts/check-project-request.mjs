@@ -62,13 +62,17 @@ const {
   normalizeProjectEmail, normalizeProjectMessengerPhone, buildProjectRequestMessage,
 } = load("lib/project-request.ts");
 const { LAUNCH_CONCEPTS, getLaunchScope, buildLaunchBrief } = load("lib/launch-concepts.ts");
+const { PROJECT_EQUIPMENT, PROJECT_SCOPE_WORKS, PROJECT_CAPABILITIES } = load("lib/project-scope.ts");
 const { POST } = load("app/api/project-request/route.ts");
 const validRequest = { projectStage: "new", contactMethod: "phone", contact: "+7 (999) 123-45-67", personalDataConsent: true };
 const questionnaire = {
   ...validRequest,
   contactMethod: "email",
   contact: "sales@example.ru",
-  projectSelection: { conceptId: "quick-service", registers: 2, selectedWorkIds: ["kitchen"], selectedCapabilityIds: ["egais", "marking"] },
+  projectSelection: {
+    conceptId: "quick-service", registers: 2, waiterStations: 3, receiptPrinters: 4, labelPrinters: 1, kitchenScreens: 0,
+    selectedWorkIds: ["equipment", "rkeeper"], selectedCapabilityIds: [],
+  },
 };
 let requestNumber = 0;
 const post = (body) => POST(new Request("http://localhost/api/project-request", {
@@ -230,7 +234,7 @@ test("the automation questionnaire sends chosen services and contact to the mana
       ...(contactMethod === "email" ? { task: "Доставка & <самовывоз>" } : {}),
       projectSelection: { ...questionnaire.projectSelection, total: 1234, formattedTotal: "1 234 ₽", concept: { label: "Forged format" } },
     };
-    assert.deepEqual(dataFrom(body).projectSelection, { ...questionnaire.projectSelection, selectedWorkIds: ["design", "pos", "kitchen"] });
+    assert.deepEqual(dataFrom(body).projectSelection, { ...questionnaire.projectSelection, selectedWorkIds: ["rkeeper", "equipment"] });
     const count = deliveries.length;
     const response = await post(body);
     assert.equal(response.status, 200);
@@ -240,9 +244,10 @@ test("the automation questionnaire sends chosen services and contact to the mana
     const message = deliveries.at(-1);
     assert.match(message, /Анкета автоматизации/);
     assert.match(message, /Формат:<\/b> Фастфуд \/ столовая/);
-    assert.match(message, /Рабочих мест:<\/b> 2/);
-    assert.match(message, /• Схема автоматизации\n• Настройка кассовых мест\n• Кухня и выдача/);
-    assert.match(message, /Дополнительные возможности:<\/b>\n• ЕГАИС\n• Маркировка/);
+    assert.match(message, /Оборудование:<\/b>/);
+    for (const { id, label } of PROJECT_EQUIPMENT) assert.ok(message.includes(`• ${label}: ${questionnaire.projectSelection[id]} шт.`));
+    assert.match(message, /Работы:<\/b>\n• r_keeper\n• Оборудование/);
+    assert.doesNotMatch(message, /Дополнительные возможности|Схема автоматизации|Настройка кассовых мест|Кухня и выдача/);
     assert.match(message, expectedContact);
     assert.doesNotMatch(message, /₽|Складской учёт|Forged format|\b1234\b|Итого/);
     if (contactMethod === "email") assert.match(message, /Доставка &amp; &lt;самовывоз&gt;/);
@@ -250,13 +255,141 @@ test("the automation questionnaire sends chosen services and contact to the mana
   }
 });
 
+test("every subset of six services reaches the manager exactly as chosen, with no forced base work", async () => {
+  const expectedCatalogue = [
+    ["rkeeper", "r_keeper"], ["equipment", "Оборудование"], ["dictionaries", "Первоначальное заполнение словарей"],
+    ["training", "Обучение сотрудников"], ["network", "Локальная сеть"], ["fiscal", "ККТ"],
+  ];
+  assert.deepEqual(PROJECT_SCOPE_WORKS.map(({ id, title }) => [id, title]), expectedCatalogue);
+  for (let mask = 0; mask < 64; mask += 1) {
+    const chosen = expectedCatalogue.filter((_, index) => mask & (1 << index));
+    const selectedWorkIds = chosen.map(([id]) => id).reverse();
+    const body = {
+      ...questionnaire,
+      projectSelection: {
+        ...questionnaire.projectSelection, selectedWorkIds,
+        works: [{ id: "rkeeper", title: "Forged service" }], total: 7,
+      },
+    };
+    const data = dataFrom(body);
+    assert.deepEqual(data.projectSelection.selectedWorkIds, chosen.map(([id]) => id), `subset ${mask}`);
+    const before = deliveries.length;
+    const response = await post(body);
+    assert.equal(response.status, 200, `subset ${mask}`);
+    assert.equal(deliveries.length, before + 1);
+    assert.deepEqual(deliveryConfigs.at(-1), managerConfig);
+    const message = deliveries.at(-1);
+    const workSection = message.split("<b>Работы:</b>\n")[1].split("\n\n")[0];
+    assert.equal(workSection, chosen.length
+      ? chosen.map(([, title]) => `• ${title}`).join("\n")
+      : "Не выбраны — уточнить при обсуждении проекта.");
+    for (const { id, label } of PROJECT_EQUIPMENT) assert.ok(message.includes(`• ${label}: ${questionnaire.projectSelection[id]} шт.`));
+    assert.doesNotMatch(message, /Схема автоматизации|Настройка кассовых мест|Кухня и выдача|Складской учёт|Стандартная интеграция|Пусконаладка и обучение|Forged service|₽|Дополнительные возможности/);
+  }
+});
+
+test("all additional capability subsets reach the manager without changing six services or equipment", async () => {
+  const base = {
+    ...questionnaire.projectSelection,
+    selectedWorkIds: PROJECT_SCOPE_WORKS.map(({ id }) => id),
+  };
+  for (let mask = 0; mask < 2 ** PROJECT_CAPABILITIES.length; mask += 1) {
+    const expected = PROJECT_CAPABILITIES.filter((_, index) => mask & (1 << index));
+    const selectedCapabilityIds = expected.map(({ id }) => id).reverse();
+    const body = {
+      ...questionnaire,
+      projectSelection: {
+        ...base, selectedCapabilityIds,
+        capabilities: [{ id: "egais", title: "Forged capability", price: 1 }], total: 7,
+      },
+    };
+    const selection = dataFrom(body).projectSelection;
+    assert.deepEqual(selection.selectedWorkIds, base.selectedWorkIds);
+    assert.deepEqual(selection.selectedCapabilityIds, expected.map(({ id }) => id));
+    for (const { id } of PROJECT_EQUIPMENT) assert.equal(selection[id], base[id]);
+    const before = deliveries.length;
+    const response = await post(body);
+    assert.equal(response.status, 200, `capability subset ${mask}`);
+    assert.equal(deliveries.length, before + 1);
+    assert.deepEqual(deliveryConfigs.at(-1), managerConfig);
+    const message = deliveries.at(-1);
+    const workSection = message.split("<b>Работы:</b>\n")[1].split("\n\n")[0];
+    assert.equal(workSection, PROJECT_SCOPE_WORKS.map(({ title }) => `• ${title}`).join("\n"));
+    for (const { id, label } of PROJECT_EQUIPMENT) assert.ok(message.includes(`• ${label}: ${base[id]} шт.`));
+    if (expected.length) {
+      const extraSection = message.split("<b>Дополнительные возможности:</b>\n")[1].split("\n\n")[0];
+      assert.equal(extraSection, expected.map(({ title }) => `• ${title}`).join("\n"));
+    } else assert.doesNotMatch(message, /Дополнительные возможности/);
+    assert.doesNotMatch(message, /Forged capability|₽|Схема автоматизации|Настройка кассовых мест/);
+    const removed = dataFrom({ ...questionnaire, projectSelection: { ...selection, selectedCapabilityIds: [] } });
+    assert.deepEqual(removed.projectSelection, base, "removing extras preserves all six services and equipment");
+    assert.doesNotMatch(buildProjectRequestMessage(removed, "REMOVED-EXTRAS"), /Дополнительные возможности/);
+  }
+});
+
+test("unknown, duplicate and malformed capabilities fail before delivery while absent or empty is valid", async () => {
+  const before = deliveries.length;
+  for (const selectedCapabilityIds of [["unknown"], ["egais", "egais"], [1], [{ id: "egais" }], Array(100).fill("egais"), null, "egais", {}]) {
+    const body = { ...questionnaire, projectSelection: { ...questionnaire.projectSelection, selectedCapabilityIds } };
+    rejectsField(body, "projectSelection");
+    const response = await post(body);
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).field, "projectSelection");
+  }
+  assert.equal(deliveries.length, before);
+  for (const selectedCapabilityIds of [undefined, []]) {
+    const body = { ...questionnaire, projectSelection: { ...questionnaire.projectSelection, selectedCapabilityIds } };
+    assert.deepEqual(dataFrom(body).projectSelection.selectedCapabilityIds, []);
+  }
+});
+
+test("all-zero and maximum equipment questionnaires reach the manager with every quantity intact", async () => {
+  for (const boundary of ["min", "max"]) {
+    const quantities = Object.fromEntries(PROJECT_EQUIPMENT.map((item) => [item.id, item[boundary]]));
+    const body = { ...questionnaire, projectSelection: { ...questionnaire.projectSelection, ...quantities } };
+    const before = deliveries.length;
+    const response = await post(body);
+    assert.equal(response.status, 200);
+    assert.equal(deliveries.length, before + 1);
+    assert.deepEqual(deliveryConfigs.at(-1), managerConfig);
+    for (const { id, label } of PROJECT_EQUIPMENT) {
+      assert.equal(dataFrom(body).projectSelection[id], quantities[id]);
+      assert.ok(deliveries.at(-1).includes(`• ${label}: ${quantities[id]} шт.`));
+    }
+  }
+});
+
+test("old questionnaires omit new equipment safely while explicit invalid counts fail before delivery", async () => {
+  const legacy = { ...questionnaire, projectSelection: { conceptId: "cafe", registers: 2, selectedWorkIds: [] } };
+  const normalized = dataFrom(legacy).projectSelection;
+  assert.deepEqual([normalized.waiterStations, normalized.receiptPrinters, normalized.labelPrinters, normalized.kitchenScreens], [0, 0, 0, 0]);
+  const response = await post(legacy);
+  assert.equal(response.status, 200);
+  for (const { id, label } of PROJECT_EQUIPMENT.filter(({ id }) => id !== "registers")) {
+    assert.ok(deliveries.at(-1).includes(`• ${label}: 0 шт.`));
+    assert.equal(normalized[id], 0);
+  }
+  const before = deliveries.length;
+  for (const { id, max } of PROJECT_EQUIPMENT) {
+    for (const quantity of [-1, max + 1, 1.5, "2", null, false, {}, []]) {
+      const body = { ...questionnaire, projectSelection: { ...questionnaire.projectSelection, [id]: quantity } };
+      rejectsField(body, "projectSelection");
+      const rejected = await post(body);
+      assert.equal(rejected.status, 400);
+      assert.equal((await rejected.json()).field, "projectSelection");
+    }
+  }
+  assert.equal(deliveries.length, before);
+});
+
 test("invalid questionnaire selections and missing manager routing never reach delivery", async () => {
   const before = deliveries.length;
   for (const projectSelection of [
     null,
     { ...questionnaire.projectSelection, conceptId: "invalid" },
-    { ...questionnaire.projectSelection, registers: 11 },
-    { ...questionnaire.projectSelection, selectedWorkIds: ["kitchen", "kitchen"] },
+    { ...questionnaire.projectSelection, registers: 21 },
+    ...[undefined, null, "rkeeper", {}, ["unknown"], ["rkeeper", "rkeeper"], ["__proto__"], [1], Array(7).fill("equipment")].map((selectedWorkIds) => ({ ...questionnaire.projectSelection, selectedWorkIds })),
+    ...["design", "pos", "kitchen", "stock", "integration", "handover"].map((id) => ({ ...questionnaire.projectSelection, selectedWorkIds: [id] })),
     { ...questionnaire.projectSelection, selectedCapabilityIds: ["unknown"] },
   ]) {
     const response = await post({ ...questionnaire, projectSelection });

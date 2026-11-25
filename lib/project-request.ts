@@ -188,10 +188,14 @@ export function buildProjectRequestMessage(data: ProjectRequest, requestId: stri
   const questionnaire = project ? [
     "<b>Анкета автоматизации</b>",
     `<b>Формат:</b> ${escapeHtml(project.concept.label)}`,
-    `<b>Рабочих мест:</b> ${project.selection.registers}`,
+    "",
+    "<b>Оборудование:</b>",
+    ...project.equipment.map(({ label, quantity }) => `• ${escapeHtml(label)}: ${quantity} шт.`),
     "",
     "<b>Работы:</b>",
-    ...project.works.map(({ title }) => `• ${escapeHtml(title)}`),
+    ...(project.works.length
+      ? project.works.map(({ title }) => `• ${escapeHtml(title)}`)
+      : ["Не выбраны — уточнить при обсуждении проекта."]),
     ...(project.capabilities.length ? [
       "",
       "<b>Дополнительные возможности:</b>",

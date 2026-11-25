@@ -207,27 +207,64 @@
   content: "";
 }
 
-.registers { position: relative; }
-
-.registers .registerLimit {
-  position: absolute;
-  z-index: 4;
-  bottom: calc(100% + 6px);
-  right: 0;
-  width: min(330px, 100%);
-  padding: 12px 14px;
-  margin: 0;
-  border-radius: 12px;
-  background: var(--ink);
-  color: var(--milk);
-  font-size: 14px;
-  line-height: 1.5;
-  pointer-events: none;
+.setupGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
 }
 
-.work[data-required="true"] { cursor: default; }
+.setupGroup {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.setupGroup legend {
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.setupHint {
+  margin: 0 0 16px;
+  color: var(--text-body);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.equipmentList { display: grid; gap: 8px; }
+
+.equipmentRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--milk);
+}
+
+.equipmentCopy { min-width: 0; }
+
+.equipmentCopy label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.equipmentCopy p {
+  margin: 3px 0 0;
+  color: var(--text-body);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .work { align-items: flex-start; }
 .work .checkMark { margin-top: 2px; }
+.work .optionHint { font-size: 14px; }
 
 .checkMark {
   display: grid;
@@ -271,15 +308,6 @@
   line-height: 1.45;
 }
 
-.optionTitle .included {
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--milk);
-  color: var(--text-body);
-  font-size: 11px;
-  line-height: 1.4;
-}
-
 .capabilities {
   min-width: 0;
   margin: 2px 0 0;
@@ -306,22 +334,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 12px;
   border-radius: 999px;
   background: var(--milk);
   color: var(--ink);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.4;
   text-align: center;
   transition: background .18s ease, color .18s ease;
 }
 
-.capability:has(input:checked) {
-  background: var(--action);
-  color: var(--action-ink);
-}
+.capability:has(input:checked) { background: var(--action); color: var(--action-ink); }
 
 .actions {
   display: flex;
@@ -364,8 +389,12 @@
 }
 
 @media (min-width: 768px) {
-  .formatStage .concepts { flex: 1 1 auto; max-height: 220px; }
   .stage > .actions { margin-top: auto; }
+}
+
+@media (min-width: 1000px) {
+  .setupGrid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 32px; }
+  .setupGroup .concepts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 767px) {
@@ -373,6 +402,8 @@
 }
 
 @media (max-width: 480px) {
+  .equipmentRow { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .equipmentRow > :last-child { justify-self: end; }
   .progressList { gap: 5px; }
   .progressStep { padding: 8px 6px; font-size: 12px; }
   .stepNumber { width: 18px; height: 18px; font-size: 11px; }

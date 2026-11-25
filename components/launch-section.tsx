@@ -3,10 +3,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { LAUNCH_CONCEPTS, type LaunchConcept } from "@/lib/launch-concepts";
 import {
-  PROJECT_CAPABILITIES, PROJECT_REGISTER_MAX, PROJECT_REGISTER_MIN, PROJECT_SCOPE_WORKS,
-  getDefaultProjectSelection, type ProjectCapabilityId, type ProjectWorkId,
+  PROJECT_CAPABILITIES, PROJECT_EQUIPMENT, PROJECT_SCOPE_WORKS,
+  getDefaultProjectSelection, type ProjectCapabilityId, type ProjectEquipmentId, type ProjectWorkId,
 } from "@/lib/project-scope";
-import { BaseBadge } from "./base-badge";
 import { LaunchContactForm } from "./launch-contact-form";
 import { SectionReveal } from "./marketing-ui";
 import { UiIcon } from "./ui-icon";
@@ -27,18 +26,12 @@ export function LaunchSection() {
   const [submitting, setSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
   const [selection, setSelection] = useState(getDefaultProjectSelection);
-  const [registerDraft, setRegisterDraft] = useState(() => String(PROJECT_REGISTER_MIN));
-  const [registerLimitVisible, setRegisterLimitVisible] = useState(false);
+  const [equipmentDrafts, setEquipmentDrafts] = useState(() => Object.fromEntries(
+    PROJECT_EQUIPMENT.map(({ id, defaultValue }) => [id, String(defaultValue)]),
+  ) as Record<ProjectEquipmentId, string>);
   const wizardRef = useRef<HTMLDivElement>(null);
   const moveFocus = useRef(false);
-  const registerLimitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countId = useId();
-  const registerDescriptionId = `${countId}-description`;
-  const registerLimitId = `${countId}-limit`;
-
-  useEffect(() => () => {
-    if (registerLimitTimer.current !== null) clearTimeout(registerLimitTimer.current);
-  }, []);
 
   useEffect(() => {
     const wizard = wizardRef.current;
@@ -58,27 +51,17 @@ export function LaunchSection() {
     setStep(nextStep);
   };
 
-  const changeRegisters = (registers: number) => {
-    if (registers > PROJECT_REGISTER_MAX) {
-      if (registerLimitTimer.current !== null) clearTimeout(registerLimitTimer.current);
-      setRegisterLimitVisible(true);
-      registerLimitTimer.current = setTimeout(() => {
-        setRegisterLimitVisible(false);
-        registerLimitTimer.current = null;
-      }, 5000);
-    } else if (registers < PROJECT_REGISTER_MAX) {
-      if (registerLimitTimer.current !== null) clearTimeout(registerLimitTimer.current);
-      registerLimitTimer.current = null;
-      setRegisterLimitVisible(false);
-    }
-    const normalized = Math.min(PROJECT_REGISTER_MAX, Math.max(PROJECT_REGISTER_MIN, Math.floor(registers)));
-    setRegisterDraft(String(normalized));
-    setSelection((current) => ({ ...current, registers: normalized }));
+  const changeEquipment = (id: ProjectEquipmentId, quantity: number) => {
+    const equipment = PROJECT_EQUIPMENT.find((item) => item.id === id)!;
+    const normalized = Math.min(equipment.max, Math.max(equipment.min, Math.floor(quantity)));
+    setEquipmentDrafts((current) => ({ ...current, [id]: String(normalized) }));
+    setSelection((current) => ({ ...current, [id]: normalized }));
   };
 
-  const commitRegisters = () => {
-    const parsed = Number(registerDraft);
-    changeRegisters(registerDraft.trim() && Number.isFinite(parsed) ? parsed : selection.registers);
+  const commitEquipment = (id: ProjectEquipmentId) => {
+    const draft = equipmentDrafts[id];
+    const parsed = Number(draft);
+    changeEquipment(id, draft.trim() && Number.isFinite(parsed) ? parsed : selection[id] ?? 0);
   };
 
   const changeConcept = (conceptId: LaunchConcept["id"]) => {
@@ -107,7 +90,7 @@ export function LaunchSection() {
             <h2 id="launch-title" className={ui.heading}>Расчет автоматизации</h2>
           </SectionReveal>
           <SectionReveal delay={0.2}>
-            <p className={ui.lead}>Укажите формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</p>
+            <p className={ui.lead}>Укажите оборудование, формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</p>
           </SectionReveal>
         </div>
 
@@ -157,50 +140,67 @@ export function LaunchSection() {
           <div className={styles.panels}>
             <section id="launch-step-0" className={`${styles.stage} ${styles.formatStage}`} inert={step !== 0} aria-labelledby="launch-step-title-0">
               <h3 id="launch-step-title-0" className={styles.stageTitle} tabIndex={-1}>Каким будет ваше заведение?</h3>
-              <div className={`${pricingStyles.countRow} ${pricingStyles.workplaceRow} ${styles.registers}`}>
-                <div>
-                  <label htmlFor={countId}>Количество рабочих мест</label>
-                  <p id={registerDescriptionId}>Кассы и станции официантов</p>
-                </div>
-                <div className={pricingStyles.stepper}>
-                  <button type="button" aria-label="Уменьшить количество рабочих мест" disabled={selection.registers === PROJECT_REGISTER_MIN} onClick={() => changeRegisters(selection.registers - 1)}><UiIcon name="minus" /></button>
-                  <input
-                    id={countId}
-                    type="number"
-                    inputMode="numeric"
-                    min={PROJECT_REGISTER_MIN}
-                    max={PROJECT_REGISTER_MAX}
-                    step="1"
-                    value={registerDraft}
-                    aria-describedby={registerLimitVisible ? `${registerDescriptionId} ${registerLimitId}` : registerDescriptionId}
-                    onChange={(event) => {
-                      const raw = event.target.value;
-                      setRegisterDraft(raw);
-                      const value = Number(raw);
-                      if (raw && Number.isInteger(value) && value >= PROJECT_REGISTER_MIN && value <= PROJECT_REGISTER_MAX) {
-                        setSelection((current) => ({ ...current, registers: value }));
-                      }
-                    }}
-                    onBlur={commitRegisters}
-                    onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }}
-                  />
-                  <button type="button" aria-label="Увеличить количество рабочих мест" aria-describedby={registerLimitVisible ? registerLimitId : undefined} onClick={() => changeRegisters(selection.registers + 1)}><UiIcon name="plus" /></button>
-                </div>
-                {registerLimitVisible && <p id={registerLimitId} className={styles.registerLimit} role="status">Если рабочих мест больше 10, укажите их количество в комментарии к проекту.</p>}
+              <div className={styles.setupGrid}>
+                <fieldset className={styles.setupGroup} aria-describedby={`${countId}-equipment-hint`}>
+                  <legend>Оборудование</legend>
+                  <p id={`${countId}-equipment-hint`} className={styles.setupHint}>Укажите количество.</p>
+                  <div className={styles.equipmentList}>
+                    {PROJECT_EQUIPMENT.map(({ id, label, hint, min, max }) => {
+                      const quantity = selection[id] ?? 0;
+                      const inputId = `${countId}-${id}`;
+                      return (
+                        <div key={id} className={styles.equipmentRow}>
+                          <div className={styles.equipmentCopy}>
+                            <label htmlFor={inputId}>{label}</label>
+                            <p id={`${inputId}-hint`}>{hint}</p>
+                          </div>
+                          <div className={pricingStyles.stepper}>
+                            <button type="button" aria-label={`Уменьшить: ${label}`} disabled={quantity === min} onClick={() => changeEquipment(id, quantity - 1)}><UiIcon name="minus" /></button>
+                            <input
+                              id={inputId}
+                              name={id}
+                              type="number"
+                              inputMode="numeric"
+                              min={min}
+                              max={max}
+                              step="1"
+                              value={equipmentDrafts[id]}
+                              aria-describedby={`${inputId}-hint`}
+                              onChange={(event) => {
+                                const raw = event.target.value;
+                                setEquipmentDrafts((current) => ({ ...current, [id]: raw }));
+                                const value = Number(raw);
+                                if (raw && Number.isInteger(value) && value >= min && value <= max) {
+                                  setSelection((current) => ({ ...current, [id]: value }));
+                                }
+                              }}
+                              onBlur={() => commitEquipment(id)}
+                              onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }}
+                            />
+                            <button type="button" aria-label={`Увеличить: ${label}`} disabled={quantity === max} onClick={() => changeEquipment(id, quantity + 1)}><UiIcon name="plus" /></button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+                <fieldset className={styles.setupGroup}>
+                  <legend>Формат заведения</legend>
+                  <p className={styles.setupHint}>Выберите концепцию — учтём её при подготовке сметы.</p>
+                  <div className={styles.concepts}>
+                    {LAUNCH_CONCEPTS.map((item) => (
+                      <label key={item.id} className={styles.concept}>
+                        <input type="radio" name="launch-concept" value={item.id} checked={item.id === selection.conceptId} onChange={() => changeConcept(item.id)} aria-labelledby={`${countId}-${item.id}-name`} aria-describedby={`${countId}-${item.id}-hint`} />
+                        <span className={styles.radioMark} aria-hidden="true" />
+                        <span className={styles.optionCopy}>
+                          <span className={styles.optionTitle} id={`${countId}-${item.id}-name`}>{item.label}</span>
+                          <span className={styles.optionHint} id={`${countId}-${item.id}-hint`}>{item.hint}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
               </div>
-              <fieldset className={styles.concepts}>
-                <legend className={styles.srOnly}>Формат заведения</legend>
-                {LAUNCH_CONCEPTS.map((item) => (
-                  <label key={item.id} className={styles.concept}>
-                    <input type="radio" name="launch-concept" value={item.id} checked={item.id === selection.conceptId} onChange={() => changeConcept(item.id)} aria-labelledby={`${countId}-${item.id}-name`} aria-describedby={`${countId}-${item.id}-hint`} />
-                    <span className={styles.radioMark} aria-hidden="true" />
-                    <span className={styles.optionCopy}>
-                      <span className={styles.optionTitle} id={`${countId}-${item.id}-name`}>{item.label}</span>
-                      <span className={styles.optionHint} id={`${countId}-${item.id}-hint`}>{item.hint}</span>
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
               <div className={styles.actions}>
                 <button type="button" className={ui.primary} onClick={() => goToStep(1)}>Далее <UiIcon name="arrow-right" /></button>
               </div>
@@ -211,13 +211,13 @@ export function LaunchSection() {
               <fieldset className={styles.workList}>
                 <legend className={styles.srOnly}>Работы по автоматизации заведения</legend>
                 {PROJECT_SCOPE_WORKS.map((work) => {
-                  const checked = work.required || selection.selectedWorkIds.includes(work.id);
+                  const checked = selection.selectedWorkIds.includes(work.id);
                   return (
-                    <label key={work.id} className={styles.work} data-required={work.required}>
-                      <input type="checkbox" name="project-work" value={work.id} checked={checked} disabled={work.required} onChange={(event) => toggleWork(work.id, event.target.checked)} aria-labelledby={`${countId}-${work.id}-name`} aria-describedby={`${countId}-${work.id}-description`} />
+                    <label key={work.id} className={styles.work}>
+                      <input type="checkbox" name="project-work" value={work.id} checked={checked} onChange={(event) => toggleWork(work.id, event.target.checked)} aria-labelledby={`${countId}-${work.id}-name`} aria-describedby={`${countId}-${work.id}-description`} />
                       <span className={styles.checkMark} aria-hidden="true">{checked && <UiIcon name="check" />}</span>
                       <span className={styles.optionCopy}>
-                        <span className={styles.optionTitle} id={`${countId}-${work.id}-name`}>{work.title}{work.required && <BaseBadge className={styles.included} label="Базовая услуга" />}</span>
+                        <span className={styles.optionTitle} id={`${countId}-${work.id}-name`}>{work.title}</span>
                         <span className={styles.optionHint} id={`${countId}-${work.id}-description`}>{work.description}</span>
                       </span>
                     </label>

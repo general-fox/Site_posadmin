@@ -158,7 +158,7 @@
   resize: vertical;
 }
 
-.registerHint {
+.equipmentHint {
   margin-top: 5px;
   color: var(--text-body);
   font-size: 13px;
@@ -185,9 +185,17 @@
   line-height: 1.5;
 }
 
-.scopeMeta span {
-  white-space: nowrap;
+.equipmentSummary {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
 }
+
+.equipmentSummary > div { display: flex; justify-content: space-between; gap: 12px; }
+.equipmentSummary dt { min-width: 0; color: var(--text-body); }
+.equipmentSummary dd { flex: none; margin: 0; font-variant-numeric: tabular-nums; }
 
 .scopeDetails {
   margin-top: 14px;
