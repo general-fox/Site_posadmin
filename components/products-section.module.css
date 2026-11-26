@@ -1,47 +1,68 @@
-/* The local surface takes precedence over the shared section background. */
+/* Keep the stack in ordinary document flow: sticky surfaces share one parent. */
 .section.section { padding-block: calc(var(--section-space) / 2); background: var(--neutral); }
+.productStack {
+  --product-header-top: 80px;
+  --product-heading-height: 112px;
+  --product-gap: 24px;
+  --product-stack-step: 12px;
+  --product-sticky-start: calc(var(--product-header-top) + var(--product-heading-height) + var(--product-gap));
+  --product-card-height: max(380px, min(560px, calc(100svh - var(--product-sticky-start) - 32px)));
+  position: relative;
+  display: block;
+  isolation: isolate;
+}
+.productHeading {
+  position: relative;
+  z-index: 10;
+  margin-bottom: var(--product-gap);
+  padding-block: 12px 16px;
+  background: var(--neutral);
+}
+.productHeading h2 { margin-top: 12px; }
 .headingLogo { display: inline-block; width: auto; max-width: 100%; height: .86em; vertical-align: -.13em; }
 .headingLogo path { stroke: var(--neutral); stroke-width: .62px; stroke-linejoin: round; }
-.productGrid {
-  --product-card-height: min(560px, calc(100svh - 104px));
-  --product-sticky-top: 92px;
-  --product-stack-shadow: 0 6px 12px rgb(29 29 31 / 7%);
-  position: relative;
-  display: grid;
-  gap: 24px;
-}
 
-.productAnchor { position: relative; min-width: 0; }
 .productTarget {
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: 1px;
-  height: 1px;
-  scroll-margin-top: calc(var(--product-sticky-top) + var(--product-stack-offset, 0px));
+  position: relative;
+  display: block;
+  width: 0;
+  height: 0;
+  scroll-margin-top: calc(var(--product-sticky-start) + var(--product-stack-offset, 0px));
   pointer-events: none;
 }
+/* Targets stay in flow even when their following card is already stuck. */
+.productCard + .productTarget { top: var(--product-gap); }
+.productCard + .productTarget + .productCard { margin-top: var(--product-gap); }
 .productCard {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: clamp(20px, 3.3vw, 48px);
   min-width: 0;
   padding: clamp(20px, 3.2vw, 44px);
   border-radius: 28px;
   background: var(--milk);
+  box-shadow: 0 4px 10px rgb(29 29 31 / 5%), inset 0 1px 0 rgb(29 29 31 / 4%);
 }
+.secondProduct { --product-stack-offset: var(--product-stack-step); }
+.lastProduct { --product-stack-offset: calc(var(--product-stack-step) * 2); }
+.productCard.secondProduct { z-index: 2; }
+.productCard.lastProduct { z-index: 3; }
 
 .tabletCard {
   grid-template-columns: minmax(0, .74fr) minmax(0, 1.26fr);
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: minmax(min-content, 1fr);
   align-items: center;
   height: var(--product-card-height);
+  min-height: min-content;
 }
-
 .productCopy { min-width: 0; max-width: 46ch; }
 .category { margin: 0 0 12px; color: var(--text-body); font-size: 14px; line-height: 1.4; }
 .productCopy h3 { margin: 0; font-size: clamp(36px, 4vw, 56px); font-weight: 500; line-height: 1.05; letter-spacing: -.045em; }
 .description { margin: 20px 0 28px; color: var(--text-body); font-size: 16px; line-height: 1.6; text-wrap: pretty; }
 .productActions { display: flex; flex-wrap: wrap; gap: 8px 12px; }
 .productCopy :is(a, button):focus-visible { background: var(--ink); color: var(--milk); }
+.productCard :is(a, button, [tabindex="0"]) { scroll-margin-top: calc(var(--product-sticky-start) + var(--product-stack-offset, 0px)); scroll-margin-bottom: 16px; }
 
 .productVisual {
   display: grid;
@@ -51,107 +72,61 @@
   min-width: 0;
   min-height: 0;
 }
-
 .foxCard .productVisual { container-type: size; }
 
-@media (min-width: 900px) and (min-height: 650px) and (prefers-reduced-motion: no-preference) {
-  .productGrid {
-    --product-card-height: min(560px, calc(100svh - 132px));
-    --product-stack-step: 12px;
-    grid-template: repeat(3, var(--product-card-height)) / minmax(0, 1fr);
-    isolation: isolate;
-    /* Shadow the combined silhouette so overlapping cards cast one shadow. */
-    filter: drop-shadow(var(--product-stack-shadow));
-  }
-
-  /* Each hash links to a flow position while its card sticks within the remaining rows. */
-  .productAnchor {
-    grid-column: 1;
-    pointer-events: none;
-  }
-
-  .productAnchor:nth-child(1) { grid-row: 1 / 4; z-index: 1; }
-  .productAnchor:nth-child(2) { grid-row: 2 / 4; z-index: 2; --product-stack-offset: var(--product-stack-step); }
-  .productAnchor:nth-child(3) { grid-row: 3 / 4; z-index: 3; --product-stack-offset: calc(var(--product-stack-step) * 2); }
-
-  .productAnchor:has(:is(a, button, [tabindex="0"]):focus-visible) { z-index: 4; }
-
-  .productAnchor > .productCard {
+@media (prefers-reduced-motion: no-preference) {
+  .productHeading { position: sticky; top: var(--product-header-top); }
+  .productCard:not(.lastProduct) {
     position: sticky;
-    top: calc(var(--product-sticky-top) + var(--product-stack-offset, 0px));
-    box-shadow: inset 0 1px 0 rgb(29 29 31 / 6%);
-    pointer-events: auto;
+    /* Tall cards first scroll far enough to reveal their bottom. svh stays
+       stable while mobile browser toolbars expand or collapse. */
+    top: min(
+      calc(var(--product-sticky-start) + var(--product-stack-offset, 0px)),
+      calc(100svh - var(--product-measured-height, var(--product-card-height)) - 16px)
+    );
   }
+  .productCard:has(:is(a, button, [tabindex="0"]):focus-visible) { z-index: 4; }
 }
 
+@media (max-width: 1023px) {
+  .productStack { --product-header-top: 72px; }
+}
 @media (max-width: 767px) {
-  .productGrid { --product-sticky-top: 76px; gap: 16px; }
+  .productStack { --product-heading-height: 104px; --product-gap: 16px; --product-stack-step: 8px; }
+  .productHeading { padding-block: 10px 14px; }
+  .productHeading h2 { margin-top: 10px; }
   .productCard { gap: 20px; padding: 22px; border-radius: 24px; }
   .productCopy { max-width: none; }
   .productCopy h3 { font-size: clamp(32px, 8vw, 44px); }
   .category { margin-bottom: 6px; }
   .description { margin: 12px 0 16px; font-size: 15px; line-height: 1.5; }
 }
-
 @media (max-width: 767px) and (orientation: portrait) {
   .tabletCard {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(256px, 1fr);
+    grid-template-rows: auto minmax(clamp(196px, 30svh, 256px), 1fr);
     align-items: start;
     height: auto;
-    min-height: min(600px, calc(100svh - 84px));
+    min-height: var(--product-card-height);
   }
+  .foxCard { grid-template-rows: auto auto; height: auto; min-height: 0; }
+  .foxCard .productVisual { height: auto; container-type: normal; }
 }
-
 @media (max-width: 360px) and (orientation: portrait) {
   .tabletCard { padding: 18px 16px; gap: 14px; }
   .tabletCard .description { margin-block: 10px 12px; }
 }
-
-@media (max-width: 767px) and (max-height: 640px) and (orientation: portrait) {
-  .tabletCard:not(.foxCard) { grid-template-rows: auto minmax(196px, 1fr); }
-}
-
-@media (max-width: 767px) and (orientation: portrait) {
-  .foxCard { grid-template-rows: auto auto; height: auto; min-height: 0; }
-  .foxCard .productVisual { height: auto; container-type: normal; }
-}
-
-@media (max-width: 767px) and (min-height: 650px) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
-  .productGrid {
-    --product-sticky-top: 80px;
-    --product-stack-step: 8px;
-    grid-template-columns: minmax(0, 1fr);
-    isolation: isolate;
-    filter: drop-shadow(var(--product-stack-shadow));
-  }
-
-  /* The stationary hash target and sticky card share the same auto-sized grid row. */
-  .productAnchor { display: contents; }
-  .productAnchor:nth-child(1) { --product-row: 1; }
-  .productAnchor:nth-child(2) { --product-row: 2; --product-stack-offset: var(--product-stack-step); }
-  .productAnchor:nth-child(3) { --product-row: 3; --product-stack-offset: calc(var(--product-stack-step) * 2); }
-  .productAnchor > :is(.productTarget, .productCard) { grid-area: var(--product-row) / 1; }
-
-  .productAnchor > .productCard {
-    position: relative;
-    z-index: var(--product-row);
-    box-shadow: inset 0 1px 0 rgb(29 29 31 / 6%);
-  }
-  .productAnchor:not(:last-child) > .productCard {
-    position: sticky;
-    top: calc(var(--product-sticky-top) + var(--product-stack-offset, 0px));
-    min-height: min(600px, calc(100svh - 104px));
-  }
-  .productCard:has(:is(a, button, [tabindex="0"]):focus-visible) { z-index: 4; }
-}
-
 @media (max-height: 540px) and (orientation: landscape) {
-  .productGrid { --product-sticky-top: 66px; }
   .tabletCard { grid-template-rows: minmax(256px, 1fr); gap: 20px; padding: 16px 20px; height: auto; min-height: calc(100svh - 72px); }
   .tabletCard h3 { font-size: 32px; }
   .tabletCard .category { margin-bottom: 4px; }
   .tabletCard .description { margin: 10px 0 12px; font-size: 14px; line-height: 1.4; }
   .foxCard { height: auto; min-height: calc(100svh - 72px); grid-template-rows: auto; }
   .foxCard .productVisual { min-height: calc(100svh - 104px); }
+  /* A short landscape viewport has no room for a pinned title plus readable
+     cards. All content remains in normal flow, without an inner scroller. */
+  .productHeading, .productCard:not(.lastProduct) { position: relative; top: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .productTarget { scroll-margin-top: calc(var(--product-header-top) + 16px); }
 }

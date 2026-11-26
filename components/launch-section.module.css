@@ -1,10 +1,10 @@
 .intro {
-  --entrance-fade-duration: 320ms;
-  --entrance-fade-stagger: 65ms;
+  --entrance-fade-duration: 600ms;
+  --entrance-fade-stagger: 90ms;
 }
 
 .wizard {
-  --entrance-fade-duration: 380ms;
+  --entrance-fade-duration: 600ms;
   --entrance-bottom-inset: 48px;
   --wizard-focus-color: var(--text-muted);
 
@@ -134,18 +134,18 @@
 
 .formatStage,
 .animatedStage {
-  --entrance-fade-duration: 190ms;
+  --entrance-fade-duration: 720ms;
+  --entrance-fade-stagger: 90ms;
 }
 
 .formatStage {
-  --entrance-fade-stagger: 190ms;
   --entrance-bottom-inset: 32px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .animatedStage:not([inert]) [data-stage-entry] {
     animation: stage-entry-lift var(--entrance-fade-duration) cubic-bezier(.26, .48, .32, 1)
-      calc(var(--entry-index, 0) * 75ms) backwards;
+      calc(var(--entry-index, 0) * var(--entrance-fade-stagger)) backwards;
   }
 
   .animatedStage [data-stage-entry]:not(.stageTitle):focus-within {

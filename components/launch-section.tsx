@@ -29,7 +29,7 @@ export function LaunchSection() {
   const [selection, setSelection] = useState(getDefaultProjectSelection);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const wizardRef = useScrollReveal<HTMLDivElement>({ motion: "lift", after: headingRef });
-  const formatRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", sequence: true, after: wizardRef });
+  const formatRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", sequence: true, after: headingRef });
   const moveFocus = useRef(false);
   const countId = useId();
 
