@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import { getProjectScope, PROJECT_EQUIPMENT, PROJECT_REGISTER_LIMIT_NOTE, type ProjectEstimateSelection } from "@/lib/project-scope";
 import {
@@ -35,6 +35,7 @@ const channels = [
     hint: "Введите номер, привязанный к MAX. Например, +7 (999) 123-45-67.", error: "Проверьте номер телефона для MAX.", normalize: normalizeProjectMessengerPhone,
   },
 ] as const;
+const contactFieldEntranceIndex = channels.length + 2;
 
 type ContactChannel = (typeof channels)[number];
 type ContactMethod = ContactChannel["id"];
@@ -143,7 +144,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
 
   return (
     <section id="launch-step-2" className={styles.section} aria-labelledby="launch-step-title-2">
-      <h3 id="launch-step-title-2" className={wizard.stageTitle} tabIndex={-1}>Куда отправить смету?</h3>
+      <h3 id="launch-step-title-2" className={wizard.stageTitle} tabIndex={-1} data-stage-entry="">Куда отправить смету?</h3>
       {requestId ? (
         <div ref={successRef} className={styles.success} role="status" tabIndex={-1}>
           <span className={styles.successIcon}><UiIcon name="check" size={20} /></span>
@@ -161,10 +162,10 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
               <fieldset className={styles.channels} disabled={submitting}
                 aria-invalid={error?.field === "contactMethod" || undefined}
                 aria-describedby={error?.field === "contactMethod" ? errorId : undefined}>
-                <legend className={shared.label}>Способ получения сметы</legend>
+                <legend className={shared.label} data-stage-entry="" style={{ "--entry-index": 1 } as CSSProperties}>Способ получения сметы</legend>
                 <div className={styles.channelChoices}>
-                  {channels.map((item) => (
-                    <label key={item.id} className={styles.channel}>
+                  {channels.map((item, index) => (
+                    <label key={item.id} className={styles.channel} data-stage-entry="" style={{ "--entry-index": index + 2 } as CSSProperties}>
                       <input checked={channel.id === item.id} name="contactMethod" type="radio" value={item.id} onChange={() => setChannel(item)} />
                       <span>{item.label}</span>
                     </label>
@@ -173,7 +174,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                 {fieldError("contactMethod")}
               </fieldset>
 
-              <div className={styles.field}>
+              <div className={styles.field} data-stage-entry="" style={{ "--entry-index": contactFieldEntranceIndex } as CSSProperties}>
                 <label htmlFor={fieldId} className={shared.label}>{channel.fieldLabel}</label>
                 <input
                   id={fieldId}
@@ -207,7 +208,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                 {fieldError("contact")}
               </div>
 
-              <div>
+              <div data-stage-entry="" style={{ "--entry-index": contactFieldEntranceIndex + 1 } as CSSProperties}>
                 <details ref={taskDisclosureRef} className={styles.comment}>
                   <summary>Комментарий к проекту <UiIcon name="chevron-down" size={16} /></summary>
                   <label htmlFor={taskId} className="sr-only">Комментарий к проекту</label>
@@ -227,7 +228,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
               </div>
             </div>
             {scope && (
-              <aside className={styles.scope} aria-labelledby={scopeTitleId}>
+              <aside className={styles.scope} aria-labelledby={scopeTitleId} data-stage-entry="" style={{ "--entry-index": contactFieldEntranceIndex + 2 } as CSSProperties}>
                 <h4 id={scopeTitleId}>Ваш проект</h4>
                 <p className={styles.scopeMeta}>{scope.concept.label}</p>
                 <dl className={styles.equipmentSummary}>
@@ -253,7 +254,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
             )}
           </div>
 
-          <div>
+          <div data-stage-entry="" style={{ "--entry-index": contactFieldEntranceIndex + 3 } as CSSProperties}>
             <label className={`${shared.consent} ${styles.consent}`}>
               <input
                 aria-describedby={error?.field === "personalDataConsent" ? errorId : undefined}
@@ -267,7 +268,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
             </label>
             {fieldError("personalDataConsent")}
           </div>
-          <div className={`${wizard.actions} ${styles.actions}`}>
+          <div className={`${wizard.actions} ${styles.actions}`} data-stage-entry="" style={{ "--entry-index": contactFieldEntranceIndex + 4 } as CSSProperties}>
             <button className={`${ui.secondary} ${wizard.back}`} aria-label="Назад" disabled={submitting} type="button" onClick={onBack}>
               <UiIcon name="chevron-down" size={16} className="rotate-90" />
               <span className={wizard.backLabel}>Назад</span>

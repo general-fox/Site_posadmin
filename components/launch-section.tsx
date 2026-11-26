@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { LAUNCH_CONCEPTS, type LaunchConcept } from "@/lib/launch-concepts";
 import {
   PROJECT_CAPABILITIES, PROJECT_EQUIPMENT, PROJECT_REGISTER_LIMIT_NOTE, PROJECT_SCOPE_WORKS,
@@ -19,6 +19,7 @@ const steps = [
   { id: 2, label: "Контакты" },
 ] as const;
 type LaunchStep = (typeof steps)[number]["id"];
+const capabilitiesEntranceIndex = PROJECT_SCOPE_WORKS.length + 1;
 
 export function LaunchSection() {
   const [step, setStep] = useState<LaunchStep>(0);
@@ -171,14 +172,14 @@ export function LaunchSection() {
               </div>
             </section>
 
-            <section id="launch-step-1" className={styles.stage} inert={step !== 1} aria-labelledby="launch-step-title-1">
-              <h3 id="launch-step-title-1" className={styles.stageTitle} tabIndex={-1}>Какие работы нужны?</h3>
+            <section id="launch-step-1" className={`${styles.stage} ${styles.animatedStage}`} inert={step !== 1} aria-labelledby="launch-step-title-1">
+              <h3 id="launch-step-title-1" className={styles.stageTitle} tabIndex={-1} data-stage-entry="">Какие работы нужны?</h3>
               <fieldset className={styles.workList}>
                 <legend className={styles.srOnly}>Работы по автоматизации заведения</legend>
-                {PROJECT_SCOPE_WORKS.map((work) => {
+                {PROJECT_SCOPE_WORKS.map((work, index) => {
                   const checked = selection.selectedWorkIds.includes(work.id);
                   return (
-                    <label key={work.id} className={styles.work}>
+                    <label key={work.id} className={styles.work} data-stage-entry="" style={{ "--entry-index": index + 1 } as CSSProperties}>
                       <input type="checkbox" name="project-work" value={work.id} checked={checked} onChange={(event) => toggleWork(work.id, event.target.checked)} aria-labelledby={`${countId}-${work.id}-name`} aria-describedby={`${countId}-${work.id}-description`} />
                       <span className={styles.checkMark} aria-hidden="true">{checked && <UiIcon name="check" />}</span>
                       <span className={styles.optionCopy}>
@@ -190,17 +191,17 @@ export function LaunchSection() {
                 })}
               </fieldset>
               <fieldset className={styles.capabilities}>
-                <legend>Дополнительные возможности</legend>
+                <legend data-stage-entry="" style={{ "--entry-index": capabilitiesEntranceIndex } as CSSProperties}>Дополнительные возможности</legend>
                 <div className={styles.capabilityChoices}>
-                  {PROJECT_CAPABILITIES.map((capability) => (
-                    <label key={capability.id} className={styles.capability}>
+                  {PROJECT_CAPABILITIES.map((capability, index) => (
+                    <label key={capability.id} className={styles.capability} data-stage-entry="" style={{ "--entry-index": capabilitiesEntranceIndex + index + 1 } as CSSProperties}>
                       <input type="checkbox" name="project-capability" value={capability.id} checked={selection.selectedCapabilityIds?.includes(capability.id) ?? false} onChange={(event) => toggleCapability(capability.id, event.target.checked)} />
                       <span>{capability.title}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
-              <div className={styles.actions}>
+              <div className={styles.actions} data-stage-entry="" style={{ "--entry-index": capabilitiesEntranceIndex + PROJECT_CAPABILITIES.length + 1 } as CSSProperties}>
                 <button type="button" className={`${ui.secondary} ${styles.back}`} aria-label="Назад" onClick={() => goToStep(0)}>
                   <UiIcon name="chevron-down" size={16} className="rotate-90" />
                   <span className={styles.backLabel}>Назад</span>
@@ -209,7 +210,7 @@ export function LaunchSection() {
               </div>
             </section>
 
-            <div className={styles.stage} inert={step !== 2}>
+            <div className={`${styles.stage} ${styles.animatedStage}`} inert={step !== 2}>
               <LaunchContactForm
                 selection={selection}
                 onBack={goToWorks}

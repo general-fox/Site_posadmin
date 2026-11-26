@@ -132,10 +132,31 @@
 
 .stage[inert] { visibility: hidden; }
 
-.formatStage {
+.formatStage,
+.animatedStage {
   --entrance-fade-duration: 190ms;
+}
+
+.formatStage {
   --entrance-fade-stagger: 190ms;
   --entrance-bottom-inset: 32px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animatedStage:not([inert]) [data-stage-entry] {
+    animation: stage-entry-lift var(--entrance-fade-duration) cubic-bezier(.26, .48, .32, 1)
+      calc(var(--entry-index, 0) * 75ms) backwards;
+  }
+
+  .animatedStage [data-stage-entry]:not(.stageTitle):focus-within {
+    opacity: 1 !important;
+    translate: none !important;
+  }
+}
+
+@keyframes stage-entry-lift {
+  from { opacity: 0; translate: 0 6px; }
+  to { opacity: 1; translate: 0 0; }
 }
 
 .stageTitle {
