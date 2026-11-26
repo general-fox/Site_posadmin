@@ -68,9 +68,12 @@
   --control-letter-spacing: normal;
   --entrance-ease: cubic-bezier(.32, .04, .28, 1);
   --entrance-blur: 1.5px;
-  --entrance-fade-duration: 600ms;
-  --entrance-fade-ease: ease-out;
-  --entrance-fade-stagger: 100ms;
+  --entrance-text-blur: 5px;
+  --entrance-distance: 10px;
+  --entrance-advance: 48px;
+  --entrance-fade-duration: 700ms;
+  --entrance-fade-ease: cubic-bezier(.22, .61, .36, 1);
+  --entrance-fade-stagger: 90ms;
   --entrance-fade: entrance-fade var(--entrance-fade-duration) var(--entrance-fade-ease) backwards;
   --hero-heading-start: 520ms;
   --accent-pulse: accent-pulse 3.8s ease-in-out infinite;
@@ -85,7 +88,14 @@
 }
 
 @media (max-width: 767px) {
-  :root { --page-gutter: 20px; --section-space: 88px; --section-gap: 28px; --grid-gap: 16px; --font-small: 14px; }
+  :root { --page-gutter: 20px; --section-space: 88px; --section-gap: 28px; --grid-gap: 16px; --font-small: 14px; --entrance-distance: 8px; }
+}
+
+/* Word units keep their natural spaces and don't create clipping masks. */
+[data-reveal-word] { display: inline-block; vertical-align: baseline; }
+@media (prefers-reduced-motion: no-preference) {
+  /* Reserve the first frame until hydration; the noscript rule keeps it readable without JS. */
+  [data-reveal-on-load]:not([data-reveal-state]) { opacity: 0; }
 }
 
 html,
@@ -828,7 +838,7 @@ a.hero-glass-btn:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal-state] { opacity: 1 !important; }
+  [data-reveal-target], [data-reveal-word] { opacity: 1 !important; filter: none !important; translate: none !important; }
   :where(*, *::before, *::after) {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;

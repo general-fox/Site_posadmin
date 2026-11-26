@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import type { CSSProperties, PointerEvent } from "react";
+import type { PointerEvent, RefObject } from "react";
 import { SITE_PRODUCTS } from "@/lib/site-navigation";
 import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
 import { HeroActions } from "./hero-actions";
 import { HeroProductPreview } from "./hero-product-previews";
 import { useHeroProductMotion } from "./use-hero-product-motion";
+import { RevealWords, useScrollReveal } from "./marketing-ui";
 import { UiIcon } from "./ui-icon";
 import styles from "./hero-stage.module.css";
 import entry from "./hero-entrance.module.css";
@@ -22,9 +23,36 @@ export function GlowLayer() {
   return <div className="hero-glow-board pointer-events-none absolute inset-0" aria-hidden="true" />;
 }
 
-function HeroProducts() {
+function HeroProduct({ product, index, after }: {
+  product: (typeof products)[number];
+  index: number;
+  after: RefObject<HTMLElement | null>;
+}) {
+  const revealRef = useScrollReveal<HTMLDivElement>({
+    motion: "lift", blur: false, after, delay: index * 0.09, animateOnMount: true,
+  });
+  const { id, preview, name, category, description } = product;
+
+  return <div className={styles.slot} ref={revealRef} data-product-motion-card data-scroll-reveal="" data-reveal-on-load="">
+    <Link href={`/#${id}`} className={styles.area}>
+      <div className={styles.areaCopy}>
+        <span className={styles.areaCategory}>{category}</span>
+        <h3>{name}</h3>
+        <span className={styles.productArrow}><UiIcon name="arrow-up-right" size={16} /></span>
+        <p className={styles.description}>{description}</p>
+      </div>
+      <div className={styles.cardArt}><HeroProductPreview product={preview} /></div>
+    </Link>
+  </div>;
+}
+
+function HeroProducts({ after }: { after: RefObject<HTMLElement | null> }) {
   const reduced = useHydratedReducedMotion();
   const sceneRef = useHeroProductMotion(reduced);
+  const surfaceRef = useScrollReveal<HTMLDivElement>({ motion: "lift", blur: false, after, animateOnMount: true });
+  const headingRef = useScrollReveal<HTMLHeadingElement>({ after, animateOnMount: true });
+  const captionRef = useScrollReveal<HTMLSpanElement>({ after: headingRef, animateOnMount: true });
+  const footerRef = useScrollReveal<HTMLDivElement>({ motion: "lift", blur: false, after: headingRef, animateOnMount: true });
 
   function moveGlow(event: PointerEvent<HTMLDivElement>) {
     if (reduced || event.pointerType === "touch") return;
@@ -42,49 +70,41 @@ function HeroProducts() {
     onPointerEnter={moveGlow}
     onPointerMove={moveGlow}
   >
-    <div className={`${styles.boardSurface} ${entry.board}`} aria-hidden="true" />
-    <div className={`${styles.visualHeader} ${entry.boardHeading}`}><h2>Наши продукты</h2><span>Развиваем сами</span></div>
+    <div className={styles.boardSurface} ref={surfaceRef} aria-hidden="true" data-scroll-reveal="" data-reveal-on-load="" />
+    <div className={styles.visualHeader}>
+      <h2 ref={headingRef} data-scroll-reveal="" data-reveal-on-load=""><RevealWords>Наши продукты</RevealWords></h2>
+      <span ref={captionRef} data-scroll-reveal="" data-reveal-on-load="">Развиваем сами</span>
+    </div>
     <div className={styles.areas}>
-      {products.map(({ id, preview, name, category, description }, index) =>
-        <div className={styles.slot} key={id} data-product-motion-card>
-          <Link
-            href={`/#${id}`}
-            className={`${styles.area} ${entry.product}`}
-            style={{ "--entry-index": index } as CSSProperties}
-          >
-            <div className={styles.areaCopy}>
-              <span className={styles.areaCategory}>{category}</span>
-              <h3>{name}</h3>
-              <span className={styles.productArrow}><UiIcon name="arrow-up-right" size={16} /></span>
-              <p className={styles.description}>{description}</p>
-            </div>
-            <div className={styles.cardArt}><HeroProductPreview product={preview} /></div>
-          </Link>
-        </div>
+      {products.map((product, index) =>
+        <HeroProduct key={product.id} product={product} index={index} after={headingRef} />
       )}
     </div>
-    <div className={`${styles.visualBottom} ${entry.boardFooter}`}><span>Одна команда для ваших систем</span><Link href="/#pricing" className={styles.visualFooter}>Техподдержка 24/7 <UiIcon name="arrow-up-right" size={14} /></Link></div>
+    <div className={styles.visualBottom} ref={footerRef} data-scroll-reveal="" data-reveal-on-load=""><span>Одна команда для ваших систем</span><Link href="/#pricing" className={styles.visualFooter}>Техподдержка 24/7 <UiIcon name="arrow-up-right" size={14} /></Link></div>
   </div>;
 }
 
 export function HeroStage() {
-  return <div
-    className={`${styles.hero} ${entry.sequence}`}
-    style={{ "--system-count": systems.length, "--product-count": products.length } as CSSProperties}
-  >
+  const headingRef = useScrollReveal<HTMLHeadingElement>({ delay: 0.12, animateOnMount: true });
+  const leadRef = useScrollReveal<HTMLParagraphElement>({ after: headingRef, animateOnMount: true });
+  const actionsRef = useScrollReveal<HTMLDivElement>({ motion: "lift", blur: false, after: leadRef, animateOnMount: true });
+  const systemsRef = useScrollReveal<HTMLUListElement>({ motion: "lift", sequence: true, blur: false, after: actionsRef, animateOnMount: true });
+  const dealerRef = useScrollReveal<HTMLAnchorElement>({ motion: "lift", blur: false, after: systemsRef, animateOnMount: true });
+
+  return <div className={`${styles.hero} ${entry.sequence}`}>
     <div className={styles.copy}>
-      <h1 className={`${styles.title} ${entry.title}`}>Автоматизация и <span className={styles.unbroken}>IT-сопровождение</span> HoReCa</h1>
-      <p className={`${styles.lead} ${entry.lead}`}>Разрабатываем решения для вашего заведения и берём на себя технический контур — от касс до IT-инфраструктуры.</p>
-      <HeroActions />
-      <ul className={styles.systems} role="list" aria-label="Направления работы">
-        {systems.map((name, i) => <li key={name} className={entry.system} style={{ "--entry-index": i } as CSSProperties}>{name}</li>)}
+      <h1 className={styles.title} ref={headingRef} data-scroll-reveal="" data-reveal-on-load=""><RevealWords>Автоматизация и <span className={styles.unbroken}>IT-сопровождение</span> HoReCa</RevealWords></h1>
+      <p className={styles.lead} ref={leadRef} data-scroll-reveal="" data-reveal-on-load="">Разрабатываем решения для вашего заведения и берём на себя технический контур — от касс до IT-инфраструктуры.</p>
+      <div ref={actionsRef} data-scroll-reveal="" data-reveal-on-load=""><HeroActions /></div>
+      <ul className={styles.systems} ref={systemsRef} role="list" aria-label="Направления работы" data-scroll-reveal="" data-reveal-on-load="">
+        {systems.map((name) => <li key={name} data-reveal-item="">{name}</li>)}
       </ul>
-      <a className={`${styles.dealer} ${entry.dealer}`} href="https://rkeeper.ru/dealers/" target="_blank" rel="noopener noreferrer">
+      <a className={styles.dealer} ref={dealerRef} href="https://rkeeper.ru/dealers/" target="_blank" rel="noopener noreferrer" data-scroll-reveal="" data-reveal-on-load="">
         Официальный дилер r_keeper <UiIcon name="arrow-up-right" size={14} />
         <span className="sr-only">, откроется в новой вкладке</span>
       </a>
     </div>
 
-    <HeroProducts />
+    <HeroProducts after={dealerRef} />
   </div>;
 }

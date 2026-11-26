@@ -1,36 +1,8 @@
-/* The default styles are visible. Browsers can play the entrance without React. */
-@media (prefers-reduced-motion: no-preference) {
-  .sequence {
-    --title-delay: var(--hero-heading-start);
-    --step: var(--entrance-fade-stagger);
-    --lead-start: calc(var(--title-delay) + var(--step));
-    --actions-start: calc(var(--lead-start) + var(--step));
-    --systems-start: calc(var(--actions-start) + 2 * var(--step));
-    --system-interval: calc(var(--step) / 2);
-    --dealer-start: calc(var(--systems-start) + (var(--system-count) - 1) * var(--system-interval) + var(--step));
-    --board-start: calc(var(--dealer-start) + var(--step));
-    --products-start: calc(var(--board-start) + var(--step));
-  }
-  .title, .lead, .actions > a, .system, .dealer, .boardHeading, .product, .boardFooter {
-    animation: var(--entrance-fade);
-  }
-  .title { animation-delay: var(--title-delay); }
-  .lead { animation-delay: var(--lead-start); }
-  .actions > a { animation-delay: var(--actions-start); }
-  .actions > a + a { animation-delay: calc(var(--actions-start) + var(--step)); }
-  .system { animation-delay: calc(var(--systems-start) + var(--entry-index) * var(--system-interval)); }
-  .dealer { animation-delay: var(--dealer-start); }
-  .board { animation: fade-in 750ms var(--entrance-fade-ease) var(--board-start) backwards; }
-  .boardHeading { animation-delay: var(--board-start); }
-  .product { animation-delay: calc(var(--products-start) + var(--entry-index) * var(--step)); }
-  .boardFooter { animation-delay: calc(var(--products-start) + var(--product-count) * var(--step)); }
-
-  .actions > a:focus-visible, .dealer:focus-visible, .product:focus-visible, .boardFooter:focus-within {
-    animation-name: none;
-  }
+/* Hero entrances use the shared observer and stay visible without JavaScript. */
+.sequence {
+  --entrance-fade-duration: 700ms;
+  --entrance-fade-stagger: 90ms;
 }
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* Controls and preview surfaces keep their edges sharp during their entrance. */
+.actions { --entrance-blur: 0px; }

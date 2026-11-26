@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { CallbackDialog } from "./callback-dialog";
 import { ArrowRight, SectionReveal } from "./marketing-ui";
@@ -9,6 +9,8 @@ import styles from "./contacts-section.module.css";
 
 export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
   const [callbackOpen, setCallbackOpen] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
 
   return (
     <section
@@ -22,12 +24,12 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
         <div className={ui.sectionHeader}>
           <SectionReveal>
             <p className={`${ui.eyebrow} ${styles.eyebrow}`}>Контакты</p>
-            <h2 id="contacts-title" className={ui.heading}>
+            <h2 id="contacts-title" className={ui.heading} ref={headingRef}>
               Давайте найдём<br /><span className={styles.muted}>решение</span>
             </h2>
           </SectionReveal>
-          <SectionReveal delay={0.2}>
-            <p className={`${ui.lead} ${styles.lead}`}>
+          <SectionReveal after={headingRef}>
+            <p className={`${ui.lead} ${styles.lead}`} ref={descriptionRef}>
               Расскажите о своей задаче — поможем с запуском,
               сопровождением или развитием вашего бизнеса.
             </p>
@@ -35,7 +37,7 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
         </div>
 
         <div className={styles.grid}>
-          <SectionReveal className={styles.direct} blur={false}>
+          <SectionReveal className={styles.direct} motion="lift" blur={false} after={descriptionRef}>
             <div>
               <h3 className={styles.label}>Связаться с командой</h3>
               <a className={styles.phone} href={SITE_CONTACTS.phoneHref}>
@@ -64,7 +66,7 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
 
           <div className={styles.offices}>
             {SITE_CONTACTS.offices.map((office, index) => (
-              <SectionReveal key={office.city} className={styles.office} blur={false} delay={index === 0 ? 0.1 : 0}>
+              <SectionReveal key={office.city} className={styles.office} motion="lift" blur={false} after={descriptionRef} delay={index * 0.09}>
                 <div className={styles.officeTop}>
                   <span className={styles.label}>{office.region}</span>
                   <span className={styles.officeNumber} aria-hidden="true">0{index + 1}</span>

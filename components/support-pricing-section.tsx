@@ -88,8 +88,7 @@ async function downloadCalculationPdf(
 }
 
 
-const firstModuleEntranceDelay = 0.12;
-const moduleEntranceInterval = 0.04;
+const moduleEntranceInterval = 0.09;
 
 function ModuleCard({ anchorId, name, features, price, selected, required, onChange, disabled, opensDialog, children, entranceIndex = 0, revealAfter }: {
   anchorId?: string;
@@ -106,8 +105,9 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
   children?: ReactNode;
 }) {
   const revealRef = useScrollReveal<HTMLElement>({
-    motion: "scale",
-    delay: firstModuleEntranceDelay + entranceIndex * moduleEntranceInterval,
+    motion: "lift",
+    blur: false,
+    delay: Math.min(entranceIndex + 1, 2) * moduleEntranceInterval,
     after: revealAfter,
   });
   const disclosureCentering = useDisclosureCentering();
@@ -148,7 +148,7 @@ export function SupportPricingSection() {
   const { snapshot, updateSnapshot } = usePricing();
   const configurationRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const summaryRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", after: headingRef });
+  const summaryRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", blur: false, after: headingRef });
   const [workplaces, setWorkplaces] = useState(MIN_ONLINE_WORKPLACES);
   const [additionalModules, setAdditionalModules] = useState<RkeeperAdditionalModuleId[]>([]);
   const [onsiteSelection, setOnsiteSelection] = useState<OnsiteLocationSelection>();
@@ -218,14 +218,14 @@ export function SupportPricingSection() {
   return <section id="pricing" className={`${ui.section} ${styles.section} section-atmosphere-host`} aria-labelledby="support-pricing-title">
     <div className={ui.shell}>
       <div className={ui.sectionHeader}>
-        <SectionReveal sectionEntryViewportFraction={0.4} className={styles.fullHeading}>
+        <SectionReveal className={styles.fullHeading}>
           <p className={ui.eyebrow}>Тарифы · r_keeper</p>
           <h2 ref={headingRef} className={ui.heading} id="support-pricing-title">Расчет сопровождения</h2>
         </SectionReveal>
       </div>
       <div className={styles.calculator}>
         <div ref={configurationRef} className={styles.configuration}>
-          <SectionReveal motion="scale" after={headingRef} className={styles.countControl}>
+          <SectionReveal motion="lift" blur={false} after={headingRef} className={styles.countControl}>
             <WorkplaceCount
               id="workplaces-rkeeper"
               value={workplaces}

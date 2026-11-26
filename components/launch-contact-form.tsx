@@ -12,6 +12,7 @@ import {
 } from "@/lib/project-request";
 import { formatProjectMessengerInput, RUSSIAN_PHONE_PREFIX } from "@/lib/russian-phone";
 import { UiIcon } from "./ui-icon";
+import { RevealWords } from "./marketing-ui";
 import shared from "./callback-dialog.module.css";
 import styles from "./launch-contact-form.module.css";
 import wizard from "./launch-section.module.css";
@@ -144,7 +145,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
 
   return (
     <section id="launch-step-2" className={styles.section} aria-labelledby="launch-step-title-2">
-      <h3 id="launch-step-title-2" className={wizard.stageTitle} tabIndex={-1} data-stage-entry="">Куда отправить смету?</h3>
+      <h3 id="launch-step-title-2" className={wizard.stageTitle} tabIndex={-1} data-stage-entry=""><RevealWords>Куда отправить смету?</RevealWords></h3>
       {requestId ? (
         <div ref={successRef} className={styles.success} role="status" tabIndex={-1}>
           <span className={styles.successIcon}><UiIcon name="check" size={20} /></span>

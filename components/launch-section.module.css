@@ -1,19 +1,33 @@
-.intro {
-  --entrance-fade-duration: 600ms;
+.section {
+  --entrance-fade-duration: 700ms;
+  --entrance-fade-ease: cubic-bezier(.22, .61, .36, 1);
+  --entrance-distance: 10px;
+  --entrance-text-blur: 5px;
   --entrance-fade-stagger: 90ms;
 }
 
 .wizard {
-  --entrance-fade-duration: 600ms;
-  --entrance-bottom-inset: 48px;
+  --entrance-advance: 48px;
   --wizard-focus-color: var(--text-muted);
 
+  position: relative;
+  isolation: isolate;
   width: 100%;
   padding: clamp(16px, 3.2vw, 36px);
   border-radius: var(--card-radius);
-  background: var(--neutral);
   scroll-margin-top: 88px;
   overflow-anchor: none;
+}
+
+/* The background moves independently; controls never inherit a second
+   opacity/translation animation from the full wizard surface. */
+.wizardSurface {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--neutral);
+  pointer-events: none;
 }
 
 .progress {
@@ -132,31 +146,8 @@
 
 .stage[inert] { visibility: hidden; }
 
-.formatStage,
-.animatedStage {
-  --entrance-fade-duration: 720ms;
-  --entrance-fade-stagger: 90ms;
-}
-
 .formatStage {
-  --entrance-bottom-inset: 32px;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .animatedStage:not([inert]) [data-stage-entry] {
-    animation: stage-entry-lift var(--entrance-fade-duration) cubic-bezier(.26, .48, .32, 1)
-      calc(var(--entry-index, 0) * var(--entrance-fade-stagger)) backwards;
-  }
-
-  .animatedStage [data-stage-entry]:not(.stageTitle):focus-within {
-    opacity: 1 !important;
-    translate: none !important;
-  }
-}
-
-@keyframes stage-entry-lift {
-  from { opacity: 0; translate: 0 6px; }
-  to { opacity: 1; translate: 0 0; }
+  --entrance-advance: 32px;
 }
 
 .stageTitle {
@@ -432,6 +423,7 @@
 }
 
 @media (max-width: 767px) {
+  .section { --entrance-distance: 8px; }
   .stage[inert] { display: none; }
 }
 

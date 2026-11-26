@@ -52,6 +52,7 @@ export default function RootLayout({
   return (
     <html lang="ru" data-scroll-behavior="smooth" className={inter.variable}>
       <body className="min-h-full antialiased">
+        <noscript><style>{"[data-reveal-on-load] { opacity: 1 !important; }"}</style></noscript>
         <JsonLd data={{
           "@context": "https://schema.org",
           "@graph": [organizationJsonLd, websiteJsonLd],

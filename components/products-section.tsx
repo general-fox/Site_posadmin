@@ -7,6 +7,7 @@ import { FlexBonusPreview } from "./flexbonus-preview";
 import { FoxControlTelegram } from "./fox-control-telegram";
 import { ReZebraPreview } from "./rezebra-preview";
 import { SiteLogoMark } from "./site-logo-mark";
+import { SectionReveal } from "./marketing-ui";
 import { UiIcon } from "./ui-icon";
 import ui from "./marketing.module.css";
 import styles from "./products-section.module.css";
@@ -49,10 +50,12 @@ export function ProductsSection() {
   return <section aria-labelledby="products-title" className={`${ui.section} ${styles.section} section-atmosphere-host`} id="products">
     <div ref={stackRef} className={`${ui.shell} ${styles.productStack}`}>
       <header ref={headingRef} className={styles.productHeading}>
-        <p className={ui.eyebrow}>Продукты для вашего заведения</p>
-        <h2 className={ui.heading} id="products-title">
-          Сделано в <SiteLogoMark className={styles.headingLogo} withDot /><span className="sr-only">Posadmin</span>
-        </h2>
+        <SectionReveal>
+          <p className={ui.eyebrow}>Продукты для вашего заведения</p>
+          <h2 className={ui.heading} id="products-title">
+            Сделано в <span data-reveal-word=""><SiteLogoMark className={styles.headingLogo} withDot /><span className="sr-only">Posadmin</span></span>
+          </h2>
+        </SectionReveal>
       </header>
       <span id="rezebra" className={styles.productTarget} data-anchor-heading="rezebra-title" aria-hidden="true" />
       <article ref={(card) => { cardRefs.current[0] = card; }} className={`${styles.productCard} ${styles.tabletCard}`} aria-labelledby="rezebra-title">

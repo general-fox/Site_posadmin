@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { ONSITE_GEOGRAPHY } from "@/lib/onsite-support";
 import { ArrowRight, SectionReveal } from "./marketing-ui";
@@ -82,16 +83,17 @@ const COMPANY_DETAILS = [
 
 export function SpecialistsSection() {
   const disclosureCentering = useDisclosureCentering();
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   return <section id="about" className={styles.section} aria-labelledby="specialists-title">
     <div className={`${ui.shell} ${styles.layout}`}>
       <SectionReveal className={styles.intro}>
         <p className={ui.eyebrow}>О нас · Команда Posadmin</p>
-        <h2 id="specialists-title" className={ui.heading}>О нас</h2>
+        <h2 id="specialists-title" className={ui.heading} ref={headingRef}>О нас</h2>
       </SectionReveal>
-      <SectionReveal className={styles.questions} blur={false}>
+      <SectionReveal className={styles.questions} motion="lift" sequence blur={false} after={headingRef}>
         {COMPANY_DETAILS.map(({ id, title, caption, Content }) => (
-          <details key={id} className={styles.question} id={`about-${id}`} name="about-questions" {...disclosureCentering}>
+          <details key={id} className={styles.question} id={`about-${id}`} name="about-questions" data-reveal-item="" {...disclosureCentering}>
             <summary className={styles.questionTitle}>
               <h3>{title}</h3>
               <span className={styles.questionCaption}>{caption}</span>

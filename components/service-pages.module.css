@@ -48,11 +48,7 @@
 .contactNote p { margin-bottom: 16px; font-size: 16px; line-height: 1.8; color: var(--text-body); }
 @media (prefers-reduced-motion: no-preference) {
   .intro { --intro-step: var(--entrance-fade-stagger); }
-  .contactIntro {
-    --intro-start: calc(var(--hero-heading-start) - 2 * var(--intro-step));
-    --intro-label-order: 1;
-  }
-  .intro > :is(.breadcrumbs, .eyebrow, .title, .lead), .intro > .actions > a {
+  .intro:not([data-shared-reveal]) > :is(.breadcrumbs, .eyebrow, .title, .lead), .intro:not([data-shared-reveal]) > .actions > a {
     animation: var(--entrance-fade);
     animation-delay: calc(var(--intro-start, 0ms) + var(--intro-index, 0) * var(--intro-step));
   }
@@ -61,7 +57,7 @@
   .intro > .lead { --intro-index: calc(var(--intro-label-order, 0) + 2); }
   .intro > .actions > a { --intro-index: calc(var(--intro-label-order, 0) + 3); }
   .intro > .actions > a + a { --intro-index: calc(var(--intro-label-order, 0) + 4); }
-  .intro:focus-within > *, .intro:focus-within > .actions > a {
+  .intro:not([data-shared-reveal]):focus-within > *, .intro:not([data-shared-reveal]):focus-within > .actions > a {
     opacity: 1 !important;
     filter: none !important;
   }

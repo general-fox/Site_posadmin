@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Breadcrumbs, ServiceArrow, ServicePageFrame } from "@/components/service-page-frame";
 import { ContactsSection } from "@/components/contacts-section";
+import { ContactPageIntro } from "@/components/contact-page-intro";
 import { JsonLd } from "@/components/json-ld";
 import { SectionReveal } from "@/components/marketing-ui";
 import { buildPageMetadata, SITE_URL } from "@/lib/seo";
@@ -30,16 +31,13 @@ export default function ContactsPage() {
       })),
     ] }} />
     <div className={styles.shell}>
-      <header className={`${styles.intro} ${styles.contactIntro}`}>
-        <Breadcrumbs items={[{ name: "Главная", path: "/" }, { name: "Контакты", path: "/contacts" }]} />
-        <p className={styles.eyebrow}>На связи с вашим заведением</p>
-        <h1 className={styles.title}>Контакты Posadmin</h1>
-        <p className={styles.lead}>Обсудим запуск, сопровождение или развитие вашей системы. Наши офисы находятся в Люберцах и Новороссийске, а техническая поддержка работает 24/7.</p>
-        <div className={styles.actions}>
-          <a className={styles.button} href={SITE_CONTACTS.phoneHref}>{SITE_CONTACTS.phone}</a>
-          <a className={styles.textLink} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer">Написать в Telegram <ServiceArrow diagonal /></a>
-        </div>
-      </header>
+      <ContactPageIntro
+        breadcrumbs={<Breadcrumbs items={[{ name: "Главная", path: "/" }, { name: "Контакты", path: "/contacts" }]} />}
+        actions={<>
+          <a className={styles.button} href={SITE_CONTACTS.phoneHref} data-reveal-item="">{SITE_CONTACTS.phone}</a>
+          <a className={styles.textLink} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" data-reveal-item="">Написать в Telegram <ServiceArrow diagonal /></a>
+        </>}
+      />
       <section className={styles.contactNote} aria-labelledby="onsite-geography">
         <SectionReveal>
           <h2 id="onsite-geography">Где доступно выездное сопровождение</h2>
