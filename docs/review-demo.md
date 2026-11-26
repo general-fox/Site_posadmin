@@ -2,7 +2,15 @@
 
 Адрес после успешной публикации: https://general-fox.github.io/Site_posadmin/
 
-Workflow `Publish review demo` собирает и публикует демоверсию при обновлении `main` или ручном запуске в Actions. В настройках Pages выбран источник GitHub Actions.
+Workflow `Publish review demo` собирает и публикует демоверсию при обновлении `main` или ручном запуске в Actions.
+
+## Настройка публикации
+
+В репозитории откройте **Settings → Pages → Build and deployment → Source** и выберите **GitHub Actions**. Не выбирайте `Deploy from a branch` с `main / (root)`: в корне хранятся исходники, и встроенная сборка Jekyll публикует README вместо сайта. Если включены оба способа, результат зависит от того, какая публикация закончится последней.
+
+После переключения источника откройте **Actions → Publish review demo → Run workflow**, выберите `main` и запустите workflow. Обе задачи, `build` и `deploy`, должны завершиться успешно. Обычный push в `main` также запускает эту публикацию.
+
+Если `build` завершился ошибкой, исправьте причину из его журнала и отправьте исправление в `main`. Локальная проверка тем же способом: `node scripts/build-review-demo.mjs`, затем `node scripts/check-review-demo.mjs`. Обычная серверная сборка не заменяет проверку статической версии для Pages.
 
 ## Что доступно
 

@@ -117,7 +117,7 @@ export function useScrollReveal<T extends HTMLElement>({
     let frame = 0;
     let timer = 0;
     let sequenceStart = 0;
-    let observer: IntersectionObserver | undefined;
+    const observer = new IntersectionObserver(queueCheck, { rootMargin: `0px 0px ${advance}px 0px` });
     const publish = () => {
       if (targets.includes(element)) return;
       element.dataset.revealState = groups.every((group) => group.phase === "settled") ? "settled"
@@ -229,8 +229,7 @@ export function useScrollReveal<T extends HTMLElement>({
       else prepare(group);
     });
     publish();
-    observer = new IntersectionObserver(queueCheck, { rootMargin: `0px 0px ${advance}px 0px` });
-    groups.filter((group) => group.phase === "waiting").forEach((group) => observer!.observe(group.anchor));
+    groups.filter((group) => group.phase === "waiting").forEach((group) => observer.observe(group.anchor));
     const precedingObserver = preceding ? new MutationObserver(queueCheck) : null;
     if (preceding) precedingObserver?.observe(preceding, { attributeFilter: ["data-reveal-state", "data-reveal-started-at"] });
 
