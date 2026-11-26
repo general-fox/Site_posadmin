@@ -113,6 +113,7 @@
   .foxCard .productVisual { height: auto; container-type: normal; }
 }
 @media (max-width: 360px) and (orientation: portrait) {
+  .productHeading h2 { font-size: 1.5rem; }
   .tabletCard { padding: 18px 16px; gap: 14px; }
   .tabletCard .description { margin-block: 10px 12px; }
 }
