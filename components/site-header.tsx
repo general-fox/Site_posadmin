@@ -215,15 +215,15 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
           ))}
         </nav>
         <div className={styles.contactActions}>
-          <a className={`site-header-glass ${styles.phone}`} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
+          <a className={`site-header-glass ${styles.phone}`} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`} data-button-reveal="">
             <PhoneIcon /><span className={styles.phoneNumber}>{SITE_CONTACTS.phone}</span>
           </a>
-          <a className={`site-header-glass ${styles.telegram}`} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" aria-label="Написать боту Posadmin в Telegram, откроется в новой вкладке" title="Telegram · @posadmin_request_bot">
+          <a className={`site-header-glass ${styles.telegram}`} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" aria-label="Написать боту Posadmin в Telegram, откроется в новой вкладке" title="Telegram · @posadmin_request_bot" data-button-reveal="">
             <TelegramIcon />
           </a>
         </div>
         <details key={`mobile-${pathname}`} ref={mobileDisclosureRef} className={styles.mobileDisclosure}>
-          <summary ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} aria-controls="mobile-site-navigation">
+          <summary ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} aria-controls="mobile-site-navigation" data-button-reveal="">
             <span className={`${styles.mobileTriggerLabel} ${styles.openMenuLabel}`}>Меню</span>
             <span className={`${styles.mobileTriggerLabel} ${styles.closeMenuLabel}`}>Закрыть</span>
             <svg className={styles.menuIcon} width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
@@ -236,7 +236,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
               style={{ "--header-item-index": index } as CSSProperties}
               aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
             <div className={styles.mobileContact}>
-              <a className={styles.mobilePhone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`}>
+              <a className={styles.mobilePhone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`} data-button-reveal="">
                 <PhoneIcon /><span><small>Позвонить нам</small><span>{SITE_CONTACTS.phone}</span></span>
               </a>
             </div>

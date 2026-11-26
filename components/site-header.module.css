@@ -34,17 +34,14 @@
     transform-origin: top;
     animation: header-background-enter 210ms var(--entrance-ease) backwards;
   }
-  .logo, :is(.desktopLink, .phone, .telegram, .mobileTrigger) {
+  .logo, .desktopLink {
     animation: var(--entrance-fade);
     animation-duration: 400ms;
   }
   .logo { animation-delay: 25ms; }
-  :is(.desktopLink, .phone, .telegram, .mobileTrigger) {
+  .desktopLink {
     animation-delay: calc(70ms + var(--header-item-step) * var(--header-item-index, 0));
   }
-  .phone { --header-item-index: var(--header-nav-length); }
-  .telegram { --header-item-index: calc(var(--header-nav-length) + 1); }
-  .mobileTrigger { --header-item-index: 2; }
   .mobileDisclosure[open] .mobileItem {
     animation: var(--entrance-fade);
     animation-delay: calc(25ms * var(--header-item-index));

@@ -49,6 +49,7 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
             </div>
             <div className={styles.actions}>
               <a
+                data-button-reveal=""
                 className={`${ui.primary} ${styles.telegram}`}
                 href={SITE_CONTACTS.telegramUrl}
                 target="_blank"
@@ -74,6 +75,7 @@ export function ContactsSection({ flushTop = false }: { flushTop?: boolean }) {
                 <h3 id={`office-${index + 1}`}>{office.city}</h3>
                 <address>{office.street}</address>
                 <a
+                  data-button-reveal=""
                   className={ui.textLink}
                   href={`https://yandex.ru/maps/?text=${encodeURIComponent(office.mapQuery)}`}
                   target="_blank"

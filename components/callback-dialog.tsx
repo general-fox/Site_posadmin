@@ -296,11 +296,11 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                 <fieldset className={styles.specialists} disabled={submitting}>
                   <legend className={styles.label}>С кем хотите поговорить</legend>
                   <div className={styles.specialistChoices}>
-                    <label className={`${styles.choice} ${styles.specialistChoice}`}>
+                    <label className={`${styles.choice} ${styles.specialistChoice}`} data-button-reveal="">
                       <input type="radio" name="specialist" value="manager" checked={specialist === "manager"} required onChange={() => { setSpecialist("manager"); setSubmitError(""); }} />
                       <span><strong>Менеджер</strong><span>Проект, тарифы и подключение</span></span>
                     </label>
-                    <label className={`${styles.choice} ${styles.specialistChoice}`}>
+                    <label className={`${styles.choice} ${styles.specialistChoice}`} data-button-reveal="">
                       <input type="radio" name="specialist" value="technical" checked={specialist === "technical"} required onChange={() => { setSpecialist("technical"); setSubmitError(""); }} />
                       <span><strong>Технический специалист</strong><span>Кассы, r_keeper и IT-вопросы</span></span>
                     </label>
@@ -366,7 +366,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
               {!chooseSpecialist ? <fieldset className={styles.timing} disabled={submitting}>
                 <legend className={styles.label}>Когда позвонить</legend>
                 <div className={styles.choices}>
-                  <label className={styles.choice}>
+                  <label className={styles.choice} data-button-reveal="">
                     <input
                       checked={contactSoon}
                       name="callbackTiming"
@@ -376,7 +376,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                     />
                     <span>В ближайшее время</span>
                   </label>
-                  <label className={styles.choice}>
+                  <label className={styles.choice} data-button-reveal="">
                     <input
                       checked={!contactSoon}
                       name="callbackTiming"

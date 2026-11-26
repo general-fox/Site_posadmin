@@ -1,96 +1,112 @@
-.preview {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
+.screen {
   width: 100%;
   height: 100%;
   min-width: 0;
   min-height: 0;
-  max-height: 474px;
-  margin: 0;
+  overflow: hidden;
+  background: #f6efd2;
 }
 
-.deviceStage {
-  display: grid;
-  place-items: center;
-  min-width: 0;
-  min-height: 0;
-  container-type: size;
-}
-
-.device {
-  position: relative;
-  width: min(96cqw, calc(100cqh * 1.5));
-  aspect-ratio: 3 / 2;
-  container-type: inline-size;
-  overflow: clip;
-  touch-action: pan-y pinch-zoom;
-  user-select: none;
-}
-
-.device:focus-visible {
-  border-radius: 16px;
-  outline: 2px solid var(--action);
-  outline-offset: 4px;
-}
-
-.deviceImage, .screenBase {
-  position: absolute;
-  inset: 0;
+.screen > svg {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* These layers illustrate one reservation; they are not interactive controls. */
+.candidateTable,
+.selectedTable,
+.reservation,
+.confirmation,
+.selectedTime {
+  opacity: 0;
   pointer-events: none;
 }
 
-.deviceCanvas {
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: 1536px;
-  height: 1024px;
-  /* Convert the ratio of container width to the source width into a unitless scale. */
-  transform: scale(tan(atan2(100cqw, 1536px)));
-  transform: scale(calc(100cqw / 1536px));
-  transform-origin: top left;
-  pointer-events: none;
+.timeline { transform: translateX(0); }
+.originalTime { opacity: 1; }
+.confirmation { transform: translateY(6px); }
+
+:global([data-preview-state="playing"]) .candidateTable {
+  animation: inspectTable 6s ease-in-out both;
 }
 
-.projectedScreen {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1200px;
-  height: 780px;
-  overflow: hidden;
-  transform-origin: top left;
-  /* Project the 1200 × 780 screen onto the four display corners in the mockup. */
-  transform: matrix3d(
-    .762266036, -.054268263, 0, -.000124429185,
-    -.317365176, .892471226, 0, -.000074150271,
-    0, 0, 1, 0,
-    289, 100, 0, 1
-  );
+:global([data-preview-state="playing"]) .selectedTable {
+  animation: selectTable 6s ease-in-out both;
 }
 
-.screenTrack {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  transition: transform 450ms ease;
+:global([data-preview-state="playing"]) .timeline {
+  animation: selectTime 6s cubic-bezier(.22, .61, .36, 1) both;
 }
 
-.slide { flex: 0 0 100%; min-width: 0; height: 100%; }
+:global([data-preview-state="playing"]) .originalTime {
+  animation: previousTime 6s ease-in-out both;
+}
 
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+:global([data-preview-state="playing"]) .selectedTime {
+  animation: nextTime 6s ease-in-out both;
+}
+
+:global([data-preview-state="playing"]) .reservation {
+  animation: reserveTable 6s ease-in-out both;
+}
+
+:global([data-preview-state="playing"]) .confirmation {
+  animation: confirmReservation 6s cubic-bezier(.22, .61, .36, 1) both;
+}
+
+/* The last frame remains after the shared one-shot timer finishes. */
+:global([data-preview-state="settled"]) .selectedTable { opacity: .65; }
+:global([data-preview-state="settled"]) .timeline { transform: translateX(44px); }
+:global([data-preview-state="settled"]) .originalTime { opacity: 0; }
+:global([data-preview-state="settled"]) .selectedTime,
+:global([data-preview-state="settled"]) .reservation,
+:global([data-preview-state="settled"]) .confirmation { opacity: 1; }
+:global([data-preview-state="settled"]) .confirmation { transform: translateY(0); }
+
+@keyframes inspectTable {
+  0%, 5% { opacity: 0; }
+  15%, 25% { opacity: .65; }
+  38%, 100% { opacity: 0; }
+}
+
+@keyframes selectTable {
+  0%, 25% { opacity: 0; }
+  42%, 68% { opacity: .9; }
+  86%, 100% { opacity: .65; }
+}
+
+@keyframes selectTime {
+  0%, 40% { transform: translateX(0); }
+  64%, 100% { transform: translateX(44px); }
+}
+
+@keyframes previousTime {
+  0%, 44% { opacity: 1; }
+  54%, 100% { opacity: 0; }
+}
+
+@keyframes nextTime {
+  0%, 50% { opacity: 0; }
+  62%, 100% { opacity: 1; }
+}
+
+@keyframes reserveTable {
+  0%, 65% { opacity: 0; }
+  80%, 100% { opacity: 1; }
+}
+
+@keyframes confirmReservation {
+  0%, 73% { opacity: 0; transform: translateY(6px); }
+  90%, 100% { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .screenTrack { transition: none; }
+  .candidateTable, .selectedTable, .timeline, .originalTime,
+  .selectedTime, .reservation, .confirmation { animation: none !important; }
+  .candidateTable, .originalTime { opacity: 0; }
+  .selectedTable { opacity: .65; }
+  .timeline { transform: translateX(44px); }
+  .selectedTime, .reservation, .confirmation { opacity: 1; }
+  .confirmation { transform: translateY(0); }
 }

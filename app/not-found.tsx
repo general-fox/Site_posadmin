@@ -9,8 +9,8 @@ export default function NotFound() {
       <h1 className={styles.title}>Этой страницы нет</h1>
       <p className={styles.lead}>Возможно, адрес изменился. Посмотрите, как мы запускаем заведения с нуля, или вернитесь на главную.</p>
       <div className={styles.actions}>
-        <Link className={styles.button} href="/#launch">Запуск с нуля <ServiceArrow /></Link>
-        <Link className={styles.textLink} href="/">На главную</Link>
+        <Link className={styles.button} href="/#launch" data-button-reveal="">Запуск с нуля <ServiceArrow /></Link>
+        <Link className={styles.textLink} href="/" data-button-reveal="">На главную</Link>
       </div>
     </div>
   </ServicePageFrame>;

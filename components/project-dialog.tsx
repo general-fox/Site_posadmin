@@ -205,7 +205,7 @@ export function ProjectDialog({ open, onClose, initialStage, projectBrief }: { o
             </section>}
             <fieldset className={styles.contactMethods} disabled={submitting}>
               <legend className={shared.label}>Удобный способ связи</legend>
-              <div className={`${shared.choices} ${styles.contactChoices}`}>{(["phone", "telegram", "chat"] as const).map((method) => <label className={shared.choice} key={method}>
+              <div className={`${shared.choices} ${styles.contactChoices}`}>{(["phone", "telegram", "chat"] as const).map((method) => <label className={shared.choice} key={method} data-button-reveal="">
                 <input type="radio" name="contactMethod" value={method} checked={contactMethod === method} onChange={() => { setContactMethod(method); clearError(); }} />
                 <span>{method === "phone" ? "Звонок" : method === "telegram" ? "Telegram" : "Другой чат"}</span>
               </label>)}</div>

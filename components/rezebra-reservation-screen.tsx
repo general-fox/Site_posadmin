@@ -1,12 +1,15 @@
 const palette = {
-  background: "#303030",
-  panel: "#474747",
-  selected: "#599DF8",
+  background: "#F6EFD2",
+  panel: "#FFF9DF",
+  selected: "#5D9DF5",
   cancel: "#FF8080",
-  add: "#92EB83",
-  disabled: "#383838",
-  divider: "#777777",
-  ink: "#F7F7F7",
+  add: "#98E38B",
+  disabled: "#E5DFC0",
+  divider: "#D0CBB3",
+  ink: "#11130F",
+  mutedInk: "#716D5E",
+  accentInk: "#FFFFFF",
+  toggle: "#93938E",
 };
 
 function Grid({ x, y, width, height, columns, values, selected }: {
@@ -64,8 +67,8 @@ function Navigation() {
 /** A vector presentation of the product UI, with no guest or venue data. */
 export function ReZebraReservationScreen() {
   return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" preserveAspectRatio="none" width="100%" height="100%" role="img" aria-label="Rezebra: создание резерва, выбор времени и числа гостей" style={{ display: "block", fontFamily: "Inter, Arial, sans-serif" }}>
-    <title>Создание резерва в Rezebra</title>
-    <desc>Векторный пример интерфейса: дата, продолжительность, время, количество гостей и пустые поля контактов и комментариев.</desc>
+    <title>Создание резерва в Rezebra — светлая тема</title>
+    <desc>Векторный пример светлого интерфейса: дата, продолжительность, время, количество гостей и пустые поля контактов и комментариев.</desc>
     <rect width="1200" height="780" fill={palette.background} />
     <rect y="50" width="56" height="730" fill={palette.panel} />
     <path d="M56 50v730M0 50h1200" stroke={palette.divider} />
@@ -73,10 +76,10 @@ export function ReZebraReservationScreen() {
 
     <g fontSize="17" fontWeight="500">
       <rect width="94" height="50" fill={palette.selected} />
-      <path d="m21 18-6 7 6 7" fill="none" stroke={palette.ink} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="35" y="31" fill={palette.ink}>Назад</text>
+      <path d="m21 18-6 7 6 7" fill="none" stroke={palette.accentInk} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="35" y="31" fill={palette.accentInk}>Назад</text>
       <rect x="98" width="180" height="50" fill={palette.selected} />
-      <text x="188" y="31" fill={palette.ink} textAnchor="middle">+_ (___) ___-__-__</text>
+      <text x="188" y="31" fill={palette.accentInk} textAnchor="middle">+_ (___) ___-__-__</text>
       <rect x="281" width="43" height="50" fill={palette.add} />
       <path d="M295 25h16m-8-8v16" stroke="#101010" strokeWidth="2" strokeLinecap="round" />
     </g>
@@ -87,7 +90,7 @@ export function ReZebraReservationScreen() {
       <text x="88" y="108" fontSize="20" fontFamily="ui-monospace, monospace">23.11.2026</text>
       <g fill="none" stroke={palette.ink} strokeWidth="1.7"><rect x="408" y="94" width="13" height="13" rx="2" /><path d="M408 98h13m-10-7v5m7-5v5" /></g>
       <rect x="556" y="89" width="39" height="20" rx="10" fill={palette.disabled} stroke={palette.divider} />
-      <circle cx="566" cy="99" r="8" fill="#B5B5B5" />
+      <circle cx="566" cy="99" r="8" fill={palette.toggle} />
       <text x="603" y="104" fontSize="16">Без лимита</text>
       <text x="80" y="144">Продолжительность резерва</text>
       <Grid x={69} y={150} width={730} height={66} columns={8} values={["previous", "02:15", "02:30", "02:45", "03:00", "03:15", "03:30", "next"]} selected="02:30" />
@@ -122,9 +125,9 @@ export function ReZebraReservationScreen() {
       <rect x="808" y="617" width="130" height="70" rx="2" fill={palette.cancel} />
       <text x="873" y="658" fill="#301A1A">Не сохранять</text>
       <rect x="808" y="692" width="130" height="70" rx="2" fill={palette.disabled} />
-      <text x="873" y="733" fontSize="15" fill="#B5B5B5">Лист ожидания</text>
+      <text x="873" y="733" fontSize="15" fill={palette.mutedInk}>Лист ожидания</text>
       <rect x="943" y="617" width="241" height="145" rx="2" fill={palette.disabled} />
-      <text x="1063" y="695" fill="#B5B5B5">Сохранить</text>
+      <text x="1063" y="695" fill={palette.mutedInk}>Сохранить</text>
     </g>
   </svg>;
 }

@@ -6,8 +6,8 @@ import entry from "./hero-entrance.module.css";
 export function HeroActions() {
   return (
     <div className={`hero-actions pointer-events-auto ${styles.actions} ${entry.actions}`}>
-      <Link href="/#pricing" className="hero-project-link">Подобрать сопровождение<ArrowRight /></Link>
-      <Link href="/#products" className="hero-callback-link">Наши продукты<ArrowRight /></Link>
+      <Link href="/#pricing" className="hero-project-link" data-button-reveal="">Подобрать сопровождение<ArrowRight /></Link>
+      <Link href="/#products" className="hero-callback-link" data-button-reveal="">Наши продукты<ArrowRight /></Link>
     </div>
   );
 }

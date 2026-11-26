@@ -34,15 +34,15 @@ export default function ContactsPage() {
       <ContactPageIntro
         breadcrumbs={<Breadcrumbs items={[{ name: "Главная", path: "/" }, { name: "Контакты", path: "/contacts" }]} />}
         actions={<>
-          <a className={styles.button} href={SITE_CONTACTS.phoneHref} data-reveal-item="">{SITE_CONTACTS.phone}</a>
-          <a className={styles.textLink} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" data-reveal-item="">Написать в Telegram <ServiceArrow diagonal /></a>
+          <a className={styles.button} href={SITE_CONTACTS.phoneHref} data-reveal-item="" data-button-reveal="">{SITE_CONTACTS.phone}</a>
+          <a className={styles.textLink} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" data-reveal-item="" data-button-reveal="">Написать в Telegram <ServiceArrow diagonal /></a>
         </>}
       />
       <section className={styles.contactNote} aria-labelledby="onsite-geography">
         <SectionReveal>
           <h2 id="onsite-geography">Где доступно выездное сопровождение</h2>
           <p>{ONSITE_GEOGRAPHY.join(", ")}.</p>
-          <Link className={styles.textLink} href="/#pricing">Тарифы и выездное сопровождение <ServiceArrow /></Link>
+          <Link className={styles.textLink} href="/#pricing" data-button-reveal="">Тарифы и выездное сопровождение <ServiceArrow /></Link>
         </SectionReveal>
       </section>
     </div>

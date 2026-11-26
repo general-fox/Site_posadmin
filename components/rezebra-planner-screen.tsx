@@ -1,17 +1,22 @@
 import { useId } from "react";
+import styles from "./rezebra-preview.module.css";
 
 const palette = {
-  background: "#303030",
-  panel: "#454545",
-  blue: "#599DF8",
-  table: "#92EB83",
+  background: "#F6EFD2",
+  panel: "#FFF9DF",
+  reservations: "#E8E2C4",
+  floor: "#E5DFC0",
+  timeline: "#FFFDF3",
+  blue: "#5D9DF5",
+  table: "#98E38B",
   reserved: "#FF8080",
-  wall: "#354454",
-  chair: "#BFC7D0",
-  text: "#F7F7F7",
-  tableText: "#11150F",
-  control: "#656565",
-  line: "#757575",
+  wall: "#3D5064",
+  chair: "#C0C9D0",
+  text: "#11130F",
+  tableText: "#11130F",
+  control: "#E8E2C4",
+  line: "#D0CBB3",
+  scrollbar: "#93938E",
 } as const;
 
 const reservations = [
@@ -60,11 +65,11 @@ function Plant({ x, y }: { x: number; y: number }) {
   return <g transform={`translate(${x} ${y})`}><circle r="19" fill="#82B39A" /><path d="M-11 7C-12-4-3-11 11-11 13 3 5 11-6 9M-9 9 6-5" fill="#C5E7C7" stroke="#DDF0D8" strokeWidth="1.1" /><text x="3" y="4" fontSize="6" fontWeight="600" fill="#FFFFFF">Оз...</text></g>;
 }
 
-export function ReZebraPlannerScreen() {
+export function ReZebraPlannerScreen({ demonstration = false }: { demonstration?: boolean }) {
   const id = useId();
-  return <svg viewBox="0 0 1200 780" preserveAspectRatio="none" width="100%" height="100%" role="img" aria-labelledby={`${id}-title ${id}-description`} xmlns="http://www.w3.org/2000/svg" style={{ display: "block", fontFamily: "Inter, Arial, sans-serif" }}>
-    <title id={`${id}-title`}>Планировщик Rezebra в тёмной теме — зал у воды</title>
-    <desc id={`${id}-description`}>Чёткая векторная иллюстрация тёмного интерфейса Rezebra: список резервов по времени, схема зала с двенадцатью столами, статусы бронирований и временная шкала. Данные показаны для примера.</desc>
+  return <svg viewBox="0 0 1200 780" preserveAspectRatio="xMidYMid meet" width="100%" height="100%" role="img" aria-labelledby={`${id}-title ${id}-description`} xmlns="http://www.w3.org/2000/svg" style={{ display: "block", fontFamily: "Inter, Arial, sans-serif" }}>
+    <title id={`${id}-title`}>Планировщик Rezebra в светлой теме — зал у воды</title>
+    <desc id={`${id}-description`}>Чёткая векторная иллюстрация светлого интерфейса Rezebra: список резервов по времени, схема зала с двенадцатью столами, статусы бронирований и временная шкала. {demonstration && "Пример бронирования: выбор стола 26 на 15:30 для четырёх гостей и подтверждение резерва. "}Данные показаны для примера.</desc>
     <rect width="1200" height="780" fill={palette.background} />
     <g fill={palette.text}>
       <rect width="94" height="48" fill={palette.blue} />
@@ -81,7 +86,7 @@ export function ReZebraPlannerScreen() {
       <NavIcon x={8} y={490} kind="phone" /><NavIcon x={8} y={625} kind="wifi" />
       <NavIcon x={8} y={678} kind="refresh" /><NavIcon x={8} y={721} kind="settings" /><NavIcon x={8} y={754} kind="users" />
 
-      <rect x="46" y="55" width="210" height="641" fill={palette.background} stroke={palette.line} />
+      <rect x="46" y="55" width="210" height="641" fill={palette.reservations} stroke={palette.line} />
       {reservations.map(([time, guests], index) => <g key={time} transform={`translate(46 ${55 + index * 53})`}>
         {time === "15:00" && <rect width="210" height="53" fill={palette.panel} />}
         <path d="M0 53h210" stroke={palette.line} />
@@ -89,8 +94,8 @@ export function ReZebraPlannerScreen() {
         <text x="196" y="21" fontSize="14" textAnchor="end">1 РЕЗЕРВ</text>
         <text x="196" y="40" fontSize="14" textAnchor="end">{guests.toLocaleUpperCase("ru-RU")}</text>
       </g>)}
-      <rect x="258" y="54" width="4" height="642" fill="#555555" />
-      <rect x="258" y="56" width="4" height="400" fill="#929292" />
+      <rect x="258" y="54" width="4" height="642" fill={palette.line} />
+      <rect x="258" y="56" width="4" height="400" fill={palette.scrollbar} />
 
       <rect x="268" y="55" width="932" height="37" fill={palette.background} />
       <text x="280" y="79" fontSize="16" fontWeight="600">Панорамный зал</text>
@@ -99,13 +104,13 @@ export function ReZebraPlannerScreen() {
       <text x="589" y="79" fontSize="16" fontWeight="600">Капитанская гостиная</text>
       <path d="M1079 73.5h14M1086 66.5v14" stroke={palette.text} strokeWidth="1.8" strokeLinecap="round" />
       <rect x="1111" y="55" width="89" height="36" fill={palette.control} />
-      <g transform="translate(1138 73.5)" fill="none" stroke="#FFFFFF" strokeWidth="1.4" strokeLinecap="round">
+      <g transform="translate(1138 73.5)" fill="none" stroke={palette.text} strokeWidth="1.4" strokeLinecap="round">
         <circle r="3.3" />
         <path d="M0-8v2M0 6v2M-8 0h2M6 0h2M-6-6l2 2M4 4l2 2M-6 6l2-2M4-4l2-2" />
       </g>
-      <path d="M1173 73.5h14" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M1173 73.5h14" stroke={palette.text} strokeWidth="1.8" strokeLinecap="round" />
 
-      <rect x="268" y="93" width="932" height="616" fill={palette.panel} />
+      <rect x="268" y="93" width="932" height="616" fill={palette.floor} />
       <path d="M302 665V165h860v500H832M302 665h350" fill="none" stroke={palette.wall} strokeWidth="10" strokeLinejoin="miter" />
       <rect x="557" y="193" width="208" height="35" rx="5" fill="#85B5C6" />
       <path d="m629 208 4-7 4 7h-8Zm-5 3 4-7 4 7h-8Zm10 0 4-7 4 7h-8Z" fill="none" stroke={palette.tableText} />
@@ -124,23 +129,43 @@ export function ReZebraPlannerScreen() {
       <Table number={25} x={354} y={554} /><Table number={26} x={557} y={554} />
       <Table number={27} x={786} y={548} round /><Table number={28} x={987} y={554} />
 
+      {demonstration && <g aria-hidden="true" pointerEvents="none">
+        <rect className={styles.candidateTable} x="553" y="413" width="110" height="74" rx="11" fill="none" stroke="#347BC4" strokeWidth="4" />
+        <rect className={styles.selectedTable} x="553" y="550" width="110" height="72" rx="11" fill="none" stroke="#347BC4" strokeWidth="4" />
+        <g className={styles.reservation}>
+          <rect x="557" y="554" width="102" height="66" rx="7" fill="#C4DAF7" stroke="#347BC4" strokeWidth="2" />
+          <text x="608" y="582" fontSize="21" fontWeight="600" textAnchor="middle">15:30</text>
+          <text x="608" y="605" fontSize="14" textAnchor="middle">4 гостя</text>
+        </g>
+        <g className={styles.confirmation}>
+          <rect x="620" y="100" width="532" height="57" rx="10" fill="#FFFDF3" stroke="#BCCBAD" strokeWidth="1.5" />
+          <circle cx="648" cy="128" r="17" fill="#DFEDCE" />
+          <path d="m641 128 5 5 10-11" fill="none" stroke="#437344" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          <text x="678" y="124" fontSize="22" fontWeight="600">Резерв подтверждён</text>
+          <text x="678" y="146" fontSize="16" fill="#5C654F">Стол 26 · 15:30 · 4 гостя</text>
+        </g>
+      </g>}
+
       <rect x="644" y="624" width="166" height="47" rx="5" fill="#3C90CF" stroke="#FFFFFF" strokeWidth=".7" />
       <path d="m692 643 4-7 4 7h-8Zm-5 9 4-7 4 7h-8Zm11 0 4-7 4 7h-8Z" fill="none" stroke={palette.tableText} strokeWidth="1.4" />
       <text x="749" y="652" fontSize="11" fontWeight="600" fill={palette.tableText} textAnchor="middle">Стойка хостес</text>
       <rect x="678" y="680" width="96" height="22" rx="5" fill="#7A8997" />
       <text x="726" y="695" fontSize="12" fontWeight="600" fill="#FFFFFF" textAnchor="middle">Вход</text>
 
-      <rect x="268" y="709" width="932" height="71" fill={palette.panel} />
+      <rect x="268" y="709" width="932" height="71" fill={palette.background} />
       <rect x="280" y="726" width="136" height="38" rx="4" fill={palette.panel} stroke={palette.line} />
       <text x="292" y="750" fontSize="15" letterSpacing=".5">23.11.2026</text>
       <rect x="395" y="738" width="11" height="11" rx="1" fill="none" stroke={palette.text} /><path d="M395 742h11M398 735v5M403 735v5" stroke={palette.text} />
-      <rect x="434" y="728" width="646" height="33" rx="4" fill={palette.background} stroke={palette.line} />
+      <rect x="434" y="728" width="646" height="33" rx="4" fill={palette.timeline} stroke={palette.line} />
       {Array.from({ length: 29 }, (_, index) => <path key={index} d={`M${454 + index * 22} 731v27`} stroke={palette.line} strokeWidth=".7" />)}
-      <text x="770" y="723" fontSize="17" textAnchor="middle">15:26</text>
-      <rect x="758" y="728" width="24" height="33" rx="3" fill={palette.blue} stroke="#3C7DC8" />
-      <path d="m766 737-5 7 5 7M774 737l5 7-5 7" fill="none" stroke="#FFFFFF" />
+      <g className={demonstration ? styles.timeline : undefined}>
+        <text className={demonstration ? styles.originalTime : undefined} x="770" y="723" fontSize="17" textAnchor="middle">15:26</text>
+        {demonstration && <text className={styles.selectedTime} x="770" y="723" fontSize="17" textAnchor="middle" aria-hidden="true">15:30</text>}
+        <rect x="758" y="728" width="24" height="33" rx="3" fill={palette.blue} stroke="#3C7DC8" />
+        <path d="m766 737-5 7 5 7M774 737l5 7-5 7" fill="none" stroke="#FFFFFF" />
+      </g>
       <rect x="1104" y="728" width="82" height="33" rx="3" fill={palette.control} />
-      <text x="1145" y="750" fontSize="16" fill="#FFFFFF" textAnchor="middle" fontWeight="600">Сейчас</text>
+      <text x="1145" y="750" fontSize="16" fill={palette.text} textAnchor="middle" fontWeight="600">Сейчас</text>
 
       <text x="58" y="747" fontSize="26">Всего</text>
       <text x="246" y="733" fontSize="14" textAnchor="end">16 РЕЗЕРВОВ</text>

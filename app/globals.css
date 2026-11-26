@@ -68,7 +68,11 @@
   --control-letter-spacing: normal;
   --entrance-ease: cubic-bezier(.32, .04, .28, 1);
   --entrance-blur: 1.5px;
-  --entrance-text-blur: 5px;
+  --entrance-text-blur: 7px;
+  --entrance-text-duration: 800ms;
+  --entrance-word-stagger: 90ms;
+  --entrance-line-stagger: 100ms;
+  --entrance-text-distance: 12px;
   --entrance-distance: 10px;
   --entrance-advance: 48px;
   --entrance-fade-duration: 700ms;
@@ -88,14 +92,22 @@
 }
 
 @media (max-width: 767px) {
-  :root { --page-gutter: 20px; --section-space: 88px; --section-gap: 28px; --grid-gap: 16px; --font-small: 14px; --entrance-distance: 8px; }
+  :root { --page-gutter: 20px; --section-space: 88px; --section-gap: 28px; --grid-gap: 16px; --font-small: 14px; --entrance-distance: 8px; --entrance-text-distance: 8px; }
 }
 
 /* Word units keep their natural spaces and don't create clipping masks. */
-[data-reveal-word] { display: inline-block; vertical-align: baseline; }
+[data-reveal-word], [data-reveal-line-word] { display: inline-block; vertical-align: baseline; }
 @media (prefers-reduced-motion: no-preference) {
   /* Reserve the first frame until hydration; the noscript rule keeps it readable without JS. */
   [data-reveal-on-load]:not([data-reveal-state]) { opacity: 0; }
+  :where(button, summary, [role="button"], input[type="button"], input[type="submit"], input[type="reset"], [data-button-reveal]):not([data-button-reveal="off"]):not([data-button-entrance]),
+  [data-button-entrance="waiting"]:not([data-button-reveal="off"]) { scale: .5; filter: blur(4px) opacity(0); }
+}
+
+[data-button-reveal="off"] { scale: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-button-entrance] { scale: none !important; filter: none !important; }
 }
 
 html,
@@ -838,7 +850,7 @@ a.hero-glass-btn:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal-target], [data-reveal-word] { opacity: 1 !important; filter: none !important; translate: none !important; }
+  [data-reveal-target], [data-reveal-word], [data-reveal-line-word] { opacity: 1 !important; filter: none !important; translate: none !important; }
   :where(*, *::before, *::after) {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;

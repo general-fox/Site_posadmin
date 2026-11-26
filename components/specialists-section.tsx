@@ -19,8 +19,8 @@ const COMPANY_DETAILS = [
       <p>Более 15 лет автоматизируем заведения HoReCa. Запустили свыше 1 000 объектов. Официальный дилер r_keeper.</p>
       <p>Закрываем весь технический контур: r_keeper, кассы, учётные системы, оборудование, сеть и рабочие места.</p>
       <div className={styles.links}>
-        <Link href="#pricing" className={ui.textLink}>Сопровождение <ArrowRight /></Link>
-        <Link href="#launch" className={ui.textLink}>Запуск проекта <ArrowRight /></Link>
+        <Link href="#pricing" className={ui.textLink} data-button-reveal="">Сопровождение <ArrowRight /></Link>
+        <Link href="#launch" className={ui.textLink} data-button-reveal="">Запуск проекта <ArrowRight /></Link>
       </div>
     </>,
   },
@@ -53,7 +53,7 @@ const COMPANY_DETAILS = [
       {SITE_CONTACTS.offices.map((office) => <div key={office.city}>
         <h4>{office.city}</h4>
         <address>{office.street}</address>
-        <a className={ui.textLink} href={`https://yandex.ru/maps/?text=${encodeURIComponent(office.mapQuery)}`} target="_blank" rel="noopener noreferrer" aria-label={`${office.city}: открыть адрес на Яндекс Картах`}>
+        <a className={ui.textLink} href={`https://yandex.ru/maps/?text=${encodeURIComponent(office.mapQuery)}`} target="_blank" rel="noopener noreferrer" aria-label={`${office.city}: открыть адрес на Яндекс Картах`} data-button-reveal="">
           Открыть на карте <ArrowRight diagonal />
         </a>
       </div>)}
@@ -76,7 +76,7 @@ const COMPANY_DETAILS = [
           <dd><a href={SITE_CONTACTS.phoneHref}>{SITE_CONTACTS.phone}</a> · {SITE_CONTACTS.managerHours}</dd>
         </div>
       </dl>
-      <a className={ui.textLink} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer">Запросить полные реквизиты <ArrowRight diagonal /></a>
+      <a className={ui.textLink} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" data-button-reveal="">Запросить полные реквизиты <ArrowRight diagonal /></a>
     </>,
   },
 ];

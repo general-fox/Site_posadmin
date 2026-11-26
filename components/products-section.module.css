@@ -4,9 +4,12 @@
   --product-header-top: 80px;
   --product-heading-height: 112px;
   --product-gap: 24px;
+  --product-card-gap: clamp(108px, 18svh, 168px);
   --product-stack-step: 12px;
   --product-sticky-start: calc(var(--product-header-top) + var(--product-heading-height) + var(--product-gap));
   --product-card-height: max(380px, min(560px, calc(100svh - var(--product-sticky-start) - 32px)));
+  --product-preview-radius: 16px;
+  --product-preview-shadow: 0 12px 28px rgb(29 29 31 / 10%);
   position: relative;
   display: block;
   isolation: isolate;
@@ -17,6 +20,8 @@
   margin-bottom: var(--product-gap);
   padding-block: 12px 16px;
   background: var(--neutral);
+  opacity: var(--product-heading-opacity, 1);
+  pointer-events: none;
 }
 .productHeading h2 { margin-top: 12px; }
 .headingLogo { display: inline-block; width: auto; max-width: 100%; height: .86em; vertical-align: -.13em; }
@@ -31,8 +36,8 @@
   pointer-events: none;
 }
 /* Targets stay in flow even when their following card is already stuck. */
-.productCard + .productTarget { top: var(--product-gap); }
-.productCard + .productTarget + .productCard { margin-top: var(--product-gap); }
+.productCard + .productTarget { top: var(--product-card-gap); }
+.productCard + .productTarget + .productCard { margin-top: var(--product-card-gap); }
 .productCard {
   position: relative;
   z-index: 1;
@@ -47,7 +52,8 @@
 .secondProduct { --product-stack-offset: var(--product-stack-step); }
 .lastProduct { --product-stack-offset: calc(var(--product-stack-step) * 2); }
 .productCard.secondProduct { z-index: 2; }
-.productCard.lastProduct { z-index: 3; }
+/* The final surface also covers the title if a fast scroll precedes a fade frame. */
+.productCard.lastProduct { z-index: 11; }
 
 .tabletCard {
   grid-template-columns: minmax(0, .74fr) minmax(0, 1.26fr);
@@ -65,14 +71,18 @@
 .productCard :is(a, button, [tabindex="0"]) { scroll-margin-top: calc(var(--product-sticky-start) + var(--product-stack-offset, 0px)); scroll-margin-bottom: 16px; }
 
 .productVisual {
+  position: relative;
   display: grid;
   place-items: center;
   width: 100%;
   height: 100%;
   min-width: 0;
   min-height: 0;
+  padding: clamp(10px, 1.2vw, 16px);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #F8F9FB, #F0F2F5);
+  box-shadow: inset 0 0 0 1px rgb(29 29 31 / 3%);
 }
-.foxCard .productVisual { container-type: size; }
 
 @media (prefers-reduced-motion: no-preference) {
   .productHeading { position: sticky; top: var(--product-header-top); }
@@ -85,18 +95,19 @@
       calc(100svh - var(--product-measured-height, var(--product-card-height)) - 16px)
     );
   }
-  .productCard:has(:is(a, button, [tabindex="0"]):focus-visible) { z-index: 4; }
+  .productCard:has(:is(a, button, [tabindex="0"]):focus-visible) { z-index: 12; }
 }
 
 @media (max-width: 1023px) {
   .productStack { --product-header-top: 72px; }
 }
 @media (max-width: 767px) {
-  .productStack { --product-heading-height: 104px; --product-gap: 16px; --product-stack-step: 8px; }
+  .productStack { --product-heading-height: 104px; --product-gap: 16px; --product-card-gap: clamp(84px, 15svh, 120px); --product-stack-step: 8px; }
   .productHeading { padding-block: 10px 14px; }
   .productHeading h2 { margin-top: 10px; }
   .productCard { gap: 20px; padding: 22px; border-radius: 24px; }
   .productCopy { max-width: none; }
+  .productVisual { padding: 0; border-radius: 16px; }
   .productCopy h3 { font-size: clamp(32px, 8vw, 44px); }
   .category { margin-bottom: 6px; }
   .description { margin: 12px 0 16px; font-size: 15px; line-height: 1.5; }
@@ -104,13 +115,11 @@
 @media (max-width: 767px) and (orientation: portrait) {
   .tabletCard {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(clamp(196px, 30svh, 256px), 1fr);
+    grid-template-rows: auto minmax(240px, 1fr);
     align-items: start;
     height: auto;
     min-height: var(--product-card-height);
   }
-  .foxCard { grid-template-rows: auto auto; height: auto; min-height: 0; }
-  .foxCard .productVisual { height: auto; container-type: normal; }
 }
 @media (max-width: 360px) and (orientation: portrait) {
   .productHeading h2 { font-size: 1.5rem; }
@@ -122,12 +131,13 @@
   .tabletCard h3 { font-size: 32px; }
   .tabletCard .category { margin-bottom: 4px; }
   .tabletCard .description { margin: 10px 0 12px; font-size: 14px; line-height: 1.4; }
-  .foxCard { height: auto; min-height: calc(100svh - 72px); grid-template-rows: auto; }
-  .foxCard .productVisual { min-height: calc(100svh - 104px); }
   /* A short landscape viewport has no room for a pinned title plus readable
      cards. All content remains in normal flow, without an inner scroller. */
   .productHeading, .productCard:not(.lastProduct) { position: relative; top: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   .productTarget { scroll-margin-top: calc(var(--product-header-top) + 16px); }
+}
+@media (prefers-reduced-motion: reduce), (max-height: 540px) and (orientation: landscape) {
+  .productStack { --product-card-gap: calc(var(--product-gap) * 3); }
 }

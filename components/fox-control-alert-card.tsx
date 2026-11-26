@@ -55,13 +55,13 @@ export const foxControlAlertSamples: Record<AlertKind, {
 
 const colors = {
   sheet: "#FFFFFF",
-  outline: "#BAA0C7",
-  panel: "#F8F5FB",
-  row: "#F0EAF6",
-  alternate: "#F6F1F9",
-  ink: "#302638",
-  muted: "#786D80",
-  warning: "#C43D80",
+  outline: "#D4DBE5",
+  panel: "#F5F7FA",
+  row: "#EAF0F7",
+  alternate: "#F1F4F8",
+  ink: "#1D1D1F",
+  muted: "#666E7A",
+  warning: "#A04D4D",
 };
 
 /** Drawn product notification with fictional roles, venue and operation data. */
@@ -91,8 +91,8 @@ export function FoxControlAlertCard({ kind, className }: { kind: AlertKind; clas
     <desc id={descriptionId}>{`${alert.role}, ${alert.time}, Ресторан 01, ${alert.station}. ${operationDetails}.`}</desc>
     <defs>
       <linearGradient id={avatarId} x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor="#925BAA" />
-        <stop offset="1" stopColor="#F6814E" />
+        <stop offset="0" stopColor="#2563EB" />
+        <stop offset="1" stopColor="#5986E7" />
       </linearGradient>
     </defs>
 

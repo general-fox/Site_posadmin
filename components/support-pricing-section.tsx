@@ -138,7 +138,7 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
     </div>
     {children}
     <details {...disclosureCentering} className={styles.details}>
-      <summary>Что входит <UiIcon name="plus" /></summary>
+      <summary data-button-reveal="off">Что входит <UiIcon name="plus" /></summary>
       <ul>{features.map((feature) => <li key={feature}><UiIcon name="check" size={14} />{feature}</li>)}</ul>
     </details>
   </article>;

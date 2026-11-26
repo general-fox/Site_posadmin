@@ -12,27 +12,37 @@ type ScrollRevealOptions = {
   delay?: number;
   rows?: boolean;
   sequence?: boolean;
-  blur?: boolean;
+  // Media opts in explicitly; large card surfaces stay sharp by default.
+  blur?: boolean | "media";
   motion?: "fade" | "lift";
   after?: RefObject<HTMLElement | null>;
   active?: boolean;
   animateOnMount?: boolean;
 };
 
-type TextProps = { children?: ReactNode; className?: string; "data-reveal-word"?: string };
+type TextProps = {
+  children?: ReactNode;
+  className?: string;
+  "data-reveal-word"?: string;
+  "data-reveal-line-word"?: string;
+};
 
-function splitWords(children: ReactNode): ReactNode {
+function splitWords(children: ReactNode, lines = false): ReactNode {
+  const marker = lines ? { "data-reveal-line-word": "" } : { "data-reveal-word": "" };
   return Children.map(children, (child) => {
     if (typeof child === "string" || typeof child === "number") {
-      // Preserve spaces, punctuation and the original accessible reading order.
-      return String(child).split(/(\s+)/u).map((word, index) => /^\s*$/u.test(word)
-        ? word : <span key={index} data-reveal-word="">{word}</span>);
+      // Keep nonbreaking spaces inside one unit so they still prevent line wrapping.
+      // Breakable spaces remain text nodes, preserving the accessible reading order.
+      return String(child).split(/([^\S\u00a0\u202f\ufeff]+)/u).map((word, index) => /^[^\S\u00a0\u202f\ufeff]*$/u.test(word)
+        ? word : <span key={index} {...marker}>{word}</span>);
     }
     if (!isValidElement<TextProps>(child)) return child;
-    if (child.props["data-reveal-word"] !== undefined || child.props.className?.includes("sr-only")) return child;
+    if (child.type === RevealWords || child.type === RevealLines ||
+      child.props["data-reveal-word"] !== undefined || child.props["data-reveal-line-word"] !== undefined ||
+      child.props.className?.includes("sr-only")) return child;
     if (child.type === "br") return child;
-    if (typeof child.type !== "string" || child.type === "svg") return <span data-reveal-word="">{child}</span>;
-    return cloneElement(child, {}, splitWords(child.props.children));
+    if (typeof child.type !== "string" || child.type === "svg") return <span {...marker}>{child}</span>;
+    return cloneElement(child, {}, splitWords(child.props.children, lines));
   });
 }
 
@@ -40,10 +50,16 @@ export function RevealWords({ children }: { children: ReactNode }) {
   return <>{splitWords(children)}</>;
 }
 
+export function RevealLines({ children }: { children: ReactNode }) {
+  // One inline container also keeps flex paragraphs from making every word a flex item.
+  return <span data-reveal-lines="">{splitWords(children, true)}</span>;
+}
+
 function prepareHeadings(children: ReactNode): ReactNode {
   return Children.map(children, (child) => {
     if (!isValidElement<TextProps>(child) || typeof child.type !== "string") return child;
     if (/^h[1-6]$/.test(child.type)) return cloneElement(child, {}, <RevealWords>{child.props.children}</RevealWords>);
+    if (child.type === "p") return cloneElement(child, {}, <RevealLines>{child.props.children}</RevealLines>);
     return child.props.children ? cloneElement(child, {}, prepareHeadings(child.props.children)) : child;
   });
 }
@@ -73,6 +89,10 @@ export function useScrollReveal<T extends HTMLElement>({
     const duration = readNumber("--entrance-fade-duration", 700);
     const stagger = readNumber("--entrance-fade-stagger", 90);
     const distance = readNumber("--entrance-distance", window.innerWidth < 768 ? 8 : 10);
+    const textDuration = readNumber("--entrance-text-duration", 800);
+    const wordStagger = readNumber("--entrance-word-stagger", 90);
+    const lineStagger = readNumber("--entrance-line-stagger", 100);
+    const textDistance = readNumber("--entrance-text-distance", window.innerWidth < 768 ? 8 : 12);
     const blurRadius = rootStyle.getPropertyValue("--entrance-text-blur").trim() || "5px";
     const easing = rootStyle.getPropertyValue("--entrance-fade-ease").trim() || "cubic-bezier(.22, .61, .36, 1)";
     const advance = readNumber("--entrance-advance", 48);
@@ -99,17 +119,26 @@ export function useScrollReveal<T extends HTMLElement>({
     else if (element.matches("h1,h2,h3,h4,h5,h6,p") || surface || children.length === 0) collect(element);
     else children.forEach((child) => collect(child));
 
-    type Unit = { node: HTMLElement; opacity: string; filter: string; translate: string; word: number; text: boolean };
-    type Group = { anchor: HTMLElement; units: Unit[]; phase: "waiting" | "entering" | "settled"; animations: Animation[] };
+    type Unit = { node: HTMLElement; opacity: string; filter: string; translate: string; word: number; text: boolean; control: boolean };
+    type Group = {
+      anchor: HTMLElement;
+      units: Unit[];
+      textMode: "words" | "lines" | null;
+      phase: "waiting" | "entering" | "settled";
+      animations: Animation[];
+    };
+    const controlSelector = "button,summary,[role='button'],input[type='button'],input[type='submit'],input[type='reset'],[data-button-reveal]";
     const groups: Group[] = targets.map((anchor) => {
-      // Words animate only when the heading is a target, never inside a moving card.
-      const words = anchor.matches("h1,h2,h3,h4,h5,h6") ? Array.from(anchor.querySelectorAll<HTMLElement>("[data-reveal-word]")) : [];
+      // Text splits only when it is a target, never inside an independently moving card.
+      const control = anchor.matches(controlSelector);
+      const textMode = control ? null : anchor.matches("h1,h2,h3,h4,h5,h6") ? "words" : anchor.matches("p") ? "lines" : null;
+      const words = textMode ? Array.from(anchor.querySelectorAll<HTMLElement>(textMode === "words" ? "[data-reveal-word]" : "[data-reveal-line-word]")) : [];
       anchor.dataset.revealTarget = "";
       return {
-        anchor, phase: "waiting", animations: [],
+        anchor, textMode, phase: "waiting", animations: [],
         units: (words.length ? words : [anchor]).map((node, word) => {
           const css = getComputedStyle(node);
-          return { node, word, opacity: css.opacity, filter: css.filter, translate: css.translate, text: words.length > 0 || anchor.matches("h1,h2,h3,h4,h5,h6,p") };
+          return { node, word, opacity: css.opacity, filter: css.filter, translate: css.translate, text: textMode !== null, control };
         }),
       };
     });
@@ -136,8 +165,8 @@ export function useScrollReveal<T extends HTMLElement>({
       publish();
     };
     const firstFrame = (unit: Unit): Keyframe => ({
-      opacity: 0, translate: `0 ${distance}px`,
-      ...(blur && unit.text && unit.filter === "none" ? { filter: `blur(${blurRadius})` } : {}),
+      opacity: 0, translate: `0 ${unit.text ? textDistance : distance}px`,
+      ...(blur && !unit.control && (unit.text || blur === "media") && unit.filter === "none" ? { filter: `blur(${blurRadius})` } : {}),
     });
     const prepare = (group: Group) => {
       group.anchor.dataset.revealState = "waiting";
@@ -164,13 +193,27 @@ export function useScrollReveal<T extends HTMLElement>({
       group.anchor.dataset.revealState = "entering";
       if (!element.dataset.revealStartedAt) element.dataset.revealStartedAt = String(startsAt);
       publish();
+      // Measure at play time: a waiting paragraph may have wrapped differently after resize.
+      // Offset coordinates ignore the temporary reveal translate and share a document origin.
+      const lineTops = group.textMode === "lines" ? group.units.map(({ node }) => {
+        let top = 0;
+        let current: HTMLElement | null = node;
+        while (current) {
+          top += current.offsetTop;
+          current = current.offsetParent instanceof HTMLElement ? current.offsetParent : null;
+        }
+        return top;
+      }) : [];
+      const lineOrder = new Map(Array.from(new Set(lineTops)).sort((a, b) => a - b).map((top, index) => [top, index]));
       let remaining = group.units.length;
       group.animations = group.units.map((unit) => {
         const from = firstFrame(unit);
+        const textDelay = group.textMode === "lines" ? (lineOrder.get(lineTops[unit.word]) ?? 0) * lineStagger
+          : group.textMode === "words" ? unit.word * wordStagger : 0;
         const animation = unit.node.animate([from, {
           opacity: unit.opacity, translate: unit.translate,
           ...(from.filter ? { filter: unit.filter } : {}),
-        }], { duration, delay: wait + unit.word * 36, easing, fill: "both" });
+        }], { duration: unit.text ? textDuration : duration, delay: wait + textDelay, easing, fill: "both" });
         animation.onfinish = () => { if (--remaining === 0) settle(group); };
         return animation;
       });

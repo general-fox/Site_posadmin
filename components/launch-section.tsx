@@ -7,7 +7,7 @@ import {
   getDefaultProjectSelection, type ProjectCapabilityId, type ProjectWorkId,
 } from "@/lib/project-scope";
 import { LaunchContactForm } from "./launch-contact-form";
-import { RevealWords, SectionReveal, useScrollReveal } from "./marketing-ui";
+import { RevealLines, RevealWords, SectionReveal, useScrollReveal } from "./marketing-ui";
 import { UiIcon } from "./ui-icon";
 import { WorkplaceCount } from "./workplace-count";
 import ui from "./marketing.module.css";
@@ -81,7 +81,7 @@ export function LaunchSection() {
             <p className={ui.eyebrow}>Проект · автоматизация HoReCa</p>
             <h2 ref={headingRef} id="launch-title" className={ui.heading}>Расчет автоматизации</h2>
           </SectionReveal>
-          <p ref={descriptionRef} className={ui.lead} data-scroll-reveal="">Укажите оборудование, формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</p>
+          <p ref={descriptionRef} className={ui.lead} data-scroll-reveal=""><RevealLines>Укажите оборудование, формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</RevealLines></p>
         </div>
 
         <div className={styles.wizard} ref={wizardRef}>
@@ -105,6 +105,7 @@ export function LaunchSection() {
                     <li key={id}>
                       <button
                         className={styles.progressStep}
+                        data-button-reveal="off"
                         type="button"
                         aria-current={current ? "step" : undefined}
                         aria-controls={`launch-step-${id}`}
@@ -198,7 +199,7 @@ export function LaunchSection() {
                 <legend data-reveal-item="">Дополнительные возможности</legend>
                 <div className={styles.capabilityChoices}>
                   {PROJECT_CAPABILITIES.map((capability) => (
-                    <label key={capability.id} className={styles.capability} data-reveal-item="">
+                    <label key={capability.id} className={styles.capability} data-reveal-item="" data-button-reveal="">
                       <input type="checkbox" name="project-capability" value={capability.id} checked={selection.selectedCapabilityIds?.includes(capability.id) ?? false} onChange={(event) => toggleCapability(capability.id, event.target.checked)} />
                       <span>{capability.title}</span>
                     </label>

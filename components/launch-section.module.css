@@ -2,7 +2,6 @@
   --entrance-fade-duration: 700ms;
   --entrance-fade-ease: cubic-bezier(.22, .61, .36, 1);
   --entrance-distance: 10px;
-  --entrance-text-blur: 5px;
   --entrance-fade-stagger: 90ms;
 }
 

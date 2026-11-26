@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { BackToTop } from "@/components/back-to-top";
+import { ButtonEntrance } from "@/components/button-entrance";
 import { JsonLd } from "@/components/json-ld";
 import {
   buildPageMetadata,
@@ -52,13 +53,14 @@ export default function RootLayout({
   return (
     <html lang="ru" data-scroll-behavior="smooth" className={inter.variable}>
       <body className="min-h-full antialiased">
-        <noscript><style>{"[data-reveal-on-load] { opacity: 1 !important; }"}</style></noscript>
+        <noscript><style>{"[data-reveal-on-load] { opacity: 1 !important; } :is(button, summary, [role=button], input[type=button], input[type=submit], input[type=reset], [data-button-reveal]) { scale: none !important; filter: none !important; }"}</style></noscript>
         <JsonLd data={{
           "@context": "https://schema.org",
           "@graph": [organizationJsonLd, websiteJsonLd],
         }} />
         {children}
         <BackToTop />
+        <ButtonEntrance />
       </body>
     </html>
   );

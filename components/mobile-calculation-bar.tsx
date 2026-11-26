@@ -65,7 +65,7 @@ export function MobileCalculationBar({ configurationRef, summaryRef, summaryId, 
       <span>{productName}</span>
       {hasSelection ? <p>{new Intl.NumberFormat("ru-RU").format(total)} ₽ <span>/ мес.</span></p> : <p className={styles.empty}>Выберите сопровождение</p>}
     </div>
-    <a className={styles.link} href={`#${summaryId}`} aria-label={`Посмотреть итог расчёта ${productName}`}>
+    <a className={styles.link} href={`#${summaryId}`} aria-label={`Посмотреть итог расчёта ${productName}`} data-button-reveal="">
       <span>К расчёту</span>
       <UiIcon name="chevron-down" />
     </a>

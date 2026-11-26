@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { FlexBonusLogo } from "./flexbonus-logo";
+import { ProductPreviewFrame } from "./product-preview-frame";
 import styles from "./flexbonus-preview.module.css";
 
 // Fictional data only: the customer's screenshot is not shipped with the site.
@@ -17,10 +17,7 @@ function DashboardIcon() {
 }
 
 export function FlexBonusPreview() {
-  return <figure className={styles.preview} aria-label="Демонстрационный интерфейс Flexbonus">
-    <div className={styles.browser}>
-      <Image className={styles.browserChrome} src="/products/flexbonus-browser.svg" width={1440} height={56} alt="" aria-hidden="true" draggable={false} />
-      <div className={styles.screen}>
+  return <ProductPreviewFrame title="Flexbonus" label="Демонстрационный интерфейс Flexbonus: динамика покупок и бонусный баланс">
     <div className={styles.window}>
       <aside className={styles.sidebar} aria-hidden="true">
         <div className={styles.brand}><FlexBonusLogo className={styles.logo} /></div>
@@ -40,14 +37,14 @@ export function FlexBonusPreview() {
         </header>
 
         <dl className={styles.metrics}>
-          {metrics.map(([label, value, unit], index) => <div key={label}><dt><span className={styles.fullLabel}>{label}</span><span className={styles.compactLabel}>{["Покупки", "Заказы", "Ср. чек", "Новые клиенты"][index]}</span></dt><dd>{value}{unit && <span> {unit}</span>}</dd></div>)}
+          {metrics.map(([label, value, unit], index) => <div key={label} style={{ animationDelay: `${index * 90}ms` }}><dt><span className={styles.fullLabel}>{label}</span><span className={styles.compactLabel}>{["Покупки", "Заказы", "Ср. чек", "Новые клиенты"][index]}</span></dt><dd>{value}{unit && <span> {unit}</span>}</dd></div>)}
         </dl>
 
         <div className={styles.analytics}>
           <section className={styles.chart} aria-label="Пример динамики покупок за 30 дней">
             <div className={styles.panelHeading}><h5>Динамика покупок</h5><span>Сумма</span></div>
             <p className={styles.panelHint}>Оплаченные заказы</p>
-            <div className={styles.bars} aria-hidden="true">{purchases.map((height, index) => <span key={index} style={{ height: `${height}%` }} />)}</div>
+            <div className={styles.bars} aria-hidden="true">{purchases.map((height, index) => <span key={index} style={{ height: `${height}%`, animationDelay: `${280 + index * 28}ms` }} />)}</div>
             <div className={styles.chartAxis} aria-hidden="true"><span>Начало периода</span><span>Сегодня</span></div>
             <div className={styles.chartSummary}><span><strong>286</strong> счетов с покупками</span><span><strong>48%</strong> с повторной покупкой</span></div>
           </section>
@@ -60,7 +57,5 @@ export function FlexBonusPreview() {
         </div>
       </div>
     </div>
-      </div>
-    </div>
-  </figure>;
+  </ProductPreviewFrame>;
 }

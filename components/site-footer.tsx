@@ -35,7 +35,7 @@ export function SiteFooter() {
           <h2>На связи</h2>
           <a className={styles.phone} href={SITE_CONTACTS.phoneHref}>{SITE_CONTACTS.phone}</a>
           <p className={styles.hours}>Менеджер: {SITE_CONTACTS.managerHours.toLowerCase()}</p>
-          <a className={styles.telegram} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" aria-label="Написать менеджеру в Telegram, откроется в новой вкладке">Написать в Telegram<ArrowRight diagonal /></a>
+          <a className={styles.telegram} href={SITE_CONTACTS.telegramUrl} target="_blank" rel="noopener noreferrer" aria-label="Написать менеджеру в Telegram, откроется в новой вкладке" data-button-reveal="">Написать в Telegram<ArrowRight diagonal /></a>
           <p className={styles.support}>Техническая поддержка — 24/7</p>
         </div>
       </SectionReveal>

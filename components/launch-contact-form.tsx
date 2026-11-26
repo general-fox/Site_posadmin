@@ -166,7 +166,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                 <legend className={shared.label} data-stage-entry="" style={{ "--entry-index": 1 } as CSSProperties}>Способ получения сметы</legend>
                 <div className={styles.channelChoices}>
                   {channels.map((item, index) => (
-                    <label key={item.id} className={styles.channel} data-stage-entry="" style={{ "--entry-index": index + 2 } as CSSProperties}>
+                    <label key={item.id} className={styles.channel} data-stage-entry="" data-button-reveal="" style={{ "--entry-index": index + 2 } as CSSProperties}>
                       <input checked={channel.id === item.id} name="contactMethod" type="radio" value={item.id} onChange={() => setChannel(item)} />
                       <span>{item.label}</span>
                     </label>

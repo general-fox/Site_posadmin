@@ -1,7 +1,7 @@
 .actions { max-width: 100%; }
 .actions > :is(a, button) { white-space: nowrap; }
 @media (max-width: 600px) {
-  .actions.actions { flex-direction: column; width: min(100%, 300px); gap: 10px; }
+  .actions.actions { flex-direction: column; width: min(100%, 300px); gap: 16px 32px; }
   .actions.actions > :is(a, button) { width: 100%; padding-inline: 16px; font-size: 14px; }
 }
 @media (max-height: 520px) and (min-width: 481px) {

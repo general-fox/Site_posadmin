@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { RevealWords, useScrollReveal } from "./marketing-ui";
+import { RevealLines, RevealWords, useScrollReveal } from "./marketing-ui";
 import styles from "./service-pages.module.css";
 
 export function ContactPageIntro({ breadcrumbs, actions }: { breadcrumbs: ReactNode; actions: ReactNode }) {
@@ -12,9 +12,9 @@ export function ContactPageIntro({ breadcrumbs, actions }: { breadcrumbs: ReactN
 
   return <header className={styles.intro} data-shared-reveal="">
     {breadcrumbs}
-    <p className={styles.eyebrow} ref={eyebrowRef} data-scroll-reveal="" data-reveal-on-load="">На связи с вашим заведением</p>
+    <p className={styles.eyebrow} ref={eyebrowRef} data-scroll-reveal="" data-reveal-on-load=""><RevealLines>На связи с вашим заведением</RevealLines></p>
     <h1 className={styles.title} ref={headingRef} data-scroll-reveal="" data-reveal-on-load=""><RevealWords>Контакты Posadmin</RevealWords></h1>
-    <p className={styles.lead} ref={leadRef} data-scroll-reveal="" data-reveal-on-load="">Обсудим запуск, сопровождение или развитие вашей системы. Наши офисы находятся в Люберцах и Новороссийске, а техническая поддержка работает 24/7.</p>
+    <p className={styles.lead} ref={leadRef} data-scroll-reveal="" data-reveal-on-load=""><RevealLines>Обсудим запуск, сопровождение или развитие вашей системы. Наши офисы находятся в Люберцах и Новороссийске, а техническая поддержка работает 24/7.</RevealLines></p>
     <div className={styles.actions} ref={actionsRef} data-scroll-reveal="" data-reveal-on-load="">{actions}</div>
   </header>;
 }
