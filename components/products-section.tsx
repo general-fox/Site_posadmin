@@ -1,23 +1,49 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode, type Ref, type RefObject } from "react";
 import { CallbackDialog } from "@/components/callback-dialog";
 import { SITE_PRODUCTS } from "@/lib/site-navigation";
 import { FlexBonusPreview } from "./flexbonus-preview";
 import { FoxControlTelegram } from "./fox-control-telegram";
 import { ReZebraPreview } from "./rezebra-preview";
 import { SiteLogoMark } from "./site-logo-mark";
-import { SectionReveal } from "./marketing-ui";
+import { SectionReveal, useScrollReveal } from "./marketing-ui";
+import { ProductCopyEntrance } from "./product-preview-frame";
+import { ProductIntegration } from "./product-integration";
+import { enableProductScrollSettling } from "./product-scroll-settling";
 import { UiIcon } from "./ui-icon";
 import ui from "./marketing.module.css";
 import styles from "./products-section.module.css";
 
 const { rezebra, flexbonus, foxControl } = SITE_PRODUCTS;
 
+function ProductCard({ id, stackClass = "", cardRef, heading, children, preview }: {
+  id: string;
+  stackClass?: string;
+  cardRef: Ref<HTMLElement>;
+  heading: RefObject<HTMLHeadingElement | null>;
+  children: ReactNode;
+  preview: ReactNode;
+}) {
+  const surface = useScrollReveal<HTMLDivElement>({ motion: "lift", blur: false, after: heading, animateOnMount: true });
+  const copy = useScrollReveal<HTMLDivElement>({ motion: "lift", blur: false, after: surface, delay: .05, animateOnMount: true });
+  return <>
+    <span id={id} className={`${styles.productTarget} ${stackClass}`} data-anchor-heading={`${id}-title`} aria-hidden="true" />
+    <article ref={cardRef} className={`${styles.productCard} ${styles.tabletCard} ${stackClass}`} aria-labelledby={`${id}-title`}>
+      <div ref={surface} className={styles.productSurface} data-scroll-replay="off" data-reveal-on-load="" aria-hidden="true" />
+      <div ref={copy} className={styles.productCopy} data-scroll-replay-item="" data-reveal-on-load="">{children}</div>
+      <div className={styles.productVisual}>
+        <ProductCopyEntrance.Provider value={copy}>{preview}</ProductCopyEntrance.Provider>
+      </div>
+    </article>
+  </>;
+}
+
 export function ProductsSection() {
   const [callbackOpen, setCallbackOpen] = useState(false);
   const stackRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
 
   useEffect(() => {
@@ -67,6 +93,7 @@ export function ProductsSection() {
       queueHeadingVisibility();
     };
     measure();
+    const stopSettling = enableProductScrollSettling(stack);
     const observer = typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
     observer?.observe(heading);
     cards.forEach((card) => observer?.observe(card));
@@ -74,6 +101,7 @@ export function ProductsSection() {
     window.addEventListener("resize", measure);
     reducedMotion.addEventListener("change", measure);
     return () => {
+      stopSettling();
       observer?.disconnect();
       cancelAnimationFrame(visibilityFrame);
       window.removeEventListener("scroll", queueHeadingVisibility);
@@ -86,61 +114,47 @@ export function ProductsSection() {
   return <section aria-labelledby="products-title" className={`${ui.section} ${styles.section} section-atmosphere-host`} id="products">
     <div ref={stackRef} className={`${ui.shell} ${styles.productStack}`}>
       <header ref={headingRef} className={styles.productHeading}>
-        <SectionReveal>
+        <SectionReveal animateOnMount>
           <p className={ui.eyebrow}>Продукты для вашего заведения</p>
-          <h2 className={ui.heading} id="products-title">
+          <h2 ref={titleRef} className={ui.heading} id="products-title">
             Сделано в <span data-reveal-word=""><SiteLogoMark className={styles.headingLogo} withDot /><span className="sr-only">Posadmin</span></span>
           </h2>
         </SectionReveal>
       </header>
-      <span id="rezebra" className={styles.productTarget} data-anchor-heading="rezebra-title" aria-hidden="true" />
-      <article ref={(card) => { cardRefs.current[0] = card; }} className={`${styles.productCard} ${styles.tabletCard}`} aria-labelledby="rezebra-title">
-        <div className={styles.productCopy}>
-          <p className={styles.category}>{rezebra.category}</p>
-          <h3 id="rezebra-title">{rezebra.name}</h3>
-          <p className={styles.description}>Ведите бронирования и рассаживайте гостей на плане зала. Хостес сразу видит, какие столы свободны и когда придут следующие гости.</p>
-          <a href="https://rezebra.ru/" target="_blank" rel="noreferrer" className={ui.primary} data-button-reveal="">На сайт {rezebra.name} <UiIcon name="arrow-up-right" /></a>
+      <ProductCard id="flexbonusb" cardRef={(card) => { cardRefs.current[0] = card; }} heading={titleRef} preview={<FlexBonusPreview />}>
+        <p className={styles.category}>{flexbonus.category}</p>
+        <h3 id="flexbonusb-title">{flexbonus.name}</h3>
+        <ProductIntegration />
+        <p className={styles.description}>Предлагайте гостям бонусы, скидки и сертификаты. В дашборде видно, как часто гости возвращаются и сколько тратят.</p>
+        <button type="button" className={ui.primary} onClick={() => setCallbackOpen(true)}>Узнать о подключении <UiIcon name="arrow-right" /></button>
+      </ProductCard>
+      <ProductCard id="rezebra" stackClass={styles.secondProduct} cardRef={(card) => { cardRefs.current[1] = card; }} heading={titleRef} preview={<ReZebraPreview />}>
+        <p className={styles.category}>{rezebra.category}</p>
+        <h3 id="rezebra-title">{rezebra.name}</h3>
+        <ProductIntegration />
+        <p className={styles.description}>Ведите бронирования и рассаживайте гостей на плане зала. Хостес сразу видит, какие столы свободны и когда придут следующие гости.</p>
+        <a href="https://rezebra.ru/" target="_blank" rel="noreferrer" className={ui.primary} data-button-reveal="">На сайт {rezebra.name} <UiIcon name="arrow-up-right" /></a>
+      </ProductCard>
+      <ProductCard id="foxcontrol" stackClass={styles.lastProduct} cardRef={(card) => { cardRefs.current[2] = card; }} heading={titleRef} preview={<FoxControlTelegram />}>
+        <p className={styles.category}>{foxControl.category}</p>
+        <h3 id="foxcontrol-title">{foxControl.name}</h3>
+        <ProductIntegration />
+        <p className={styles.description}>Получайте в Telegram уведомления об удалениях, скидках и переносах в r_keeper. Ежедневные отчёты по сменам доступны для одного ресторана и всей сети.</p>
+        <div className={styles.productActions}>
+          <a href="https://foxcontrol.ru/" target="_blank" rel="noopener noreferrer" className={ui.primary} aria-label="На сайт Fox Control, откроется в новой вкладке" data-button-reveal="">На сайт Fox Control <UiIcon name="arrow-up-right" /></a>
+          <a
+            data-button-reveal=""
+            data-button-motion="fade"
+            href="/products/fox-control-daily-report-example.pdf"
+            download="Fox-Control-ежедневный-отчёт.pdf"
+            type="application/pdf"
+            className={styles.reportLink}
+            aria-label="Скачать пример ежедневного отчёта Fox Control в PDF"
+          >
+            Скачать пример отчёта <UiIcon name="download" />
+          </a>
         </div>
-        <div className={styles.productVisual}>
-          <ReZebraPreview />
-        </div>
-      </article>
-      <span id="flexbonusb" className={`${styles.productTarget} ${styles.secondProduct}`} data-anchor-heading="flexbonusb-title" aria-hidden="true" />
-      <article ref={(card) => { cardRefs.current[1] = card; }} className={`${styles.productCard} ${styles.tabletCard} ${styles.secondProduct}`} aria-labelledby="flexbonusb-title">
-        <div className={styles.productCopy}>
-          <p className={styles.category}>{flexbonus.category}</p>
-          <h3 id="flexbonusb-title">{flexbonus.name}</h3>
-          <p className={styles.description}>Предлагайте гостям бонусы, скидки и сертификаты. В дашборде видно, как часто гости возвращаются и сколько тратят.</p>
-          <button type="button" className={ui.primary} onClick={() => setCallbackOpen(true)}>Узнать о подключении <UiIcon name="arrow-right" /></button>
-        </div>
-        <div className={styles.productVisual}>
-          <FlexBonusPreview />
-        </div>
-      </article>
-      <span id="foxcontrol" className={`${styles.productTarget} ${styles.lastProduct}`} data-anchor-heading="foxcontrol-title" aria-hidden="true" />
-      <article ref={(card) => { cardRefs.current[2] = card; }} className={`${styles.productCard} ${styles.tabletCard} ${styles.lastProduct}`} aria-labelledby="foxcontrol-title">
-        <div className={styles.productCopy}>
-          <p className={styles.category}>{foxControl.category}</p>
-          <h3 id="foxcontrol-title">{foxControl.name}</h3>
-          <p className={styles.description}>Получайте в Telegram уведомления об удалениях, скидках и переносах в r_keeper. Ежедневные отчёты по сменам доступны для одного ресторана и всей сети.</p>
-          <div className={styles.productActions}>
-            <a href="https://foxcontrol.ru/" target="_blank" rel="noopener noreferrer" className={ui.primary} aria-label="На сайт Fox Control, откроется в новой вкладке" data-button-reveal="">На сайт Fox Control <UiIcon name="arrow-up-right" /></a>
-            <a
-              data-button-reveal=""
-              href="/products/fox-control-daily-report-example.pdf"
-              download="Fox-Control-ежедневный-отчёт.pdf"
-              type="application/pdf"
-              className={ui.secondary}
-              aria-label="Скачать пример ежедневного отчёта Fox Control в PDF"
-            >
-              Скачать пример отчёта <UiIcon name="download" />
-            </a>
-          </div>
-        </div>
-        <div className={styles.productVisual}>
-          <FoxControlTelegram />
-        </div>
-      </article>
+      </ProductCard>
     </div>
     <CallbackDialog onClose={() => setCallbackOpen(false)} open={callbackOpen} />
   </section>;

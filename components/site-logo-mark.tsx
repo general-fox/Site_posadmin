@@ -11,10 +11,12 @@ const PATHS = [
 
 export function SiteLogoMark({ className, withDot = false }: { className?: string; withDot?: boolean }) {
   const width = withDot ? 109 : 94.7954;
+  // The dotted mark spans x=0…106.25. Keep its transparent margins equal.
+  const minX = withDot ? (106.25 - width) / 2 : 0;
   return (
     <svg
       className={className}
-      viewBox={`0 0 ${width} 17.43`}
+      viewBox={`${minX} 0 ${width} 17.43`}
       width={width}
       height="17.43"
       fill="none"

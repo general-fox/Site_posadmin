@@ -1,0 +1,13 @@
+.body { display: flow-root; }
+:global([data-answer-motion]) > .clip { overflow: hidden; }
+:global([data-answer-motion="opening"]) > :global([data-answer-clip]) > .body { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  :global([data-answer-lines]) > :global([data-answer-clip]) > .body :is(:global([data-reveal-line-word]), :global([data-answer-link]), :global([data-answer-item])) {
+    animation: answer-line-in 480ms var(--entrance-fade-ease) min(calc(var(--answer-line, 0) * 65ms), 780ms) backwards;
+  }
+  :global([data-answer-lines]) > :global([data-answer-clip]) > .body:focus-within :is(:global([data-reveal-line-word]), :global([data-answer-link]), :global([data-answer-item])) { animation: none; }
+}
+@keyframes answer-line-in {
+  from { opacity: 0; translate: 0 6px; filter: blur(3px); }
+  to { opacity: 1; translate: 0 0; filter: blur(0); }
+}

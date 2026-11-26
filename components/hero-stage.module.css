@@ -3,7 +3,6 @@
 .title { margin-top: 41px; font-size: clamp(44px, 4.8vw, 66px); font-weight: 400; line-height: 1.14; letter-spacing: -.018em; text-wrap: balance; }
 .unbroken { white-space: nowrap; }
 .lead { max-width: 590px; margin: 24px auto 0; color: var(--text-body); font-size: 18px; line-height: 1.65; text-wrap: pretty; }
-/* Leave room for the 10% entrance overshoot without touching neighbouring buttons. */
 .copy :global(.hero-actions) { justify-content: center; flex-wrap: wrap; margin: 28px auto 0; gap: 16px 32px; }
 .copy :global(.hero-project-link), .copy :global(.hero-callback-link) { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 48px; padding: 14px 24px; border: 0; border-radius: 999px; font-size: 15px; font-weight: 400; }
 .copy :global(.hero-project-link) { background: var(--action); color: var(--action-ink); }

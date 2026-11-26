@@ -18,11 +18,13 @@ type WorkplaceCountProps = {
   onChange: (value: number) => void;
   disabled?: boolean;
   revealItem?: boolean;
+  revealButtons?: boolean;
 };
 
 export function WorkplaceCount({
   id, name, value, label, description, min = MIN_ONLINE_WORKPLACES, max = MAX_ONLINE_WORKPLACES,
   limitNote, className = `${styles.countRow} ${styles.workplaceRow}`, onChange, disabled = false, revealItem = false,
+  revealButtons = true,
 }: WorkplaceCountProps) {
   const [draft, setDraft] = useState(String(value));
   const [limitNotice, setLimitNotice] = useState(0);
@@ -59,7 +61,7 @@ export function WorkplaceCount({
       <p id={descriptionId}>{description}</p>
     </div>
     <div className={styles.stepper}>
-      <button type="button" aria-label={label ? `Уменьшить: ${label}` : "Уменьшить количество рабочих мест"} disabled={disabled || value === min} onClick={() => updateCount(value - 1)}><UiIcon name="minus" /></button>
+      <button type="button" aria-label={label ? `Уменьшить: ${label}` : "Уменьшить количество рабочих мест"} data-button-reveal={revealButtons ? undefined : "off"} disabled={disabled || value === min} onClick={() => updateCount(value - 1)}><UiIcon name="minus" /></button>
       <input
         id={id}
         name={name}
@@ -95,6 +97,7 @@ export function WorkplaceCount({
         type="button"
         aria-label={atLimit && limitNote ? limitLabel : incrementLabel}
         aria-describedby={limitVisible ? limitId : undefined}
+        data-button-reveal={revealButtons ? undefined : "off"}
         disabled={disabled || (atLimit && !limitNote)}
         onClick={() => {
           const next = Math.min(max, value + 1);

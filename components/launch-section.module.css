@@ -145,6 +145,11 @@
 
 .stage[inert] { visibility: hidden; }
 
+@media (prefers-reduced-motion: no-preference) {
+  .panels[data-step-return] > .stage:not([inert]) { animation: step-return 180ms ease-out; }
+}
+@keyframes step-return { from { opacity: .5; } to { opacity: 1; } }
+
 .formatStage {
   --entrance-advance: 32px;
 }
@@ -349,7 +354,7 @@
 .capabilityChoices {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin-top: 8px;
 }
 
@@ -424,11 +429,20 @@
 @media (max-width: 767px) {
   .section { --entrance-distance: 8px; }
   .stage[inert] { display: none; }
+  .equipmentList { gap: 6px; }
+  .equipmentRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    padding: 8px 10px;
+  }
+  .equipmentRow > div:first-child { flex: 1 1 84px; overflow-wrap: anywhere; }
+  .equipmentRow label { display: block; line-height: 1.3; }
+  .equipmentRow > div:first-child p { margin-top: 2px; font-size: 13px; line-height: 1.35; }
+  .equipmentRow > div:last-of-type { grid-template-columns: 44px 32px 44px; gap: 0; }
 }
 
 @media (max-width: 480px) {
-  .equipmentRow { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .equipmentRow > div:last-of-type { justify-self: end; }
   .progressList { gap: 5px; }
   .progressStep { padding: 8px 6px; font-size: 12px; }
   .stepNumber { width: 18px; height: 18px; font-size: 11px; }
@@ -444,6 +458,12 @@
 }
 
 @media (max-width: 374px) {
+  /* Let longer explanations use the space underneath both the label and stepper. */
+  .equipmentRow { display: grid; padding-block: 6px; }
+  .equipmentRow > div:first-child { display: contents; }
+  .equipmentRow label { grid-area: 1 / 1; }
+  .equipmentRow > div:last-of-type { grid-area: 1 / 2; }
+  .equipmentRow > div:first-child p { grid-area: 2 / 1 / 3 / -1; margin: 0; }
   .wizard .actions > .back { flex: 0 0 48px; align-self: center; height: 48px; padding: 0; }
   .back > svg { width: 18px; height: 18px; }
   .backLabel { display: none; }

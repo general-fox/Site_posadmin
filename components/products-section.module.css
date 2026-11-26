@@ -4,7 +4,7 @@
   --product-header-top: 80px;
   --product-heading-height: 112px;
   --product-gap: 24px;
-  --product-card-gap: clamp(108px, 18svh, 168px);
+  --product-card-gap: clamp(112px, 20svh, 224px);
   --product-stack-step: 12px;
   --product-sticky-start: calc(var(--product-header-top) + var(--product-heading-height) + var(--product-gap));
   --product-card-height: max(380px, min(560px, calc(100svh - var(--product-sticky-start) - 32px)));
@@ -46,8 +46,20 @@
   min-width: 0;
   padding: clamp(20px, 3.2vw, 44px);
   border-radius: 28px;
+  /* Keep the sticky stack opaque while only its surface changes colour. */
+  background: var(--neutral);
+}
+.productSurface {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
   background: var(--milk);
   box-shadow: 0 4px 10px rgb(29 29 31 / 5%), inset 0 1px 0 rgb(29 29 31 / 4%);
+  --entrance-distance: 0px;
+  --entrance-advance: -32px;
+  --entrance-fade-duration: 480ms;
 }
 .secondProduct { --product-stack-offset: var(--product-stack-step); }
 .lastProduct { --product-stack-offset: calc(var(--product-stack-step) * 2); }
@@ -62,12 +74,33 @@
   height: var(--product-card-height);
   min-height: min-content;
 }
-.productCopy { min-width: 0; max-width: 46ch; }
+.productCopy { min-width: 0; max-width: 46ch; --entrance-fade-duration: 520ms; --entrance-distance: 6px; }
 .category { margin: 0 0 12px; color: var(--text-body); font-size: 14px; line-height: 1.4; }
 .productCopy h3 { margin: 0; font-size: clamp(36px, 4vw, 56px); font-weight: 500; line-height: 1.05; letter-spacing: -.045em; }
 .description { margin: 20px 0 28px; color: var(--text-body); font-size: 16px; line-height: 1.6; text-wrap: pretty; }
 .productActions { display: flex; flex-wrap: wrap; gap: 8px 12px; }
 .productCopy :is(a, button):focus-visible { background: var(--ink); color: var(--milk); }
+.reportLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--action);
+  font-size: var(--font-small);
+  text-decoration: underline;
+  text-underline-offset: .22em;
+}
+.reportLink svg { flex: none; }
+@media (hover: hover) {
+  .reportLink:hover { color: var(--ink); }
+}
+.productCopy .reportLink:focus-visible {
+  background: transparent;
+  color: var(--action);
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
 .productCard :is(a, button, [tabindex="0"]) { scroll-margin-top: calc(var(--product-sticky-start) + var(--product-stack-offset, 0px)); scroll-margin-bottom: 16px; }
 
 .productVisual {
@@ -80,8 +113,6 @@
   min-height: 0;
   padding: clamp(10px, 1.2vw, 16px);
   border-radius: 20px;
-  background: linear-gradient(145deg, #F8F9FB, #F0F2F5);
-  box-shadow: inset 0 0 0 1px rgb(29 29 31 / 3%);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -102,7 +133,7 @@
   .productStack { --product-header-top: 72px; }
 }
 @media (max-width: 767px) {
-  .productStack { --product-heading-height: 104px; --product-gap: 16px; --product-card-gap: clamp(84px, 15svh, 120px); --product-stack-step: 8px; }
+  .productStack { --product-heading-height: 104px; --product-gap: 16px; --product-card-gap: clamp(80px, 15svh, 144px); --product-stack-step: 8px; }
   .productHeading { padding-block: 10px 14px; }
   .productHeading h2 { margin-top: 10px; }
   .productCard { gap: 20px; padding: 22px; border-radius: 24px; }

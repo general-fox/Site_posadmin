@@ -1,6 +1,8 @@
 "use client";
 
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
+import { enableHomeScrollReplay } from "./home-scroll-replay";
+import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
 import { ContactsSection } from "./contacts-section";
 import { SiteFooter } from "./site-footer";
 import styles from "./closing-layout.module.css";
@@ -22,6 +24,12 @@ export function ClosingLayout({
   page?: "home" | "services" | "contacts" | "other";
   ending?: ReactNode;
 }) {
+  const root = useRef<HTMLDivElement>(null);
+  const reducedMotion = useHydratedReducedMotion();
+  useEffect(() => {
+    if (page === "home" && !reducedMotion && root.current) return enableHomeScrollReplay(root.current);
+  }, [page, reducedMotion]);
+
   useEffect(() => {
     const targetForHash = (hash: string) => {
       try { return hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null; }
@@ -83,7 +91,7 @@ export function ClosingLayout({
     };
   }, []);
 
-  return <div className={styles.stack}>
+  return <div ref={root} className={styles.stack}>
       <div className={`${styles.underlay} ${page === "home" ? styles.productUnderlay : ""}`} data-closing-underlay>{children}</div>
       <div className={`${styles.ending} ${page !== "home" ? styles.flushEnding : ""} ${page === "services" || page === "other" ? styles.footerEnding : ""}`} data-closing-ending data-header-surface="dark">
         {ending ?? <><ContactsSection flushTop /><SiteFooter /></>}

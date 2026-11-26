@@ -13,8 +13,8 @@ import styles from "./hero-stage.module.css";
 import entry from "./hero-entrance.module.css";
 
 const products = [
-  { id: "rezebra", preview: "rezebra", ...SITE_PRODUCTS.rezebra, description: "Бронирования, столы и загрузка зала" },
   { id: "flexbonusb", preview: "flexbonus", ...SITE_PRODUCTS.flexbonus, description: "Бонусы, скидки и лояльность гостей" },
+  { id: "rezebra", preview: "rezebra", ...SITE_PRODUCTS.rezebra, description: "Бронирования, столы и загрузка зала" },
   { id: "foxcontrol", preview: "foxcontrol", ...SITE_PRODUCTS.foxControl, description: "Контроль кассовых операций" },
 ] as const;
 const systems = ["r_keeper", "1С", "ЕГАИС", "ККТ", "Честный знак", "Меркурий", "IT-инфраструктура"];
@@ -95,11 +95,11 @@ export function HeroStage() {
     <div className={styles.copy}>
       <h1 className={styles.title} ref={headingRef} data-scroll-reveal="" data-reveal-on-load=""><RevealWords>Автоматизация и <span className={styles.unbroken}>IT-сопровождение</span> HoReCa</RevealWords></h1>
       <p className={styles.lead} ref={leadRef} data-scroll-reveal="" data-reveal-on-load=""><RevealLines>Разрабатываем решения для вашего заведения и берём на себя технический контур — от касс до IT-инфраструктуры.</RevealLines></p>
-      <div ref={actionsRef} data-scroll-reveal="" data-reveal-on-load=""><HeroActions /></div>
+      <div ref={actionsRef} data-scroll-reveal="" data-reveal-on-load="" data-button-group=""><HeroActions /></div>
       <ul className={styles.systems} ref={systemsRef} role="list" aria-label="Направления работы" data-scroll-reveal="" data-reveal-on-load="">
         {systems.map((name) => <li key={name} data-reveal-item="">{name}</li>)}
       </ul>
-      <a className={styles.dealer} ref={dealerRef} href="https://rkeeper.ru/dealers/" target="_blank" rel="noopener noreferrer" data-scroll-reveal="" data-reveal-on-load="" data-button-reveal="off">
+      <a className={styles.dealer} ref={dealerRef} href="https://rkeeper.ru/dealers/" target="_blank" rel="noopener noreferrer" data-scroll-reveal="" data-reveal-on-load="" data-button-reveal="">
         Официальный дилер r_keeper <UiIcon name="arrow-up-right" size={14} />
         <span className="sr-only">, откроется в новой вкладке</span>
       </a>

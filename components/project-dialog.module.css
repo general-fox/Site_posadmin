@@ -42,7 +42,7 @@
 .estimateDetails li strong { display: block; font-weight: 400; }
 .estimateDetails li div > span { display: block; margin-top: 3px; color: var(--text-body); font-size: 11px; }
 .estimateDetails li > span { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.estimateDetails > p { margin-top: 8px; font-size: 11px; color: var(--text-body); line-height: 1.6; }
+.estimateDetails [data-answer-body] > p { margin-top: 8px; font-size: 11px; color: var(--text-body); line-height: 1.6; }
 .optional { margin-left: 5px; color: var(--text-body); font-size: 12px; font-weight: 400; }
 .taskDisclosure { margin-top: 16px; }
 .taskDisclosure summary { display: flex; min-height: 44px; align-items: center; gap: 8px; padding-block: 8px; color: var(--ink); cursor: pointer; font-size: 13px; line-height: 1.5; list-style: none; }

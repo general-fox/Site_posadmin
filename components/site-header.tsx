@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SiteLogoMark } from "@/components/site-logo-mark";
+import { AnimatedDetails, closeAnimatedDetails } from "./animated-details";
+import { followHeaderLink } from "./header-highlight";
 import { SITE_CONTACTS } from "@/lib/site-contacts";
 import { HOME_NAVIGATION } from "@/lib/site-navigation";
 import styles from "./site-header.module.css";
@@ -50,17 +52,31 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
   const pathname = usePathname();
   const [surface, setSurface] = useState<HeaderSurface>(page === "home" ? "dark" : "light");
   const [activeSection, setActiveSection] = useState<Section | null>(null);
-  const [previewSection, setPreviewSection] = useState<Section | null>();
+  const [hoveredSection, setHoveredSection] = useState<Section | null>();
+  const [focusedSection, setFocusedSection] = useState<Section | null>();
   const headerRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
+  const highlightRef = useRef<HTMLSpanElement>(null);
   const mobileDisclosureRef = useRef<HTMLDetailsElement>(null);
   const mobileTriggerRef = useRef<HTMLElement>(null);
   const currentSection = page === "home" ? activeSection : page === "contacts" ? "contact" : page === "services" ? "launch" : null;
-  const highlightedSection = previewSection === undefined ? currentSection : previewSection;
+  const highlightedSection = hoveredSection !== undefined ? hoveredSection
+    : focusedSection !== undefined ? focusedSection : currentSection;
+
+  useLayoutEffect(() => {
+    if (navRef.current && highlightRef.current) return followHeaderLink(navRef.current, highlightRef.current);
+  }, [pathname]);
+
+  function previewFocus(link: HTMLAnchorElement, section: Section | null) {
+    if (link.matches(":focus-visible")) {
+      setHoveredSection(undefined);
+      setFocusedSection(section);
+    }
+  }
 
   const closeMenus = useCallback(() => {
     const menu = mobileDisclosureRef.current;
-    if (menu?.open) menu.open = false;
+    if (menu?.open) closeAnimatedDetails(menu);
   }, []);
 
   useEffect(() => {
@@ -198,10 +214,13 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
     <header ref={headerRef} className={`site-header ${styles.header}`} data-surface={surface} data-page={page}>
       <div className={styles.headerInner} style={{ "--header-nav-length": HOME_NAVIGATION.length } as CSSProperties}>
         <nav key={pathname} ref={navRef} className={`site-nav ${styles.nav}`} aria-label="Основное меню"
-          onMouseLeave={() => setPreviewSection(undefined)}
-          onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setPreviewSection(undefined); }}>
+          onPointerLeave={() => setHoveredSection(undefined)}
+          onPointerDown={() => setFocusedSection(undefined)}
+          onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocusedSection(undefined); }}>
+          <span ref={highlightRef} className={styles.navHighlight} aria-hidden="true" />
           <Link href="/" aria-label="posadmin, на главную" className={styles.logo} data-highlighted={highlightedSection === null ? "true" : undefined}
-            onMouseEnter={() => setPreviewSection(null)} onFocus={() => setPreviewSection(null)}>
+            onPointerEnter={(event) => { if (event.pointerType !== "touch") setHoveredSection(null); }}
+            onFocus={(event) => previewFocus(event.currentTarget, null)}>
             <SiteLogoMark className="site-logo-mark" withDot />
           </Link>
           {HOME_NAVIGATION.map((item, index) => (
@@ -209,7 +228,8 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
               className={`${styles.navItem} ${styles.desktopLink}`} aria-current={currentSection === item.id ? "location" : undefined}
               style={{ "--header-item-index": index } as CSSProperties}
               data-highlighted={highlightedSection === item.id ? "true" : undefined}
-              onMouseEnter={() => setPreviewSection(item.id)} onFocus={() => setPreviewSection(item.id)}>
+              onPointerEnter={(event) => { if (event.pointerType !== "touch") setHoveredSection(item.id); }}
+              onFocus={(event) => previewFocus(event.currentTarget, item.id)}>
               <span className="nav-link">{item.label}</span>
             </Link>
           ))}
@@ -222,7 +242,7 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
             <TelegramIcon />
           </a>
         </div>
-        <details key={`mobile-${pathname}`} ref={mobileDisclosureRef} className={styles.mobileDisclosure}>
+        <AnimatedDetails key={`mobile-${pathname}`} ref={mobileDisclosureRef} className={styles.mobileDisclosure} clipClassName={styles.mobilePanel}>
           <summary ref={mobileTriggerRef} className={`site-nav ${styles.mobileTrigger}`} aria-controls="mobile-site-navigation" data-button-reveal="">
             <span className={`${styles.mobileTriggerLabel} ${styles.openMenuLabel}`}>Меню</span>
             <span className={`${styles.mobileTriggerLabel} ${styles.closeMenuLabel}`}>Закрыть</span>
@@ -232,16 +252,15 @@ export function SiteHeader({ page = "home" }: { page?: Page }) {
             </svg>
           </summary>
           <nav id="mobile-site-navigation" aria-label="Мобильное меню" className={`site-mobile-menu ${styles.mobileMenu}`} data-lenis-prevent>
-            {HOME_NAVIGATION.map((item, index) => <Link key={item.id} href={item.href} className={styles.mobileItem}
-              style={{ "--header-item-index": index } as CSSProperties}
+            {HOME_NAVIGATION.map((item) => <Link key={item.id} href={item.href} className={styles.mobileItem} data-answer-item=""
               aria-current={currentSection === item.id ? "location" : undefined}>{item.label}<Arrow /></Link>)}
-            <div className={styles.mobileContact}>
-              <a className={styles.mobilePhone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`} data-button-reveal="">
+            <div className={styles.mobileContact} data-answer-item="">
+              <a className={styles.mobilePhone} href={SITE_CONTACTS.phoneHref} aria-label={`Позвонить в Posadmin: ${SITE_CONTACTS.phone}`} data-button-reveal="off">
                 <PhoneIcon /><span><small>Позвонить нам</small><span>{SITE_CONTACTS.phone}</span></span>
               </a>
             </div>
           </nav>
-        </details>
+        </AnimatedDetails>
       </div>
     </header>
   );

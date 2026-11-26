@@ -65,9 +65,19 @@
 .choice:has(input:focus-visible) { background: var(--ink); color: var(--milk); }
 .choice:has(input:focus-visible) input { background: var(--surface-selected); }
 .choice:has(input:focus-visible) span span { color: var(--milk); }
-.scheduleHint { margin-top: 10px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
-.schedule { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; margin-top: 18px; }
-.schedule > label { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; min-width: 0; }
+.scheduleHint { display: grid; margin-top: 10px; color: var(--text-body); font-size: 12px; line-height: 1.5; }
+.scheduleHint > span { grid-area: 1 / 1; }
+.scheduleHint > [aria-hidden="true"] { visibility: hidden; }
+.scheduleFold { display: grid; grid-template-rows: 0fr; }
+.scheduleFold[data-expanded="true"] { grid-template-rows: 1fr; }
+.scheduleClip { min-height: 0; overflow: hidden; }
+.schedule { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; padding-top: 18px; }
+@media (prefers-reduced-motion: no-preference) {
+  .scheduleFold { transition: grid-template-rows .34s cubic-bezier(.25,.65,.3,1); }
+  .schedule { opacity: 0; transition: opacity .16s ease-out; }
+  .scheduleFold[data-expanded="true"] .schedule { opacity: 1; transition: opacity .23s ease-out .08s; }
+}
+.schedule > label, .schedule > .timeField { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; min-width: 0; }
 .scheduleError { grid-column: 1 / -1; margin: 0; padding: 10px 12px; border: 0; background: var(--accent-soft); color: var(--accent-text); font-size: 13px; line-height: 1.5; }
 .fieldControl:disabled { background: var(--surface-muted); color: var(--text-body); cursor: not-allowed; }
 .calculation { margin-top: 20px; padding: 16px; border: 0; border-radius: 8px; background: var(--surface-soft); }

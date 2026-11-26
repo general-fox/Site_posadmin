@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type SyntheticEvent } from "react";
 import { LAUNCH_CONCEPTS, type LaunchConcept } from "@/lib/launch-concepts";
 import {
   PROJECT_CAPABILITIES, PROJECT_EQUIPMENT, PROJECT_REGISTER_LIMIT_NOTE, PROJECT_SCOPE_WORKS,
@@ -20,9 +20,16 @@ const steps = [
 ] as const;
 type LaunchStep = (typeof steps)[number]["id"];
 
+function keepFormVisible(event: SyntheticEvent<HTMLDivElement>) {
+  if (event.target instanceof Element && event.target.closest("input,button,select,textarea,label,summary")) {
+    event.currentTarget.dataset.scrollReplay = "off";
+  }
+}
+
 export function LaunchSection() {
   const [step, setStep] = useState<LaunchStep>(0);
   const [furthestStep, setFurthestStep] = useState(0);
+  const [returningToStep, setReturningToStep] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
   const [selection, setSelection] = useState(getDefaultProjectSelection);
@@ -30,11 +37,12 @@ export function LaunchSection() {
   const descriptionRef = useScrollReveal<HTMLParagraphElement>({ after: headingRef });
   const wizardRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useScrollReveal<HTMLDivElement>({ motion: "lift", blur: false, after: descriptionRef });
-  const formatHeadingRef = useScrollReveal<HTMLHeadingElement>({ after: surfaceRef, active: step === 0, animateOnMount: true });
-  const formatRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", blur: false, sequence: true, after: formatHeadingRef, active: step === 0, animateOnMount: true });
-  const worksHeadingRef = useScrollReveal<HTMLHeadingElement>({ after: surfaceRef, active: step === 1, animateOnMount: true });
-  const worksRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", blur: false, sequence: true, after: worksHeadingRef, active: step === 1, animateOnMount: true });
-  const contactRevealRef = useScrollReveal<HTMLDivElement>({ motion: "lift", sequence: true, after: surfaceRef, active: step === 2, animateOnMount: true });
+  const firstVisitStep = returningToStep ? null : step;
+  const formatHeadingRef = useScrollReveal<HTMLHeadingElement>({ after: surfaceRef, active: firstVisitStep === 0, animateOnMount: true });
+  const formatRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", blur: false, sequence: true, after: formatHeadingRef, active: firstVisitStep === 0, animateOnMount: true });
+  const worksHeadingRef = useScrollReveal<HTMLHeadingElement>({ after: surfaceRef, active: firstVisitStep === 1, animateOnMount: true });
+  const worksRevealRef = useScrollReveal<HTMLElement>({ motion: "lift", blur: false, sequence: true, after: worksHeadingRef, active: firstVisitStep === 1, animateOnMount: true });
+  const contactRevealRef = useScrollReveal<HTMLDivElement>({ motion: "lift", sequence: true, after: surfaceRef, active: firstVisitStep === 2, animateOnMount: true });
   const moveFocus = useRef(false);
   const countId = useId();
 
@@ -52,6 +60,7 @@ export function LaunchSection() {
   const goToStep = (nextStep: LaunchStep) => {
     if (nextStep === step || submitting || complete) return;
     moveFocus.current = true;
+    setReturningToStep(nextStep <= furthestStep);
     setFurthestStep((current) => Math.max(current, nextStep));
     setStep(nextStep);
   };
@@ -84,7 +93,7 @@ export function LaunchSection() {
           <p ref={descriptionRef} className={ui.lead} data-scroll-reveal=""><RevealLines>Укажите оборудование, формат заведения и нужные работы. Менеджер подготовит смету и отправит её выбранным способом.</RevealLines></p>
         </div>
 
-        <div className={styles.wizard} ref={wizardRef}>
+        <div className={styles.wizard} ref={wizardRef} onClickCapture={keepFormVisible} onChangeCapture={keepFormVisible} onFocusCapture={keepFormVisible}>
           <div ref={surfaceRef} className={styles.wizardSurface} data-scroll-reveal="" aria-hidden="true" />
           <SectionReveal className={styles.progress} after={surfaceRef} motion="lift" blur={false}>
             <div
@@ -129,7 +138,7 @@ export function LaunchSection() {
             </nav>
           </SectionReveal>
 
-          <div className={styles.panels}>
+          <div className={styles.panels} data-step-return={returningToStep ? "" : undefined}>
             <section id="launch-step-0" ref={formatRevealRef} className={`${styles.stage} ${styles.formatStage}`} inert={step !== 0} aria-labelledby="launch-step-title-0" data-scroll-reveal="">
               <h3 ref={formatHeadingRef} id="launch-step-title-0" className={styles.stageTitle} tabIndex={-1} data-scroll-reveal=""><RevealWords>Каким будет ваше заведение?</RevealWords></h3>
               <div className={styles.setupGrid}>
@@ -151,6 +160,7 @@ export function LaunchSection() {
                         limitNote={id === "registers" || id === "waiterStations" ? PROJECT_REGISTER_LIMIT_NOTE : undefined}
                         onChange={(quantity) => setSelection((current) => ({ ...current, [id]: quantity }))}
                         revealItem
+                        revealButtons={false}
                       />
                     ))}
                   </div>
@@ -172,7 +182,7 @@ export function LaunchSection() {
                   </div>
                 </fieldset>
               </div>
-              <div className={styles.actions} data-reveal-item="">
+              <div className={styles.actions} data-reveal-item="" data-button-group="">
                 <button type="button" className={ui.primary} onClick={() => goToStep(1)}>Далее <UiIcon name="arrow-right" /></button>
               </div>
             </section>
@@ -197,16 +207,16 @@ export function LaunchSection() {
               </fieldset>
               <fieldset className={styles.capabilities}>
                 <legend data-reveal-item="">Дополнительные возможности</legend>
-                <div className={styles.capabilityChoices}>
+                <div className={styles.capabilityChoices} data-reveal-item="" data-button-group="">
                   {PROJECT_CAPABILITIES.map((capability) => (
-                    <label key={capability.id} className={styles.capability} data-reveal-item="" data-button-reveal="">
+                    <label key={capability.id} className={styles.capability} data-button-reveal="">
                       <input type="checkbox" name="project-capability" value={capability.id} checked={selection.selectedCapabilityIds?.includes(capability.id) ?? false} onChange={(event) => toggleCapability(capability.id, event.target.checked)} />
                       <span>{capability.title}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
-              <div className={styles.actions} data-reveal-item="">
+              <div className={styles.actions} data-reveal-item="" data-button-group="">
                 <button type="button" className={`${ui.secondary} ${styles.back}`} aria-label="Назад" onClick={() => goToStep(0)}>
                   <UiIcon name="chevron-down" size={16} className="rotate-90" />
                   <span className={styles.backLabel}>Назад</span>

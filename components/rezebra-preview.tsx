@@ -2,15 +2,13 @@
 
 import { ProductPreviewFrame } from "./product-preview-frame";
 import { ReZebraPlannerScreen } from "./rezebra-planner-screen";
-import styles from "./rezebra-preview.module.css";
 
 export function ReZebraPreview() {
   return <ProductPreviewFrame
+    device="tablet"
     title="Rezebra"
-    label="Планировщик Rezebra: схема зала, выбор стола и подтверждение бронирования. Данные приведены для примера."
+    label="План зала и бронирования в Rezebra на планшете хостес"
   >
-    <div className={styles.screen}>
-      <ReZebraPlannerScreen demonstration />
-    </div>
+    {(phase) => <ReZebraPlannerScreen phase={phase} />}
   </ProductPreviewFrame>;
 }

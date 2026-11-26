@@ -4,6 +4,18 @@ import { useLayoutEffect, useRef } from "react";
 import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
 
 const controls = ':is(button, summary, [role="button"], input[type="button"], input[type="submit"], input[type="reset"], [data-button-reveal]):not([data-button-reveal="off"])';
+const siblingStagger = 150;
+// Scale around the resting position, with one small overshoot and a soft landing.
+// The independent scale property leaves each control's own transform intact.
+const buttonEntranceFrames: Keyframe[] = [
+  { scale: "0.76", filter: "opacity(0)", offset: 0, easing: "cubic-bezier(.2,.65,.28,1)" },
+  { scale: "1.025", filter: "opacity(1)", offset: 0.67, easing: "cubic-bezier(.4,0,.35,1)" },
+  { scale: "1", filter: "opacity(1)", offset: 1 },
+];
+const fadeEntranceFrames: Keyframe[] = [
+  { filter: "opacity(0)" },
+  { filter: "opacity(1)" },
+];
 
 type Entrance = {
   phase: "waiting" | "entering" | "settled";
@@ -12,13 +24,14 @@ type Entrance = {
   inView: boolean;
 };
 
-/** Adds depth to controls without taking over their parent/hover transforms. */
+/** Reveal neighbouring controls in reading order, independently of other groups. */
 export function ButtonEntrance() {
   const reduced = useHydratedReducedMotion();
   const seen = useRef(new WeakSet<HTMLElement>());
 
   useLayoutEffect(() => {
     const entries = new Map<HTMLElement, Entrance>();
+    const nextSiblingStart = new WeakMap<HTMLElement, number>();
     let frame = 0;
     let timer = 0;
     let disposed = false;
@@ -48,7 +61,7 @@ export function ButtonEntrance() {
         entries.set(node, entry);
         if (reduced || !supported || seen.current.has(node)) settle(node, entry);
         else {
-          // CSS header entrances have their own delay; the depth starts with them.
+          // Honour any entrance delay already set by the component.
           const css = getComputedStyle(node);
           const cssDelay = css.animationName === "none" ? 0 : Math.max(...css.animationDelay.split(",").map((value) => {
             const delay = parseFloat(value) || 0;
@@ -88,7 +101,6 @@ export function ButtonEntrance() {
       if (disposed) return;
       const now = performance.now();
       let earliest = Infinity;
-      let batch = 0;
       entries.forEach((entry, node) => {
         if (!node.isConnected) {
           entry.animation?.cancel();
@@ -96,24 +108,29 @@ export function ButtonEntrance() {
           entries.delete(node);
           return;
         }
+        if (entry.phase === "settled") return;
+        if (node.closest("[data-step-return]") && !node.closest("[inert]")) { settle(node, entry); return; }
         if (entry.phase !== "waiting" || document.hidden || !entry.inView) return;
         const bounds = node.getBoundingClientRect();
         if (!bounds.width || !bounds.height || bounds.bottom <= 0 || bounds.top >= window.innerHeight - 12 || bounds.right <= 0 || bounds.left >= window.innerWidth) return;
         if (hidden(node)) return;
-        if (node.matches(":focus-visible")) { settle(node, entry); return; }
+        if (node.matches(":focus-visible") || node.querySelector(":focus-visible")) { settle(node, entry); return; }
         const dependency = dependencyTime(node);
         if (dependency === null) return;
         const readyAt = Math.max(entry.readyAt, dependency);
         if (readyAt > now) { earliest = Math.min(earliest, readyAt); return; }
         entry.phase = "entering";
         node.dataset.buttonEntrance = "entering";
-        // Filter opacity fades the control without overwriting opacity/translate
-        // from its section entrance. Text blur is only applied to text units.
-        const animation = node.animate([
-          { scale: ".5", filter: "blur(4px) opacity(0)", offset: 0, easing: "cubic-bezier(.2, .65, .25, 1)" },
-          { scale: "1.1", filter: "blur(0px) opacity(1)", offset: .55, easing: "cubic-bezier(.3, 0, .25, 1)" },
-          { scale: "1", filter: "blur(0px) opacity(1)", offset: 1 },
-        ], { duration: 1400, delay: Math.min(batch++, 2) * 70, fill: "both" });
+        const parent = node.parentElement!;
+        const start = Math.max(now, nextSiblingStart.get(parent) ?? 0);
+        nextSiblingStart.set(parent, start + siblingStagger);
+        const fadeOnly = Boolean(node.closest('[data-button-motion="fade"]'));
+        const animation = node.animate(fadeOnly ? fadeEntranceFrames : buttonEntranceFrames, {
+          duration: fadeOnly ? 380 : 540,
+          easing: fadeOnly ? "ease-out" : "linear",
+          delay: start - now,
+          fill: "both",
+        });
         entry.animation = animation;
         animation.finished.then(() => {
           if (!disposed && entry.animation === animation) settle(node, entry);

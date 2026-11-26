@@ -122,21 +122,21 @@
 }
 
 @keyframes metric-appear {
-  from { opacity: .4; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: .4; }
+  to { opacity: 1; }
 }
 @keyframes purchases-grow {
   from { transform: scaleY(.12); opacity: .35; }
   to { transform: scaleY(1); opacity: 1; }
 }
 @keyframes balance-appear {
-  from { opacity: .35; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: .35; }
+  to { opacity: 1; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .bars > span { transform-origin: center bottom; }
-  :global([data-preview-state="waiting"]:has([data-reveal-state])) .metrics > div { opacity: .4; transform: translateY(6px); }
-  :global([data-preview-state="waiting"]:has([data-reveal-state])) .balance { opacity: .35; transform: translateY(6px); }
+  :global([data-preview-state="waiting"]:has([data-reveal-state])) .metrics > div { opacity: .4; }
+  :global([data-preview-state="waiting"]:has([data-reveal-state])) .balance { opacity: .35; }
   :global([data-preview-state="waiting"]:has([data-reveal-state])) .bars > span { transform: scaleY(.12); opacity: .35; }
   :global([data-preview-state="playing"]) .metrics > div { animation: metric-appear 700ms cubic-bezier(.22,.61,.36,1) both; }
   :global([data-preview-state="playing"]) .bars > span { animation: purchases-grow 1200ms cubic-bezier(.22,.61,.36,1) both; }

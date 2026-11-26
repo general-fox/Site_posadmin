@@ -1,122 +1,107 @@
-// Offline regression checks; no browser, network or live submissions.
 // Usage: node scripts/check-disclosure-centering.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import ts from "typescript";
 
-function load(file, dependencies = {}, globals = {}) {
-  const code = ts.transpileModule(readFileSync(new URL(`../${file}`, import.meta.url), "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  const module = { exports: {} };
-  const require = (name) => {
-    if (!(name in dependencies)) throw new Error(`Unexpected dependency: ${name}`);
-    return dependencies[name];
-  };
-  new Function("require", "module", "exports", ...Object.keys(globals), code)(
-    require, module, module.exports, ...Object.values(globals),
-  );
-  return module.exports;
-}
+const source = ts.transpileModule(readFileSync(new URL("../lib/scroll-to-panel.ts", import.meta.url), "utf8"), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText;
 
-const { centeredPanelScrollTop } = load("lib/scroll-to-panel.ts");
-const desktop = { panelTop: 2000, panelHeight: 240, viewportHeight: 900, headerBottom: 80, maxScroll: 8000 };
-
-test("short disclosures center within the viewport below the fixed header", () => {
-  assert.equal(centeredPanelScrollTop(desktop), 1630);
-});
-test("tall disclosures start below the menu instead of hiding their summary", () => {
-  assert.equal(centeredPanelScrollTop({ ...desktop, panelHeight: 1200 }), 1904);
-});
-test("uses the visible mobile viewport and its offset", () => {
-  assert.equal(centeredPanelScrollTop({ ...desktop, viewportTop: 20, viewportHeight: 500, headerBottom: 72 }), 1824);
-});
-test("destinations cannot overshoot document edges", () => {
-  assert.equal(centeredPanelScrollTop({ ...desktop, panelTop: 10 }), 0);
-  assert.equal(centeredPanelScrollTop({ ...desktop, maxScroll: 1300 }), 1300);
-});
-test("floating calculation bar reduces the useful area without hiding tall-card headings", () => {
-  assert.equal(centeredPanelScrollTop({ ...desktop, bottomInset: 120 }), 1682);
-  assert.equal(centeredPanelScrollTop({ ...desktop, bottomInset: 120, panelHeight: 800 }), 1904);
-});
-
-function disclosureHarness() {
-  const frames = new Map();
-  const centered = [];
-  let nextFrame = 0;
-  let cleanup;
-  class Element {
-    constructor(summary = null) { this.summary = summary; }
-    closest(selector) { return selector === "summary" ? this.summary : null; }
-  }
-  const { useDisclosureCentering } = load("components/use-disclosure-centering.ts", {
-    react: {
-      useRef: (current) => ({ current }),
-      useCallback: (callback) => callback,
-      useEffect: (callback) => { cleanup = callback(); },
-    },
-    "@/lib/scroll-to-panel": {
-      centerPanelInViewport: (element) => { centered.push(element); return () => {}; },
-    },
-  }, {
-    Element,
-    requestAnimationFrame: (callback) => { frames.set(++nextFrame, callback); return nextFrame; },
-    cancelAnimationFrame: (frame) => frames.delete(frame),
+function fixture({ summaryTop = 800, firstLineTop = 868, bodyBottom = 1600, reduced = false,
+  barTop, viewportTop = 0, viewportHeight = 900, remaining = 3000,
+} = {}) {
+  const bounds = (top, bottom) => ({ getBoundingClientRect: () => ({ top, bottom, height: bottom - top }) });
+  const preference = Object.assign(new EventTarget(), { matches: reduced });
+  const written = [];
+  const window = Object.assign(new EventTarget(), {
+    innerHeight: 900, scrollY: 1000, visualViewport: { offsetTop: viewportTop, height: viewportHeight },
+    matchMedia: () => preference,
+    scrollTo({ top }) { this.scrollY = top; written.push(top); this.dispatchEvent(new Event("scroll")); },
   });
-  const props = useDisclosureCentering();
-  const details = { open: false, closest: () => null };
-  const summary = new Element();
-  summary.summary = summary;
-  summary.parentElement = details;
-  const event = { currentTarget: details, target: summary, button: 0, defaultPrevented: false };
-  const flush = () => {
-    while (frames.size) {
-      const callbacks = [...frames.values()];
-      frames.clear();
-      callbacks.forEach((callback) => callback());
-    }
+  const document = {
+    documentElement: { scrollHeight: 1900 + remaining },
+    querySelector: selector => selector === ".site-header" ? bounds(0, 80) : barTop == null ? null : bounds(barTop, 890),
   };
-  return { props, details, event, centered, flush, cleanup, Element };
+  const details = { open: true, isConnected: true, closest: selector => selector.startsWith("#pricing") && barTop != null,
+    querySelector: () => bounds(summaryTop, firstLineTop) };
+  const body = { ...bounds(firstLineTop, bodyBottom), querySelector: () => bounds(firstLineTop, firstLineTop + 24) };
+  const frames = new Map();
+  let id = 0;
+  const globals = { window, document, performance: { now: () => 0 }, getComputedStyle: () => ({ lineHeight: "24px" }),
+    requestAnimationFrame: cb => { frames.set(++id, cb); return id; }, cancelAnimationFrame: id => frames.delete(id) };
+  const module = { exports: {} };
+  new Function("module", "exports", ...Object.keys(globals), source)(module, module.exports, ...Object.values(globals));
+  const assist = module.exports.prepareDisclosureScroll(details, body);
+  const tick = now => {
+    const callbacks = [...frames.values()];
+    frames.clear();
+    callbacks.forEach(cb => cb(now));
+  };
+  const finish = () => { assist?.afterOpen(); tick(150); tick(300); };
+  return { assist, window, preference, details, written, tick, finish };
 }
 
-test("only user opening scrolls, after native layout has settled", () => {
-  const h = disclosureHarness();
-  assert.equal(h.centered.length, 0);
-  h.props.onClick(h.event);
-  assert.equal(h.centered.length, 0);
-  h.details.open = true;
-  h.flush();
-  assert.deepEqual(h.centered, [h.details]);
+test("a fully readable opening never moves the viewport even for a long answer", () => {
+  const h = fixture({ summaryTop: 260, firstLineTop: 344, bodyBottom: 2000 });
+  h.finish();
+  assert.deepEqual(h.written, []);
 });
-test("closing and clicking disclosure content never recenter the page", () => {
-  const h = disclosureHarness();
-  h.details.open = true;
-  h.props.onClick(h.event);
-  h.props.onClick({ ...h.event, target: new h.Element() });
-  h.flush();
-  assert.equal(h.centered.length, 0);
+
+test("only the clipped opening lines are revealed, with intermediate scroll positions", () => {
+  const h = fixture();
+  h.finish();
+  assert.deepEqual(h.written.map(Math.round), [1014, 1028]);
 });
-test("marked disclosure cards retain their title and context when centered", () => {
-  const h = disclosureHarness();
-  const card = {};
-  h.details.closest = (selector) => selector === "[data-disclosure-panel]" ? card : null;
-  h.props.onClick(h.event);
-  h.details.open = true;
-  h.flush();
-  assert.deepEqual(h.centered, [card]);
+
+test("cap the move for large summaries; respect short answers and document limits", () => {
+  for (const [overrides, distance] of [
+    [{ firstLineTop: 1000 }, 96], [{ bodyBottom: 884 }, 0], [{ remaining: 9 }, 9],
+  ]) {
+    const h = fixture(overrides); h.finish();
+    assert.equal(h.window.scrollY, 1000 + distance);
+  }
 });
-test("cancelled openings and unmounted disclosures cannot trigger a delayed scroll", () => {
-  const h = disclosureHarness();
-  h.props.onClick({ ...h.event, defaultPrevented: true });
-  h.flush();
-  assert.equal(h.centered.length, 0);
-  h.props.onClick(h.event);
-  h.flush();
-  assert.equal(h.centered.length, 0);
-  h.props.onClick(h.event);
-  h.details.open = true;
-  h.cleanup();
-  h.flush();
-  assert.equal(h.centered.length, 0);
+
+test("both fixed header and floating estimate bar protect the readable viewport", () => {
+  const above = fixture({ summaryTop: 60 }); above.finish(); assert.deepEqual(above.written, []);
+  const below = fixture({ summaryTop: 905 }); below.finish(); assert.deepEqual(below.written, []);
+  const covered = fixture({ barTop: 680, summaryTop: 685 }); covered.finish(); assert.deepEqual(covered.written, []);
+  const bar = fixture({ barTop: 790, summaryTop: 690, firstLineTop: 760 }); bar.finish();
+  assert.equal(bar.window.scrollY, 1030);
+  const tight = fixture({ barTop: 150, summaryTop: 96, firstLineTop: 160 }); tight.finish();
+  assert.equal(tight.window.scrollY, 1008);
+});
+
+test("use the visual viewport's offset and height on a phone", () => {
+  const h = fixture({ viewportTop: 40, viewportHeight: 600, summaryTop: 520, firstLineTop: 602 });
+  h.finish(); assert.equal(h.window.scrollY, 1022);
+});
+
+test("wheel, touch, focus and scrolling during expansion prevent a delayed move", () => {
+  for (const type of ["wheel", "touchstart", "pointerdown", "keydown", "focusin", "scroll", "resize"]) {
+    const h = fixture();
+    if (type === "scroll") h.window.scrollY += 20;
+    h.window.dispatchEvent(new Event(type));
+    h.finish(); assert.deepEqual(h.written, [], type);
+  }
+});
+
+test("new input, a system preference change, or teardown stops an in-flight move", () => {
+  for (const trigger of ["wheel", "touchstart", "reduce", "cleanup"]) {
+    const h = fixture();
+    h.assist.afterOpen(); h.tick(80);
+    assert.equal(h.written.length, 1);
+    if (trigger === "reduce") { h.preference.matches = true; h.preference.dispatchEvent(new Event("change")); }
+    else if (trigger === "cleanup") h.assist.cancel();
+    else h.window.dispatchEvent(new Event(trigger));
+    h.tick(300); assert.equal(h.written.length, 1, trigger);
+  }
+});
+
+test("reduced motion, closing and unmounting never initiate a scroll", () => {
+  const h = fixture({ reduced: true }); h.finish(); assert.deepEqual(h.written, []);
+  for (const key of ["open", "isConnected"]) {
+    const h = fixture(); h.details[key] = false; h.finish(); assert.deepEqual(h.written, []);
+  }
 });

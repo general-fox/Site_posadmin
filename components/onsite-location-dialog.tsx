@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import {
   isOnsiteSupportLocation,
   KRASNODAR_ONSITE_LABEL,
@@ -12,6 +12,8 @@ import {
 } from "@/lib/onsite-support";
 import { formatRussianLocation, searchRussianLocations, type RussianLocation } from "@/lib/russian-locations";
 import { UiIcon } from "./ui-icon";
+import { AnimatedSelect } from "./animated-select";
+import { DropdownList } from "./dropdown-list";
 import styles from "./callback-dialog.module.css";
 import ui from "./marketing.module.css";
 import locationStyles from "./onsite-location-dialog.module.css";
@@ -23,6 +25,11 @@ type OnsiteLocationDialogProps = {
 };
 
 const byRequestNotice = "Мы рассмотрим возможность предоставления услуги в вашем городе или регионе.";
+const cities = [
+  { value: "", label: "Выберите город или регион", disabled: true },
+  ...ONSITE_LOCATION_OPTIONS.map(({ id, name }) => ({ value: id, label: name })),
+  { value: "other", label: "Другой город или регион" },
+];
 
 export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLocationDialogProps) {
   const savedKrasnodar = selection?.location === "other" && selection.otherCity === KRASNODAR_ONSITE_LABEL;
@@ -39,11 +46,9 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const panelRef = useRef<HTMLFormElement>(null);
-  const selectRef = useRef<HTMLSelectElement>(null);
+  const selectRef = useRef<HTMLButtonElement>(null);
   const cityInputRef = useRef<HTMLInputElement>(null);
-  const popupRef = useRef<HTMLDivElement>(null);
-  const suggestionsRef = useRef<HTMLUListElement>(null);
+  const locationId = useId();
   const titleId = useId();
   const hintId = useId();
   const errorId = useId();
@@ -55,6 +60,9 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
   const showByRequestNotice = isKrasnodar || (isOtherCity && !!query);
   const suggestions = useMemo(() => query.length >= 2 && !selectedPlace ? searchRussianLocations(query) : [], [query, selectedPlace]);
   const suggestionsVisible = isOtherCity && showSuggestions && suggestions.length > 0;
+  const suggestionOptions = useMemo(() => suggestions.map(place => ({
+    value: place.id, label: place.name, description: place.region,
+  })), [suggestions]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -66,68 +74,6 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
     selectRef.current?.focus({ preventScroll: true });
     return () => { root.style.overflow = previousOverflow; };
   }, []);
-
-  useLayoutEffect(() => {
-    const input = cityInputRef.current;
-    const popup = popupRef.current;
-    const panel = panelRef.current;
-    if (!suggestionsVisible || !input || !popup || !panel) return;
-
-    const viewport = window.visualViewport;
-    const gap = 6;
-    const viewportPadding = 12;
-    const maxMenuHeight = 228;
-    const usesPopover = typeof popup.showPopover === "function";
-    if (usesPopover) popup.showPopover();
-
-    const placePopup = () => {
-      const field = input.getBoundingClientRect();
-      const panelBounds = panel.getBoundingClientRect();
-      const viewportTop = viewport?.offsetTop ?? 0;
-      const viewportBottom = viewportTop + (viewport?.height ?? window.innerHeight);
-      const above = field.top - viewportTop - gap - viewportPadding;
-      const below = viewportBottom - field.bottom - gap - viewportPadding;
-      const opensAbove = below < maxMenuHeight && above > below;
-      const inputCenter = (field.top + field.bottom) / 2;
-      const visible = inputCenter > Math.max(panelBounds.top, viewportTop)
-        && inputCenter < Math.min(panelBounds.bottom, viewportBottom);
-
-      popup.style.visibility = visible ? "visible" : "hidden";
-      popup.style.left = `${field.left}px`;
-      popup.style.top = `${opensAbove ? field.top - gap : field.bottom + gap}px`;
-      popup.style.width = `${field.width}px`;
-      popup.style.maxHeight = `${Math.max(0, Math.min(maxMenuHeight, opensAbove ? above : below))}px`;
-      popup.dataset.side = opensAbove ? "above" : "below";
-    };
-
-    placePopup();
-    const resizeObserver = new ResizeObserver(placePopup);
-    resizeObserver.observe(panel);
-    resizeObserver.observe(input);
-    panel.addEventListener("scroll", placePopup);
-    window.addEventListener("resize", placePopup);
-    viewport?.addEventListener("resize", placePopup);
-    viewport?.addEventListener("scroll", placePopup);
-    return () => {
-      resizeObserver.disconnect();
-      panel.removeEventListener("scroll", placePopup);
-      window.removeEventListener("resize", placePopup);
-      viewport?.removeEventListener("resize", placePopup);
-      viewport?.removeEventListener("scroll", placePopup);
-      if (usesPopover && popup.matches(":popover-open")) popup.hidePopover();
-    };
-  }, [suggestionsVisible]);
-
-  useEffect(() => {
-    if (!suggestionsVisible || activeSuggestion < 0) return;
-    const popup = popupRef.current;
-    const option = suggestionsRef.current?.children[activeSuggestion];
-    if (!popup || !option) return;
-    const bounds = popup.getBoundingClientRect();
-    const item = option.getBoundingClientRect();
-    if (item.top < bounds.top) popup.scrollTop += item.top - bounds.top;
-    if (item.bottom > bounds.bottom) popup.scrollTop += item.bottom - bounds.bottom;
-  }, [activeSuggestion, suggestionsVisible]);
 
   const hideSuggestions = () => {
     setShowSuggestions(false);
@@ -210,33 +156,28 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
       }}
       onClick={(event) => { if (event.target === event.currentTarget) dismiss(); }}
     >
-      <form ref={panelRef} className={styles.panel} onSubmit={submit}>
+      <form className={styles.panel} onSubmit={submit}>
         <button aria-label="Закрыть окно" className={styles.close} type="button" onClick={dismiss}>
           <UiIcon name="close" />
         </button>
 
         <h2 id={titleId} className={styles.title}>Где нужно выездное сопровождение?</h2>
-        <label className={styles.phoneField}>
-          <span className={styles.label}>Город или регион</span>
-          <select
-            ref={selectRef}
-            aria-describedby={isKrasnodar ? hintId : undefined}
+        <div className={styles.phoneField}>
+          <label htmlFor={locationId} className={styles.label}>Город или регион</label>
+          <AnimatedSelect
+            id={locationId} label="Город или регион" options={cities} triggerRef={selectRef}
+            describedBy={isKrasnodar ? hintId : undefined}
             className={styles.fieldControl}
             name="location"
             required
             value={location}
-            onChange={(event) => {
-              const nextLocation = event.currentTarget.value;
+            onChange={(nextLocation) => {
               setLocation(nextLocation === "krasnodar" || isOnsiteSupportLocation(nextLocation) ? nextLocation : "");
               setCityError(false);
               hideSuggestions();
             }}
-          >
-            <option value="" disabled>Выберите город или регион</option>
-            {ONSITE_LOCATION_OPTIONS.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
-            <option value="other">Другой город или регион</option>
-          </select>
-        </label>
+          />
+        </div>
 
         {isOtherCity && <>
           <label className={styles.phoneField}>
@@ -270,29 +211,10 @@ export function OnsiteLocationDialog({ selection, onConfirm, onClose }: OnsiteLo
               }}
             />
           </label>
-          {suggestionsVisible && <div ref={popupRef} className={locationStyles.popup} popover="manual">
-            <ul
-              ref={suggestionsRef}
-              className={locationStyles.suggestions}
-              id={suggestionsId}
-              role="listbox"
-              aria-label="Подсказки по городам и регионам"
-            >
-              {suggestions.map((place, index) => <li
-                key={place.id}
-                id={`${suggestionsId}-${index}`}
-                className={locationStyles.suggestion}
-                role="option"
-                aria-selected={index === activeSuggestion}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => choosePlace(place)}
-              >
-                <span className={locationStyles.name}>{place.name}</span>
-                {place.region && <span className={locationStyles.region}>{place.region}</span>}
-              </li>)}
-            </ul>
-          </div>}
         </>}
+        <DropdownList anchor={cityInputRef} id={suggestionsId} label="Подсказки по городам и регионам"
+          open={suggestionsVisible} options={suggestionOptions} active={activeSuggestion}
+          onChoose={index => choosePlace(suggestions[index])} />
         <p id={hintId} className={isByRequest ? styles.hint : undefined} aria-live="polite">
           {showByRequestNotice && byRequestNotice}
           {isOtherCity && !showByRequestNotice && <span className={locationStyles.placeholder} aria-hidden="true">

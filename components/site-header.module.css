@@ -9,6 +9,12 @@
 .navItem { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 15px; border: 0; border-radius: 8px; background: none; color: inherit; cursor: pointer; white-space: nowrap; }
 .nav :is(.logo, .navItem)::before { content: ""; position: absolute; inset: 3px; z-index: -1; border-radius: 8px; background: var(--header-highlight); visibility: hidden; pointer-events: none; }
 .nav [data-highlighted="true"]::before { visibility: visible; }
+.navHighlight { position: absolute; inset: 3px auto 3px 0; opacity: 0; border-radius: 8px; background: var(--header-highlight); pointer-events: none; }
+@media (min-width: 1024px) {
+  .nav[data-moving-highlight] .navHighlight { opacity: 1; }
+  .nav[data-moving-highlight] a::before { visibility: hidden; }
+  .header .nav :is(.logo, .navItem):focus-visible { outline: 2px solid var(--action-focus); outline-offset: -3px; background: transparent; }
+}
 .navItem:focus-visible, .mobileItem:focus-visible { outline: none; text-decoration: none; background: var(--action); color: var(--milk); }
 .contactActions { display: flex; flex-shrink: 0; align-items: center; gap: 8px; }
 .phone, .telegram { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 10px; height: 48px; padding: 0 16px; border: 0; border-radius: 12px; font-family: var(--font-inter), sans-serif; font-size: 14px; font-weight: 500; line-height: 1; letter-spacing: normal; white-space: nowrap; text-decoration: none; pointer-events: auto; }
@@ -23,7 +29,7 @@
 .mobileItem, .mobileTrigger { font-family: var(--font-inter), Inter, sans-serif; font-weight: var(--control-font-weight); letter-spacing: var(--control-letter-spacing); }
 .mobileDisclosure { display: none; }
 
-@keyframes menu-appear { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes menu-appear { from { opacity: 0; } to { opacity: 1; } }
 @keyframes header-background-enter { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -35,18 +41,12 @@
     animation: header-background-enter 210ms var(--entrance-ease) backwards;
   }
   .logo, .desktopLink {
-    animation: var(--entrance-fade);
-    animation-duration: 400ms;
+    animation: menu-appear 400ms var(--entrance-fade-ease) backwards;
   }
   .logo { animation-delay: 25ms; }
   .desktopLink {
     animation-delay: calc(70ms + var(--header-item-step) * var(--header-item-index, 0));
   }
-  .mobileDisclosure[open] .mobileItem {
-    animation: var(--entrance-fade);
-    animation-delay: calc(25ms * var(--header-item-index));
-  }
-
   .header:focus-within::before { transform: none !important; }
   .header :is(.logo, .desktopLink, .phone, .telegram, .mobileTrigger, .mobileItem):focus-visible {
     filter: none !important;
@@ -65,24 +65,28 @@
   .mobileTrigger::-webkit-details-marker { display: none; }
   .mobileTrigger::marker { content: ""; }
   .mobileTriggerLabel { grid-area: 1 / 1; justify-self: end; }
-  .closeMenuLabel, .mobileDisclosure[open] .openMenuLabel { visibility: hidden; }
-  .mobileDisclosure[open] .closeMenuLabel { visibility: visible; }
+  .closeMenuLabel, .mobileDisclosure[open]:not([data-answer-motion="closing"]) .openMenuLabel { visibility: hidden; }
+  .mobileDisclosure[open]:not([data-answer-motion="closing"]) .closeMenuLabel { visibility: visible; }
   .menuIcon { display: block; grid-area: 1 / 2; }
   .menuIcon > path { transform-box: view-box; transform-origin: center; transition: transform 200ms ease; }
   .menuIcon > path:first-child { transform: translateY(-3px); }
   .menuIcon > path:last-child { transform: translateY(3px); }
-  .mobileDisclosure[open] .menuIcon > path:first-child { transform: rotate(45deg); }
-  .mobileDisclosure[open] .menuIcon > path:last-child { transform: rotate(-45deg); }
-  .mobileMenu { display: grid; position: absolute; top: 72px; right: 16px; left: 16px; max-width: 540px; max-height: calc(100dvh - 88px); margin: 0 auto; padding: 10px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--blue) var(--dark-background); border: 0; border-radius: 14px; background: var(--dark-background); pointer-events: auto; animation: menu-appear 300ms var(--entrance-ease); }
-  .mobileDisclosure:not([open]) .mobileMenu { display: none; }
+  .mobileDisclosure[open]:not([data-answer-motion="closing"]) .menuIcon > path:first-child { transform: rotate(45deg); }
+  .mobileDisclosure[open]:not([data-answer-motion="closing"]) .menuIcon > path:last-child { transform: rotate(-45deg); }
+  .mobilePanel { position: absolute; top: 72px; right: 16px; left: 16px; max-width: 540px; margin-inline: auto; overflow: hidden; border-radius: 14px; background: var(--dark-background); pointer-events: auto; }
+  .mobileDisclosure:not([open]) .mobilePanel { display: none; }
+  .mobileMenu { display: grid; max-height: calc(100dvh - 88px); padding: 10px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--blue) var(--dark-background); }
   .mobileItem { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 52px; padding: 12px 14px; border: 0; border-radius: 8px; background: none; color: var(--milk); font-size: 14px; line-height: 1.5; text-align: left; cursor: pointer; }
-  .mobileItem[aria-current], .mobileItem:hover { background: var(--dark-raised); }
+  .mobileItem, .mobilePhone { transition: background-color 160ms ease-out; }
+  .mobileItem[aria-current], .mobileItem:active, .mobilePhone:active { background: var(--dark-raised); }
+  @media (hover: hover) and (pointer: fine) {
+    .mobileItem:hover, .mobilePhone:hover { background: var(--dark-raised); }
+  }
   .mobileContact { margin-top: 8px; padding-top: 8px; }
   .mobilePhone { display: flex; align-items: center; gap: 14px; min-height: 68px; padding: 12px 14px; border-radius: 8px; color: var(--milk); }
   .mobilePhone > span { display: grid; gap: 7px; }
   .mobilePhone small { font-size: 12px; font-weight: 400; line-height: 1.3; color: var(--surface-deep); }
   .mobilePhone > span > span { font-size: 16px; line-height: 1.3; font-variant-numeric: lining-nums tabular-nums; }
-  .mobilePhone:hover { background: var(--dark-raised); }
 }
 
 @media (max-width: 767px) {
@@ -102,6 +106,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mobileMenu { animation: none; }
   .header *, .header *::before, .header *::after { transition-duration: 0s !important; }
 }

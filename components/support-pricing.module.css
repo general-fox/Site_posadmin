@@ -8,6 +8,12 @@
 .toggle, .details summary { letter-spacing: var(--control-letter-spacing); font-variation-settings: normal; font-optical-sizing: auto; }
 .calculator { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px 32px; align-items: start; }
 .configuration, .summaryColumn { display: contents; }
+.countControl, .module {
+  --entrance-advance: -68px;
+  --entrance-distance: 12px;
+  --entrance-fade-duration: 720ms;
+  --entrance-fade-ease: cubic-bezier(.26, .48, .32, 1);
+}
 .countControl { grid-area: 1 / 1; min-width: 0; }
 .calculator .updatedAt { grid-area: 1 / 2; align-self: end; }
 .countRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
@@ -120,6 +126,7 @@
 .summary > button:disabled { background: var(--surface-selected); color: var(--text-muted); cursor: not-allowed; }
 @media (max-width: 1120px) { .calculator { grid-template-columns: minmax(0, 1fr) 340px; column-gap: 24px; } .summary { padding: 24px; } .module { padding: 20px; } .workplaceRow { padding-inline: 20px; } }
 @media (max-width: 900px) {
+  .countControl, .module { --entrance-advance: -156px; }
   .calculator { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .configuration, .summaryColumn { display: grid; min-width: 0; }
   .configuration { gap: 16px; }

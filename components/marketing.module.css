@@ -25,3 +25,18 @@
 @media (min-width: 768px) { .primary, .secondary, .textLink { font-size: 15px; } }
 @media (max-width: 767px) { .sectionHeader { grid-template-columns: 1fr; gap: 24px; margin-bottom: 32px; } .heading { font-size: var(--heading-section); } .lead { font-size: var(--font-body); } }
 @media (prefers-reduced-motion: reduce) { .eyebrow::before { animation: none; } .primary, .secondary, .textLink { transition: none; } .primary:hover { transform: none; } }
+.productIntegration {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 10px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--action) 10%, var(--milk));
+  color: color-mix(in srgb, var(--action) 78%, var(--ink));
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}

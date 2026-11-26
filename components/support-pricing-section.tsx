@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatedDetails } from "./animated-details";
 import { useRef, useState, type ReactNode, type RefObject } from "react";
 import { CallbackDialog } from "./callback-dialog";
 import { BaseBadge } from "./base-badge";
@@ -8,7 +9,6 @@ import { MobileCalculationBar } from "./mobile-calculation-bar";
 import { UiIcon } from "./ui-icon";
 import { WorkplaceCount } from "./workplace-count";
 import { ArrowRight, SectionReveal, useScrollReveal } from "./marketing-ui";
-import { useDisclosureCentering } from "./use-disclosure-centering";
 import { calculateRkeeperPricing, getRkeeperModulePrice, RKEEPER_PRODUCT_ID, RKEEPER_TARIFF, type RkeeperAdditionalModuleId } from "@/lib/rkeeper-pricing";
 import { calculateItAdministrationPricing, getItAdministrationModulePrice, IT_ADMINISTRATION_MODULE_ID, IT_ADMINISTRATION_TARIFF } from "@/lib/it-administration-pricing";
 import { isOnsiteSupportAvailable, ONSITE_SUPPORT_LOCATIONS, type OnsiteLocationSelection } from "@/lib/onsite-support";
@@ -88,7 +88,8 @@ async function downloadCalculationPdf(
 }
 
 
-const moduleEntranceInterval = 0.09;
+const firstModuleEntranceDelay = 0.12;
+const moduleEntranceInterval = 0.04;
 
 function ModuleCard({ anchorId, name, features, price, selected, required, onChange, disabled, opensDialog, children, entranceIndex = 0, revealAfter }: {
   anchorId?: string;
@@ -105,13 +106,12 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
   children?: ReactNode;
 }) {
   const revealRef = useScrollReveal<HTMLElement>({
-    motion: "lift",
+    motion: "scale",
     blur: false,
-    delay: Math.min(entranceIndex + 1, 2) * moduleEntranceInterval,
+    delay: firstModuleEntranceDelay + entranceIndex * moduleEntranceInterval,
     after: revealAfter,
   });
-  const disclosureCentering = useDisclosureCentering();
-  return <article id={anchorId} ref={revealRef} data-scroll-reveal="" data-disclosure-panel="" className={`${styles.module} ${required || selected ? styles.selected : ""}`}>
+  return <article id={anchorId} ref={revealRef} data-scroll-reveal="" className={`${styles.module} ${required || selected ? styles.selected : ""}`}>
     <div className={styles.moduleTop}>
       <h3 className={styles.moduleName}>{name}</h3>
       <div className={styles.modulePricing}>
@@ -123,6 +123,7 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
             aria-label={`${selected ? "Убрать" : addModuleLabel}: ${name}`}
             aria-haspopup={opensDialog ? "dialog" : undefined}
             aria-pressed={selected}
+            data-button-reveal="off"
             onClick={onChange}
             disabled={disabled}
           >
@@ -137,10 +138,10 @@ function ModuleCard({ anchorId, name, features, price, selected, required, onCha
       </div>
     </div>
     {children}
-    <details {...disclosureCentering} className={styles.details}>
+    <AnimatedDetails keepStartVisible className={styles.details}>
       <summary data-button-reveal="off">Что входит <UiIcon name="plus" /></summary>
       <ul>{features.map((feature) => <li key={feature}><UiIcon name="check" size={14} />{feature}</li>)}</ul>
-    </details>
+    </AnimatedDetails>
   </article>;
 }
 
@@ -225,12 +226,13 @@ export function SupportPricingSection() {
       </div>
       <div className={styles.calculator}>
         <div ref={configurationRef} className={styles.configuration}>
-          <SectionReveal motion="lift" blur={false} after={headingRef} className={styles.countControl}>
+          <SectionReveal motion="scale" blur={false} after={headingRef} className={styles.countControl}>
             <WorkplaceCount
               id="workplaces-rkeeper"
               value={workplaces}
               description="Кассы, станции официантов и компьютеры сотрудников"
               limitNote={ONLINE_WORKPLACE_LIMIT_NOTE}
+              revealButtons={false}
               disabled={loading}
               onChange={(value) => { setWorkplaces(value); resetFeedback(); }}
             />

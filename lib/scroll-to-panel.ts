@@ -1,66 +1,65 @@
-type PanelPosition = {
-  panelTop: number;
-  panelHeight: number;
-  viewportTop?: number;
-  viewportHeight: number;
-  headerBottom: number;
-  bottomInset?: number;
-  maxScroll: number;
-};
+// Keep the summary and roughly two lines of its answer together at the lower edge.
+function readingNudge(details: HTMLDetailsElement, body: HTMLElement) {
+  const summary = details.querySelector(":scope > summary");
+  if (!summary || !details.open || !details.isConnected) return 0;
+  const viewport = window.visualViewport;
+  const viewportTop = viewport?.offsetTop ?? 0;
+  const viewportBottom = viewportTop + (viewport?.height ?? window.innerHeight);
+  const header = document.querySelector(".site-header")?.getBoundingClientRect();
+  const bar = details.closest("#pricing, #it-pricing")
+    ? document.querySelector("[data-calculation-bar]")?.getBoundingClientRect() : null;
+  const top = Math.max(viewportTop, header?.bottom ?? 0);
+  const bottom = bar && bar.height > 0 && bar.bottom > viewportTop
+    ? Math.min(viewportBottom, bar.top) : viewportBottom;
+  const summaryTop = summary.getBoundingClientRect().top;
+  if (summaryTop < top || summaryTop >= bottom) return 0;
 
-/** Center short content below the menu; keep the beginning of long content visible. */
-export function centeredPanelScrollTop({
-  panelTop, panelHeight, viewportTop = 0, viewportHeight, headerBottom, bottomInset = 16, maxScroll,
-}: PanelPosition) {
-  const topInset = Math.max(viewportTop + 16, headerBottom + 16);
-  const availableHeight = Math.max(0, viewportTop + viewportHeight - bottomInset - topInset);
-  const targetTop = topInset + Math.max(0, (availableHeight - panelHeight) / 2);
-  return Math.max(0, Math.min(maxScroll, panelTop - targetTop));
+  const firstLine = body.querySelector("[data-reveal-line-word], [data-answer-item], [data-answer-link]") ?? body;
+  const lineHeight = parseFloat(getComputedStyle(firstLine).lineHeight) || 24;
+  const readingEnd = Math.min(body.getBoundingClientRect().bottom, firstLine.getBoundingClientRect().top + 2 * lineHeight);
+  const remaining = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+  return Math.max(0, Math.min(readingEnd + 12 - bottom, 96, summaryTop - top - 8, remaining));
 }
 
-/** One native, interruptible scroll. Never locks the page or moves keyboard focus. */
-export function centerPanelInViewport(panel: HTMLElement) {
-  if (!panel.isConnected || panel.closest("dialog")) return () => {};
-  const viewport = window.visualViewport;
-  const header = document.querySelector<HTMLElement>(".site-header");
-  const viewportTop = viewport?.offsetTop ?? 0;
-  const viewportHeight = viewport?.height ?? window.innerHeight;
-  const calculationBar = panel.closest("#pricing, #it-pricing")
-    ? document.querySelector<HTMLElement>("[data-calculation-bar]")?.getBoundingClientRect()
-    : null;
-  const bottomInset = calculationBar && calculationBar.height > 0 && calculationBar.bottom > viewportTop
-    ? Math.max(16, viewportTop + viewportHeight - calculationBar.top + 16)
-    : 16;
-  const top = centeredPanelScrollTop({
-    panelTop: panel.getBoundingClientRect().top + window.scrollY,
-    panelHeight: panel.getBoundingClientRect().height,
-    viewportTop,
-    viewportHeight,
-    headerBottom: header?.getBoundingClientRect().bottom ?? 0,
-    bottomInset,
-    maxScroll: document.documentElement.scrollHeight - window.innerHeight,
-  });
-  if (Math.abs(window.scrollY - top) < 2) return () => {};
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  window.scrollTo({ top, behavior: reduced ? "instant" : "smooth" });
-  if (reduced) return () => {};
-
+/** Track intent from the activating click through expansion and any short scroll. */
+export function prepareDisclosureScroll(details: HTMLDetailsElement, body: HTMLElement) {
+  const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+  if (preference.matches || details.closest("dialog")) return;
   const controller = new AbortController();
-  let timeout = 0;
-  const cleanUp = () => { controller.abort(); window.clearTimeout(timeout); };
-  const interrupt = () => {
-    if (controller.signal.aborted) return;
-    cleanUp();
-    window.scrollTo({ top: window.scrollY, behavior: "instant" });
-  };
   const options = { passive: true, signal: controller.signal };
-  window.addEventListener("wheel", interrupt, options);
-  window.addEventListener("touchstart", interrupt, options);
-  window.addEventListener("pointerdown", interrupt, options);
-  window.addEventListener("keydown", (event) => {
-    if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " ", "Tab", "Escape"].includes(event.key)) interrupt();
+  const origin = window.scrollY;
+  let lastY = origin;
+  let frame = 0;
+  const cancel = () => {
+    controller.abort();
+    cancelAnimationFrame(frame);
+  };
+  for (const event of ["wheel", "touchstart", "pointerdown", "keydown", "focusin", "resize", "pagehide"]) {
+    window.addEventListener(event, cancel, options);
+  }
+  // Also respect scrollbar drags, external anchor navigation and scroll anchoring.
+  window.addEventListener("scroll", () => {
+    if (Math.abs(window.scrollY - lastY) > 1) cancel();
   }, options);
-  window.addEventListener("scrollend", cleanUp, { ...options, once: true });
-  timeout = window.setTimeout(cleanUp, 1_500);
-  return interrupt;
+  preference.addEventListener("change", cancel, options);
+
+  function afterOpen() {
+    if (controller.signal.aborted) return;
+    const distance = readingNudge(details, body);
+    if (distance < 2 || Math.abs(window.scrollY - origin) > 1) { cancel(); return; }
+    const start = performance.now();
+    const step = (now: number) => {
+      if (controller.signal.aborted) return;
+      if (Math.abs(window.scrollY - lastY) > 1) { cancel(); return; }
+      const progress = Math.min(1, Math.max(0, (now - start) / 300));
+      const eased = (1 - Math.cos(Math.PI * progress)) / 2;
+      lastY = origin + distance * eased;
+      window.scrollTo({ top: lastY, behavior: "instant" });
+      lastY = window.scrollY;
+      if (progress < 1) frame = requestAnimationFrame(step);
+      else cancel();
+    };
+    frame = requestAnimationFrame(step);
+  }
+  return { afterOpen, cancel };
 }

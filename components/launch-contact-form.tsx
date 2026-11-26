@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatedDetails } from "./animated-details";
 import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { DEMO_FORM_NOTICE, IS_REVIEW_DEMO } from "@/lib/demo-mode";
 import { getProjectScope, PROJECT_EQUIPMENT, PROJECT_REGISTER_LIMIT_NOTE, type ProjectEstimateSelection } from "@/lib/project-scope";
@@ -210,7 +211,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
               </div>
 
               <div data-stage-entry="" style={{ "--entry-index": contactFieldEntranceIndex + 1 } as CSSProperties}>
-                <details ref={taskDisclosureRef} className={styles.comment}>
+                <AnimatedDetails ref={taskDisclosureRef} className={styles.comment}>
                   <summary>Комментарий к проекту <UiIcon name="chevron-down" size={16} /></summary>
                   <label htmlFor={taskId} className="sr-only">Комментарий к проекту</label>
                   <textarea
@@ -224,7 +225,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                     rows={2}
                   />
                   {fieldError("task")}
-                </details>
+                </AnimatedDetails>
                 {equipmentLimitNote && <p id={taskHintId} className={styles.equipmentHint}>{equipmentLimitNote}</p>}
               </div>
             </div>
@@ -237,8 +238,8 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                     <div key={id}><dt>{label}</dt><dd>{quantity} шт.</dd></div>
                   ))}
                 </dl>
-                <details className={`${styles.comment} ${styles.scopeDetails}`}>
-                  <summary>
+                <AnimatedDetails className={`${styles.comment} ${styles.scopeDetails}`}>
+                  <summary data-button-motion="fade">
                     <span>Состав проекта</span>
                     <span className={styles.scopeCount}>{scope.works.length + scope.capabilities.length}</span>
                     <UiIcon name="chevron-down" size={16} />
@@ -250,7 +251,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
                     <p>Дополнительные возможности</p>
                     <ul>{scope.capabilities.map(({ id, title }) => <li key={id}>{title}</li>)}</ul>
                   </div>}
-                </details>
+                </AnimatedDetails>
               </aside>
             )}
           </div>
@@ -269,7 +270,7 @@ export function LaunchContactForm({ selection, onBack, onComplete, onPendingChan
             </label>
             {fieldError("personalDataConsent")}
           </div>
-          <div className={`${wizard.actions} ${styles.actions}`} data-stage-entry="" style={{ "--entry-index": contactFieldEntranceIndex + 4 } as CSSProperties}>
+          <div className={`${wizard.actions} ${styles.actions}`} data-stage-entry="" data-button-group="" style={{ "--entry-index": contactFieldEntranceIndex + 4 } as CSSProperties}>
             <button className={`${ui.secondary} ${wizard.back}`} aria-label="Назад" disabled={submitting} type="button" onClick={onBack}>
               <UiIcon name="chevron-down" size={16} className="rotate-90" />
               <span className={wizard.backLabel}>Назад</span>

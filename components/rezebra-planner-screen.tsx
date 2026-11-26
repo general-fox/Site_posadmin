@@ -1,175 +1,165 @@
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
+import type { PreviewPhase } from "./product-preview-frame";
+import { UiIcon } from "./ui-icon";
 import styles from "./rezebra-preview.module.css";
 
-const palette = {
-  background: "#F6EFD2",
-  panel: "#FFF9DF",
-  reservations: "#E8E2C4",
-  floor: "#E5DFC0",
-  timeline: "#FFFDF3",
-  blue: "#5D9DF5",
-  table: "#98E38B",
-  reserved: "#FF8080",
-  wall: "#3D5064",
-  chair: "#C0C9D0",
-  text: "#11130F",
-  tableText: "#11130F",
-  control: "#E8E2C4",
-  line: "#D0CBB3",
-  scrollbar: "#93938E",
-} as const;
+const tables = [
+  { number: 15, x: 73, y: 103, late: true },
+  { number: 16, x: 223, y: 103, round: true, booking: { guest: "Анна Орлова", time: "17:52", guests: "2 гостя", note: "Стол у окна" } },
+  { number: 17, x: 375, y: 103, booking: { guest: "Илья Миронов", time: "20:20", guests: "4 гостя", note: "Постоянный гость" } },
+  { number: 18, x: 525, y: 103 },
+  { number: 19, x: 73, y: 193, round: true, late: true },
+  { number: 20, x: 223, y: 193 },
+  { number: 21, x: 375, y: 193 },
+  { number: 22, x: 525, y: 193, round: true },
+  { number: 23, x: 223, y: 280 },
+  { number: 24, x: 375, y: 280 },
+];
 
-const reservations = [
-  ["11:00", "3 гостя"], ["11:30", "4 гостя"], ["12:00", "5 гостей"],
-  ["12:45", "5 гостей"], ["13:15", "4 гостя"], ["13:45", "3 гостя"],
-  ["14:30", "7 гостей"], ["15:00", "6 гостей"], ["15:30", "3 гостя"],
-  ["16:00", "7 гостей"], ["16:30", "6 гостей"], ["17:15", "1 гость"],
-] as const;
+type TableProps = (typeof tables)[number];
 
-function NavIcon({ x, y, kind, active = false }: { x: number; y: number; kind: "home" | "search" | "map" | "calendar" | "phone" | "wifi" | "refresh" | "settings" | "users"; active?: boolean }) {
-  const paths = {
-    home: <><path d="m3 10 9-7 9 7M6 8v13h12V8M10 21v-7h4v7" /></>,
-    search: <><circle cx="10" cy="10" r="6" /><path d="m15 15 6 6" /></>,
-    map: <><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5ZM9 3v16M15 5v16" /></>,
-    calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 2v6M17 2v6M3 11h18M15 14v4l3 1" /></>,
-    phone: <><path d="m7 3 3 5-3 3c2 4 3 5 7 7l3-3 5 3-2 4C9 22 2 15 2 5l5-2Z" /></>,
-    wifi: <><path d="M2 7a17 17 0 0 1 20 0M5 11a12 12 0 0 1 14 0M8 15a6 6 0 0 1 8 0" /><circle cx="12" cy="20" r="1" fill="currentColor" /></>,
-    refresh: <><path d="M20 9a8 8 0 0 0-14-4L3 8M3 3v5h5M4 15a8 8 0 0 0 14 4l3-3M21 21v-5h-5" /></>,
-    settings: <><path d="m10 2 4 0 1 3 3 1 3 3-2 3 0 3 1 3-4 3-3-1-3 1-4-3 1-3 0-3-2-3 3-3 3-1 1-3Z" /><circle cx="12" cy="12" r="3" /></>,
-    users: <><circle cx="9" cy="7" r="4" /><path d="M2 21v-3a7 7 0 0 1 14 0v3M18 12v8M14 16h8" /></>,
-  };
-  return <g transform={`translate(${x} ${y})`} color={active ? "#FFFFFF" : palette.text} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{paths[kind]}</g>;
-}
+const demoTable = 17;
 
-function Table({ number, x, y, round = false, reserved = false, status, time }: { number: number; x: number; y: number; round?: boolean; reserved?: boolean; status?: string; time?: string }) {
-  const width = round ? 76 : 102;
-  const height = round ? 76 : 66;
-  const center = width / 2;
-  const chairStyle = { fill: palette.chair, stroke: palette.wall, strokeWidth: .8 };
+function Table({ table, selected, pressSequence, panelId, onSelect }: {
+  table: TableProps;
+  selected: boolean;
+  pressSequence?: number;
+  panelId: string;
+  onSelect: (number: number) => void;
+}) {
+  const { number, x, y, round, booking, late } = table;
+  const halfWidth = round ? 24 : 38;
+  const halfHeight = round ? 24 : 19;
+  const shape = { x: -halfWidth, y: -halfHeight, width: halfWidth * 2, height: halfHeight * 2, rx: round ? halfWidth : 5 };
+
   return <g transform={`translate(${x} ${y})`}>
-    <text x="2" y="-14" fontSize="17" fontWeight="500">{number}</text>
-    <rect x={center - 8} y="-9" width="16" height="7" rx="3" {...chairStyle} />
-    <rect x={center - 8} y={height + 2} width="16" height="7" rx="3" {...chairStyle} />
-    <rect x="-9" y={height / 2 - 8} width="7" height="16" rx="3" {...chairStyle} />
-    <rect x={width + 2} y={height / 2 - 8} width="7" height="16" rx="3" {...chairStyle} />
-    {!round && number % 3 === 2 && <rect x="2" y="-12" width={width - 4} height="8" rx="4" {...chairStyle} />}
-    <rect width={width} height={height} rx={round ? 38 : 7} fill={reserved ? palette.reserved : palette.table} stroke={palette.tableText} strokeWidth="1" />
-    {status && <text x={center} y={round ? 25 : 23} fontSize={round ? 13 : 14} fontWeight="600" textAnchor="middle" fill={palette.tableText}>{status}</text>}
-    {time && <text x={center} y={round ? 46 : 45} fontSize="22" fontWeight="600" textAnchor="middle" fill={palette.tableText}>{time}</text>}
-    {reserved && <><rect x="11" y={height - 21} width={width - 22} height="5" rx="2.5" fill={palette.blue} /><g stroke={palette.tableText} strokeWidth="1.2" fill="none"><path d={`m${center - 22} ${height - 8} 4-4 4 4M${center - 8} ${height - 11}v5M${center - 11} ${height - 8}h6`} /><circle cx={center + 12} cy={height - 8} r="3" /><circle cx={center + 24} cy={height - 8} r="3" /></g></>}
-    {(reserved || number === 17) && <><circle cx={width + 3} cy="-2" r="5" fill="#FFB23D" /><path d={`m${width} 1 6-6`} stroke="#FFFFFF" strokeWidth="1.2" /></>}
+    <g key={pressSequence ?? "idle"} className={styles.tableArt} data-demo={number === demoTable} data-pressed={pressSequence !== undefined}>
+      <g className={styles.tableFace}>
+        <g fill="#BFC7D0">
+          <rect x="-6" y={-halfHeight - 4} width="12" height="7" rx="3.5" />
+          <rect x="-6" y={halfHeight - 3} width="12" height="7" rx="3.5" />
+          <rect x={-halfWidth - 4} y="-6" width="7" height="12" rx="3.5" />
+          <rect x={halfWidth - 3} y="-6" width="7" height="12" rx="3.5" />
+        </g>
+        <rect {...shape} fill="#92EB90" stroke="#292C29" />
+        {late && <rect x={shape.x - 4} y={shape.y - 4} width={shape.width + 8} height={shape.height + 8} rx={shape.rx + 4} fill="none" stroke="#8DD7B5" strokeWidth="1.5" strokeDasharray="2 3" />}
+        {booking && <g>
+          <rect {...shape} fill="#FF8582" stroke="#392C30" />
+          <text className={round ? styles.roundTime : styles.time} y="1">{booking.time}</text>
+        </g>}
+        {late && <g>
+          {!round && <text fontSize="12" y="-7">Опаздывает</text>}
+          <text className={round ? styles.roundTime : styles.time} y={round ? 1 : 9}>04:47</text>
+        </g>}
+      </g>
+      {booking && <g transform="translate(8 5)" pointerEvents="none" aria-hidden="true">
+        <circle className={styles.tapWave} r="12" />
+        <circle className={styles.tapPoint} r="6" />
+      </g>}
+    </g>
+    <text className={styles.tableNumber} x={-halfWidth + 2} y={-halfHeight - 12} fill="#F6F7F8" textAnchor="start">{number}</text>
+    {booking && <g
+      className={styles.tableButton}
+      id={`${panelId}-table-${number}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`Бронь стола ${number} на ${booking.time}`}
+      aria-expanded={selected}
+      aria-controls={panelId}
+      onClick={() => onSelect(number)}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        if (!event.repeat) onSelect(number);
+      }}
+    >
+      <rect x="-55" y="-40" width="110" height="84" fill="transparent" />
+      <rect className={styles.selectionRing} x={-halfWidth - 6} y={-halfHeight - 6}
+        width={shape.width + 12} height={shape.height + 12} rx={shape.rx + 6} />
+    </g>}
   </g>;
 }
 
-function Plant({ x, y }: { x: number; y: number }) {
-  return <g transform={`translate(${x} ${y})`}><circle r="19" fill="#82B39A" /><path d="M-11 7C-12-4-3-11 11-11 13 3 5 11-6 9M-9 9 6-5" fill="#C5E7C7" stroke="#DDF0D8" strokeWidth="1.1" /><text x="3" y="4" fontSize="6" fontWeight="600" fill="#FFFFFF">Оз...</text></g>;
-}
+export function ReZebraPlannerScreen({ phase }: { phase: PreviewPhase }) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const panelId = useId();
+  const [detail, setDetail] = useState<{ number: number; open: boolean } | null>(null);
+  const [tap, setTap] = useState<{ number: number; sequence: number; keepPlanInset: boolean } | null>(null);
+  const [demoReady, setDemoReady] = useState(false);
+  const open = detail?.open ?? (demoReady || phase === "settled");
+  const planInset = open || (tap?.keepPlanInset ?? false);
+  const number = detail?.number ?? demoTable;
+  const table = tables.find((item) => item.number === number);
 
-export function ReZebraPlannerScreen({ demonstration = false }: { demonstration?: boolean }) {
-  const id = useId();
-  return <svg viewBox="0 0 1200 780" preserveAspectRatio="xMidYMid meet" width="100%" height="100%" role="img" aria-labelledby={`${id}-title ${id}-description`} xmlns="http://www.w3.org/2000/svg" style={{ display: "block", fontFamily: "Inter, Arial, sans-serif" }}>
-    <title id={`${id}-title`}>Планировщик Rezebra в светлой теме — зал у воды</title>
-    <desc id={`${id}-description`}>Чёткая векторная иллюстрация светлого интерфейса Rezebra: список резервов по времени, схема зала с двенадцатью столами, статусы бронирований и временная шкала. {demonstration && "Пример бронирования: выбор стола 26 на 15:30 для четырёх гостей и подтверждение резерва. "}Данные показаны для примера.</desc>
-    <rect width="1200" height="780" fill={palette.background} />
-    <g fill={palette.text}>
-      <rect width="94" height="48" fill={palette.blue} />
-      <path d="m22 17-7 7 7 7" stroke="#FFFFFF" strokeWidth="1.6" fill="none" />
-      <text x="34" y="30" fontSize="17" fill="#FFFFFF" fontWeight="600">Назад</text>
-      <rect x="110" width="170" height="48" fill={palette.panel} />
-      <text x="125" y="30" fontSize="18" fontWeight="600">Планировщик</text>
-      <path d="M0 49h1200" stroke={palette.line} />
+  useEffect(() => {
+    if (detail || phase !== "playing") return;
+    const timer = window.setTimeout(() => setDemoReady(true), 1400);
+    return () => window.clearTimeout(timer);
+  }, [phase, detail]);
 
-      <rect y="50" width="40" height="730" fill={palette.panel} />
-      <rect y="250" width="40" height="70" fill={palette.blue} />
-      <NavIcon x={8} y={92} kind="home" /><NavIcon x={8} y={190} kind="search" />
-      <NavIcon x={8} y={273} kind="map" active /><NavIcon x={8} y={390} kind="calendar" />
-      <NavIcon x={8} y={490} kind="phone" /><NavIcon x={8} y={625} kind="wifi" />
-      <NavIcon x={8} y={678} kind="refresh" /><NavIcon x={8} y={721} kind="settings" /><NavIcon x={8} y={754} kind="users" />
+  useEffect(() => {
+    if (!tap) return;
+    const timer = window.setTimeout(() => setDetail({ number: tap.number, open: true }), 480);
+    return () => window.clearTimeout(timer);
+  }, [tap]);
 
-      <rect x="46" y="55" width="210" height="641" fill={palette.reservations} stroke={palette.line} />
-      {reservations.map(([time, guests], index) => <g key={time} transform={`translate(46 ${55 + index * 53})`}>
-        {time === "15:00" && <rect width="210" height="53" fill={palette.panel} />}
-        <path d="M0 53h210" stroke={palette.line} />
-        <text x="12" y="32" fontSize="26" fontWeight="500" letterSpacing="-.7">{time}</text>
-        <text x="196" y="21" fontSize="14" textAnchor="end">1 РЕЗЕРВ</text>
-        <text x="196" y="40" fontSize="14" textAnchor="end">{guests.toLocaleUpperCase("ru-RU")}</text>
-      </g>)}
-      <rect x="258" y="54" width="4" height="642" fill={palette.line} />
-      <rect x="258" y="56" width="4" height="400" fill={palette.scrollbar} />
+  const pressTable = (next: number) => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTap(null);
+      setDetail({ number: next, open: true });
+      return;
+    }
+    setDetail({ number, open: false });
+    setTap((previous) => ({ number: next, sequence: (previous?.sequence ?? 0) + 1, keepPlanInset: planInset }));
+  };
 
-      <rect x="268" y="55" width="932" height="37" fill={palette.background} />
-      <text x="280" y="79" fontSize="16" fontWeight="600">Панорамный зал</text>
-      <rect x="438" y="54" width="133" height="38" rx="3" fill={palette.blue} />
-      <text x="504" y="79" fontSize="16" fontWeight="600" fill="#FFFFFF" textAnchor="middle">Зал у воды</text>
-      <text x="589" y="79" fontSize="16" fontWeight="600">Капитанская гостиная</text>
-      <path d="M1079 73.5h14M1086 66.5v14" stroke={palette.text} strokeWidth="1.8" strokeLinecap="round" />
-      <rect x="1111" y="55" width="89" height="36" fill={palette.control} />
-      <g transform="translate(1138 73.5)" fill="none" stroke={palette.text} strokeWidth="1.4" strokeLinecap="round">
-        <circle r="3.3" />
-        <path d="M0-8v2M0 6v2M-8 0h2M6 0h2M-6-6l2 2M4 4l2 2M-6 6l2-2M4-4l2-2" />
+  const closePanel = () => {
+    document.getElementById(`${panelId}-table-${tap?.number ?? number}`)?.focus({ preventScroll: true });
+    setTap(null);
+    setDetail({ number, open: false });
+  };
+
+  return <div className={styles.scene} data-manual={detail !== null} data-plan-inset={planInset} onKeyDown={(event) => {
+    if (event.key === "Escape" && (open || tap)) closePanel();
+  }}>
+    <svg className={styles.plan} viewBox="0 0 600 376" role="group" aria-labelledby={titleId} aria-describedby={descriptionId} xmlns="http://www.w3.org/2000/svg">
+      <title id={titleId}>Зал Rezebra в тёмной теме</title>
+      <desc id={descriptionId}>Столы с 15 по 24. Стол 16 забронирован на 17:52, стол 17 на 20:20. У столов 15 и 19 гости опаздывают.</desc>
+      <g fontSize="15" fontWeight="500" fill="#F6F7F8" textAnchor="middle" dominantBaseline="central">
+        <rect x="160" y="10" width="216" height="31" rx="5" fill="#506F7C" />
+        <text x="268" y="25">Панорамные окна</text>
+        <rect x="443" y="10" width="145" height="31" rx="5" fill="#765C48" />
+        <text x="515.5" y="25">Бар</text>
+        <rect x="233" y="318" width="132" height="27" rx="5" fill="#326E59" />
+        <text x="299" y="331">Стойка хостес</text>
       </g>
-      <path d="M1173 73.5h14" stroke={palette.text} strokeWidth="1.8" strokeLinecap="round" />
-
-      <rect x="268" y="93" width="932" height="616" fill={palette.floor} />
-      <path d="M302 665V165h860v500H832M302 665h350" fill="none" stroke={palette.wall} strokeWidth="10" strokeLinejoin="miter" />
-      <rect x="557" y="193" width="208" height="35" rx="5" fill="#85B5C6" />
-      <path d="m629 208 4-7 4 7h-8Zm-5 3 4-7 4 7h-8Zm10 0 4-7 4 7h-8Z" fill="none" stroke={palette.tableText} />
-      <text x="687" y="216" fontSize="10" fontWeight="600" fill={palette.tableText} textAnchor="middle">Панорамные окна</text>
-      <Plant x={503} y={211} /><Plant x={805} y={211} />
-      <rect x="841" y="193" width="180" height="36" rx="10" fill="#8D7258" stroke="#A18B73" />
-      <path d="m916 205 10 0-5 7v6m-4 0h8" fill="none" stroke="#FFFFFF" strokeWidth="1.5" />
-      <text x="943" y="216" fontSize="12" fontWeight="600" fill="#FFFFFF">Бар</text>
-
-      <Table number={17} x={354} y={278} status="Опаздывает" time="00:56" />
-      <Table number={18} x={570} y={273} round reserved status="С" time="17:17" />
-      <Table number={19} x={773} y={278} reserved status="С 17:52" />
-      <Table number={20} x={987} y={278} />
-      <Table number={21} x={367} y={412} round /><Table number={22} x={557} y={417} />
-      <Table number={23} x={773} y={417} /><Table number={24} x={1000} y={412} round />
-      <Table number={25} x={354} y={554} /><Table number={26} x={557} y={554} />
-      <Table number={27} x={786} y={548} round /><Table number={28} x={987} y={554} />
-
-      {demonstration && <g aria-hidden="true" pointerEvents="none">
-        <rect className={styles.candidateTable} x="553" y="413" width="110" height="74" rx="11" fill="none" stroke="#347BC4" strokeWidth="4" />
-        <rect className={styles.selectedTable} x="553" y="550" width="110" height="72" rx="11" fill="none" stroke="#347BC4" strokeWidth="4" />
-        <g className={styles.reservation}>
-          <rect x="557" y="554" width="102" height="66" rx="7" fill="#C4DAF7" stroke="#347BC4" strokeWidth="2" />
-          <text x="608" y="582" fontSize="21" fontWeight="600" textAnchor="middle">15:30</text>
-          <text x="608" y="605" fontSize="14" textAnchor="middle">4 гостя</text>
-        </g>
-        <g className={styles.confirmation}>
-          <rect x="620" y="100" width="532" height="57" rx="10" fill="#FFFDF3" stroke="#BCCBAD" strokeWidth="1.5" />
-          <circle cx="648" cy="128" r="17" fill="#DFEDCE" />
-          <path d="m641 128 5 5 10-11" fill="none" stroke="#437344" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="678" y="124" fontSize="22" fontWeight="600">Резерв подтверждён</text>
-          <text x="678" y="146" fontSize="16" fill="#5C654F">Стол 26 · 15:30 · 4 гостя</text>
-        </g>
-      </g>}
-
-      <rect x="644" y="624" width="166" height="47" rx="5" fill="#3C90CF" stroke="#FFFFFF" strokeWidth=".7" />
-      <path d="m692 643 4-7 4 7h-8Zm-5 9 4-7 4 7h-8Zm11 0 4-7 4 7h-8Z" fill="none" stroke={palette.tableText} strokeWidth="1.4" />
-      <text x="749" y="652" fontSize="11" fontWeight="600" fill={palette.tableText} textAnchor="middle">Стойка хостес</text>
-      <rect x="678" y="680" width="96" height="22" rx="5" fill="#7A8997" />
-      <text x="726" y="695" fontSize="12" fontWeight="600" fill="#FFFFFF" textAnchor="middle">Вход</text>
-
-      <rect x="268" y="709" width="932" height="71" fill={palette.background} />
-      <rect x="280" y="726" width="136" height="38" rx="4" fill={palette.panel} stroke={palette.line} />
-      <text x="292" y="750" fontSize="15" letterSpacing=".5">23.11.2026</text>
-      <rect x="395" y="738" width="11" height="11" rx="1" fill="none" stroke={palette.text} /><path d="M395 742h11M398 735v5M403 735v5" stroke={palette.text} />
-      <rect x="434" y="728" width="646" height="33" rx="4" fill={palette.timeline} stroke={palette.line} />
-      {Array.from({ length: 29 }, (_, index) => <path key={index} d={`M${454 + index * 22} 731v27`} stroke={palette.line} strokeWidth=".7" />)}
-      <g className={demonstration ? styles.timeline : undefined}>
-        <text className={demonstration ? styles.originalTime : undefined} x="770" y="723" fontSize="17" textAnchor="middle">15:26</text>
-        {demonstration && <text className={styles.selectedTime} x="770" y="723" fontSize="17" textAnchor="middle" aria-hidden="true">15:30</text>}
-        <rect x="758" y="728" width="24" height="33" rx="3" fill={palette.blue} stroke="#3C7DC8" />
-        <path d="m766 737-5 7 5 7M774 737l5 7-5 7" fill="none" stroke="#FFFFFF" />
+      <g fill="#15201A" textAnchor="middle" dominantBaseline="central" fontWeight="600">
+        {tables.map((item) => <Table key={item.number} table={item} selected={open && number === item.number}
+          pressSequence={tap?.number === item.number ? tap.sequence : undefined} panelId={panelId} onSelect={pressTable} />)}
       </g>
-      <rect x="1104" y="728" width="82" height="33" rx="3" fill={palette.control} />
-      <text x="1145" y="750" fontSize="16" fill={palette.text} textAnchor="middle" fontWeight="600">Сейчас</text>
-
-      <text x="58" y="747" fontSize="26">Всего</text>
-      <text x="246" y="733" fontSize="14" textAnchor="end">16 РЕЗЕРВОВ</text>
-      <text x="246" y="754" fontSize="14" textAnchor="end">76 ГОСТЕЙ</text>
-    </g>
-  </svg>;
+    </svg>
+    <div className={styles.panel} id={panelId} role="region" aria-label="Информация о брони" data-open={open} aria-hidden={!open} inert={!open}>
+      {table?.booking && <>
+        <div className={styles.panelHeader}>
+          <span>Брони</span>
+          <button type="button" aria-label="Закрыть бронь" className={styles.close} data-button-reveal="off" onClick={closePanel}><UiIcon name="close" size={14} /></button>
+        </div>
+        <div className={styles.bookingCard}>
+          <div className={styles.bookingHeading}>
+            <strong>{table.booking.guest}</strong>
+            <time dateTime={table.booking.time}>{table.booking.time}</time>
+          </div>
+          <div className={styles.seating}><span>Зелёный зал</span><span>Стол {table.number}</span></div>
+          <div className={styles.guests}>
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+              <circle cx="8" cy="6" r="2.6" /><path d="M2 16v-1a6 6 0 0 1 12 0v1ZM13 4a2.5 2.5 0 0 1 0 5m2 2a4 4 0 0 1 3 4" />
+            </svg>
+            {table.booking.guests}
+          </div>
+          <span className={styles.guestNote}>{table.booking.note}</span>
+        </div>
+      </>}
+    </div>
+  </div>;
 }

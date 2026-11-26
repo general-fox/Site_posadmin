@@ -1,124 +1,39 @@
-.window {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  color: var(--ink);
-  background: #FFFFFF;
-  container: fox-preview / size;
+.devices {
+  position: relative;
+  width: min(100cqw, 168cqh);
+  aspect-ratio: 1.68;
+  isolation: isolate;
 }
 
-.layout { display: grid; grid-template-columns: 146px minmax(0, 1fr); width: 100%; height: 100%; min-width: 0; min-height: 0; }
-.sidebar { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 14px 8px; border-right: 1px solid #E5E9F0; background: #FFFFFF; }
-.sidebarTitle { display: flex; align-items: center; gap: 7px; padding: 0 6px; color: #2563EB; font-size: 13px; font-weight: 600; }
-.sidebarTitle svg { width: 20px; height: 20px; }
-.search { display: flex; align-items: center; gap: 5px; margin: 13px 2px 9px; padding: 7px 9px; border-radius: 7px; background: #F3F5F8; color: #6B7280; font-size: 10px; line-height: 1.2; }
-.search > span { font-size: 15px; line-height: .8; }
-.chatItem { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 10px 6px; border-radius: 8px; }
-.selectedChat { background: #EAF0FC; }
-.avatar { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #E4ECFE; color: #2563EB; }
-.avatar svg { width: 22px; height: 22px; }
-.chatItem > div { min-width: 0; }
-.chatItem strong { display: block; font-size: 10px; font-weight: 600; line-height: 1.3; }
-.chatItem > div > span { display: block; margin-top: 3px; color: #6B7280; font-size: 9px; line-height: 1.3; }
-.teamAvatar { background: #F2EDE7; color: #8D7258; font-size: 11px; font-weight: 600; }
-.savedAvatar { background: #EEF1F6; color: #69778C; font-size: 15px; }
-.unread { display: grid; place-items: center; flex-shrink: 0; width: 16px; height: 16px; margin-left: auto; border-radius: 50%; background: #2563EB; color: #FFFFFF; font-size: 9px; }
-.sidebarNote { margin: auto 6px 0; padding-top: 14px; color: #7B8290; font-size: 9px; line-height: 1.5; }
-
-.chat { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; background: #EFF3F9; }
-.header { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 11px 16px; border-bottom: 1px solid #E5E9F0; background: #FFFFFF; }
-.header > div { min-width: 0; }
-.header h4 { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.2; }
-.header p { margin: 3px 0 0; color: #6B7280; font-size: 9px; line-height: 1.3; }
-.headerDots { flex-shrink: 0; margin-left: auto; color: #768295; font-size: 20px; line-height: 1; }
-.conversation { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; min-width: 0; min-height: 0; padding: 16px 18px; }
-.date { flex-shrink: 0; margin: 0; color: #748094; font-size: 9px; line-height: 1.3; }
-.messages { display: grid; gap: 9px; width: 100%; max-width: 350px; min-width: 0; margin: 0; padding: 0; list-style: none; }
-.message { min-width: 0; padding: 11px 13px; border: 1px solid #E2E7EF; border-radius: 12px 12px 12px 3px; background: #FFFFFF; box-shadow: 0 2px 5px rgb(29 29 31 / 3%); }
-.messageHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
-.messageHeading strong { color: #3E4E66; font-size: 11px; font-weight: 600; line-height: 1.3; }
-.message time { flex-shrink: 0; color: #8590A1; font-size: 9px; line-height: 1.3; font-variant-numeric: tabular-nums; }
-.operation { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; margin-top: 7px; font-size: 12px; line-height: 1.3; font-variant-numeric: tabular-nums; }
-.operation b { flex-shrink: 0; color: #A04D4D; font-size: 11px; font-weight: 600; white-space: nowrap; }
-.operationMeta { margin: 6px 0 0; color: #788295; font-size: 9px; line-height: 1.3; }
-.report { display: flex; align-items: center; gap: 9px; }
-.fileIcon { display: grid; place-items: center; flex-shrink: 0; width: 31px; height: 35px; border-radius: 8px; background: #EAF0FC; color: #2563EB; }
-.fileIcon svg { width: 23px; height: 23px; }
-.reportCopy { min-width: 0; }
-.reportCopy strong { display: block; color: #2563EB; font-size: 11px; font-weight: 600; line-height: 1.3; }
-.reportCopy > span { display: block; margin-top: 4px; color: #788295; font-size: 9px; line-height: 1.3; }
-.report time { align-self: end; margin-left: auto; }
-.composer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding: 10px 16px; background: #FFFFFF; color: #8992A0; font-size: 10px; line-height: 1.3; }
-.composer svg { width: 17px; height: 17px; color: #2563EB; }
-
-@media (prefers-reduced-motion: no-preference) {
-  :global([data-preview-state="waiting"]:has([data-reveal-state])) .message { opacity: .28; translate: 0 8px; }
-  :global([data-preview-state="playing"]) .message { animation: message-arrive 700ms cubic-bezier(.22, .61, .36, 1) both; animation-delay: .3s; }
-  :global([data-preview-state="playing"]) .message:nth-child(2) { animation-delay: .6s; }
-  :global([data-preview-state="playing"]) .message:nth-child(3) { animation-delay: .9s; }
-}
-@keyframes message-arrive { from { opacity: .28; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
-
-@container fox-preview (max-width: 450px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .sidebar { display: none; }
-  .header { padding-inline: 12px; }
-  .conversation { padding-inline: 12px; }
+.laptop {
+  position: absolute;
+  left: 0;
+  top: 1%;
+  width: 90%;
+  aspect-ratio: 1000 / 624;
 }
 
-@container fox-preview (max-height: 320px) {
-  .sidebar { padding-top: 10px; }
-  .sidebarNote { display: none; }
-  .header { padding-block: 8px; }
-  .header .avatar { width: 27px; height: 27px; }
-  .conversation { gap: 7px; padding-block: 10px; }
-  .messages { gap: 7px; }
-  .message { padding: 8px 11px; }
-  .operation { margin-top: 5px; }
-  .operationMeta { display: none; }
-  .composer { padding-block: 8px; }
+.hardware { display: block; width: 100%; height: 100%; }
+
+/* The app sits inside the lid, leaving the camera and lower bezel visible. */
+.laptopScreen {
+  position: absolute;
+  inset: 3.3654% 8.7% 14.5833%;
+  overflow: hidden;
+  border-radius: 1.1% / 1.8%;
+  background: #fff;
+  container-type: size;
 }
 
-@container fox-preview (max-height: 260px) {
-  .chat { grid-template-rows: auto minmax(0, 1fr); }
-  .chatItem:last-of-type { display: none; }
-  .header { gap: 7px; padding: 6px 10px; }
-  .header .avatar { width: 23px; height: 23px; }
-  .header .avatar svg { width: 19px; height: 19px; }
-  .header h4 { font-size: 12px; }
-  .header p { display: none; }
-  .conversation { gap: 0; padding: 6px 10px; }
-  .date { display: none; }
-  .messages { gap: 5px; }
-  .message { padding: 6px 10px; border-radius: 9px 9px 9px 3px; }
-  .messageHeading strong, .reportCopy strong { font-size: 10px; }
-  .message time { font-size: 8px; }
-  .operation { margin-top: 4px; font-size: 10px; }
-  .operation b { font-size: 10px; }
-  .report { gap: 7px; }
-  .fileIcon { width: 25px; height: 27px; border-radius: 6px; }
-  .fileIcon svg { width: 19px; height: 19px; }
-  .reportCopy > span { margin-top: 2px; font-size: 8px; }
-  .composer { display: none; }
+.phone {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 23%;
 }
 
-@container fox-preview (max-height: 210px) {
-  .header { padding-block: 5px; }
-  .header .avatar { width: 20px; height: 20px; }
-  .header .avatar svg { width: 17px; height: 17px; }
-  .messages { gap: 4px; }
-  .message { padding-block: 5px; }
-  .fileIcon { width: 23px; height: 25px; }
-}
-
-@container fox-preview (max-width: 300px) {
-  .headerDots, .date > span { display: none; }
-  .header p { font-size: 8px; }
-  .message { padding-inline: 8px; }
-  .reportCopy > span { max-width: 155px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .message { animation: none !important; opacity: 1 !important; translate: none !important; }
+@container (max-width: 450px) {
+  .devices { width: min(100cqw, 130cqh); aspect-ratio: 1.3; }
+  .laptop { top: 2%; width: 86%; }
+  .phone { width: 31%; }
 }

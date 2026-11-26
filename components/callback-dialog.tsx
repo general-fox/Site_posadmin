@@ -1,16 +1,19 @@
 "use client";
 
+import { AnimatedDetails } from "./animated-details";
 import { motion } from "framer-motion";
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type FormEvent,
   type MouseEvent,
 } from "react";
-import { useMarketingReducedMotion } from "./marketing-ui";
+import { useMarketingReducedMotion, useScrollReveal } from "./marketing-ui";
 import { UiIcon } from "./ui-icon";
+import { AnimatedSelect } from "./animated-select";
 import ui from "./marketing.module.css";
 import styles from "./callback-dialog.module.css";
 import { getCalculationSummary, type CalculationSelection } from "@/lib/calculation-request";
@@ -48,12 +51,16 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
   const descriptionId = useId();
   const phoneHintId = useId();
   const scheduleHintId = useId();
+  const timeId = useId();
   const scheduleErrorId = useId();
   const reduced = useMarketingReducedMotion();
   const [scheduleNow, setScheduleNow] = useState<Date | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const formRef = useScrollReveal<HTMLFormElement>({
+    active: open && !submitted, motion: "lift", blur: false, sequence: true, animateOnMount: true,
+  });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [contactSoon, setContactSoon] = useState(true);
@@ -83,7 +90,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
     items: projectSummary.estimate.items.map((item) => ({ name: item.title, price: formatPrice(item.total) })),
   } : null;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
@@ -221,6 +228,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
 
   return (
     <dialog
+      data-button-motion="fade"
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       className={styles.dialog}
@@ -235,13 +243,14 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
     >
       {open ? (
         <motion.div
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+          animate={{ opacity: 1 }}
           className={styles.panel}
-          initial={reduced ? false : { opacity: 0, scale: 0.99, y: 12 }}
+          initial={reduced ? false : { opacity: 0 }}
           transition={{ duration: reduced ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
           <button
             aria-label="Закрыть окно"
+            data-button-reveal="off"
             className={styles.close}
             disabled={submitting}
             onClick={closeDialog}
@@ -274,7 +283,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} aria-busy={submitting}>
+            <form ref={formRef} onSubmit={handleSubmit} aria-busy={submitting}>
               <label className={styles.honeypot} aria-hidden="true">
                 Не заполняйте это поле
                 <input
@@ -284,23 +293,25 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                   type="text"
                 />
               </label>
-              <p className={`${ui.eyebrow} ${styles.eyebrow}`}>{chooseSpecialist ? "Обратный звонок" : "Связь с менеджером"}</p>
-              <h2 className={styles.title} id={titleId} ref={titleRef} tabIndex={-1}>
-                {chooseSpecialist ? "Кто вам нужен?" : preview ? "Обсудим ваш расчёт" : "Когда вам удобно поговорить?"}
-              </h2>
-              <p className={styles.description} id={descriptionId}>
-                {IS_REVIEW_DEMO ? "Демонстрация формы: данные не отправляются. Для проверки можно использовать вымышленный номер." : chooseSpecialist ? "Выберите специалиста и оставьте номер. Передадим запрос нужной команде." : preview ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
-              </p>
+              <header data-stage-entry="">
+                <p className={`${ui.eyebrow} ${styles.eyebrow}`}>{chooseSpecialist ? "Обратный звонок" : "Связь с менеджером"}</p>
+                <h2 className={styles.title} id={titleId} ref={titleRef} tabIndex={-1}>
+                  {chooseSpecialist ? "Кто вам нужен?" : preview ? "Обсудим ваш расчёт" : "Когда вам удобно поговорить?"}
+                </h2>
+                <p className={styles.description} id={descriptionId}>
+                  {IS_REVIEW_DEMO ? "Демонстрация формы: данные не отправляются. Для проверки можно использовать вымышленный номер." : chooseSpecialist ? "Выберите специалиста и оставьте номер. Передадим запрос нужной команде." : preview ? "Расчёт отправится менеджеру вместе с заявкой." : "Оставьте номер и выберите удобное время — мы свяжемся с вами и обсудим вашу задачу."}
+                </p>
+              </header>
 
               {chooseSpecialist ? (
-                <fieldset className={styles.specialists} disabled={submitting}>
+                <fieldset className={styles.specialists} disabled={submitting} data-stage-entry="">
                   <legend className={styles.label}>С кем хотите поговорить</legend>
                   <div className={styles.specialistChoices}>
-                    <label className={`${styles.choice} ${styles.specialistChoice}`} data-button-reveal="">
+                    <label className={`${styles.choice} ${styles.specialistChoice}`}>
                       <input type="radio" name="specialist" value="manager" checked={specialist === "manager"} required onChange={() => { setSpecialist("manager"); setSubmitError(""); }} />
                       <span><strong>Менеджер</strong><span>Проект, тарифы и подключение</span></span>
                     </label>
-                    <label className={`${styles.choice} ${styles.specialistChoice}`} data-button-reveal="">
+                    <label className={`${styles.choice} ${styles.specialistChoice}`}>
                       <input type="radio" name="specialist" value="technical" checked={specialist === "technical"} required onChange={() => { setSpecialist("technical"); setSubmitError(""); }} />
                       <span><strong>Технический специалист</strong><span>Кассы, r_keeper и IT-вопросы</span></span>
                     </label>
@@ -312,19 +323,19 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
               ) : null}
 
               {preview ? (
-                <section className={styles.calculation} aria-label={preview.label}>
+                <section className={styles.calculation} aria-label={preview.label} data-stage-entry="">
                   <div className={styles.calculationHeading}>
                     <p>{preview.title}</p>
                     <p className={styles.calculationTotal}>{preview.total}{preview.period && <span>{preview.period}</span>}</p>
                   </div>
                   <p className={styles.calculationMeta}>{preview.meta}</p>
                   {summary?.workplaceCount === MAX_ONLINE_WORKPLACES && <p className={styles.calculationMeta}>Если рабочих мест больше {MAX_ONLINE_WORKPLACES}, назовите их количество менеджеру во время звонка.</p>}
-                  <details className={styles.calculationDetails}>
-                    <summary><UiIcon name="chevron-down" size={14} />{projectSummary ? "Состав работ" : "Состав услуг"}</summary>
+                  <AnimatedDetails className={styles.calculationDetails}>
+                    <summary data-button-reveal="off"><UiIcon name="chevron-down" size={14} />{projectSummary ? "Состав работ" : "Состав услуг"}</summary>
                     <ul>{preview.items.map((item) => (
                       <li key={item.name}><span>{item.name}</span><span>{item.price}</span></li>
                     ))}</ul>
-                  </details>
+                  </AnimatedDetails>
                   {projectSummary && projectSummary.estimate.capabilities.length > 0 && <div className={styles.calculationExtras}>
                     <p>Индивидуальный расчёт</p>
                     <ul>{projectSummary.estimate.capabilities.map(({ id, title }) => <li key={id}>{title}</li>)}</ul>
@@ -333,7 +344,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                 </section>
               ) : null}
 
-              <label className={styles.phoneField}>
+              <label className={styles.phoneField} data-stage-entry="">
                 <span className={styles.label}>Номер телефона</span>
                 <input
                   aria-describedby={phoneHintId}
@@ -363,10 +374,10 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                 </span>
               </label>
 
-              {!chooseSpecialist ? <fieldset className={styles.timing} disabled={submitting}>
+              {!chooseSpecialist ? <fieldset className={styles.timing} disabled={submitting} data-stage-entry="">
                 <legend className={styles.label}>Когда позвонить</legend>
                 <div className={styles.choices}>
-                  <label className={styles.choice} data-button-reveal="">
+                  <label className={styles.choice}>
                     <input
                       checked={contactSoon}
                       name="callbackTiming"
@@ -376,7 +387,7 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                     />
                     <span>В ближайшее время</span>
                   </label>
-                  <label className={styles.choice} data-button-reveal="">
+                  <label className={styles.choice}>
                     <input
                       checked={!contactSoon}
                       name="callbackTiming"
@@ -388,65 +399,67 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                   </label>
                 </div>
                 <p className={styles.scheduleHint} id={scheduleHintId}>
-                  {CALLBACK_HOURS_LABEL}. {!contactSoon ? "Выберите удобное время звонка." : "Заявку можно оставить в любое время."}
+                  <span aria-hidden={!contactSoon}>{CALLBACK_HOURS_LABEL}. Заявку можно оставить в любое время.</span>
+                  <span aria-hidden={contactSoon}>{CALLBACK_HOURS_LABEL}. Выберите удобное время звонка.</span>
                 </p>
               </fieldset> : null}
 
-                {!contactSoon ? (
-                  <motion.div
-                    animate={{ opacity: 1, y: 0 }}
-                    className={styles.schedule}
-                    initial={reduced ? false : { opacity: 0, y: -4 }}
-                    transition={{ duration: reduced ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    <label>
-                      <span className={styles.label}>Удобная дата</span>
-                      <input
-                        className={styles.fieldControl}
-                        aria-describedby={`${scheduleHintId}${dateError ? ` ${scheduleErrorId}` : ""}`}
-                        aria-invalid={Boolean(dateError)}
-                        disabled={submitting}
-                        min={scheduleNow ? getMoscowDateTime(scheduleNow).date : undefined}
-                        name="date"
-                        onChange={(event) => {
-                          const nextDate = event.currentTarget.value;
-                          const now = new Date();
-                          setScheduleNow(now);
-                          setSelectedDate(nextDate);
-                          const slots = getCallbackSlots(nextDate, now);
-                          if (!slots.includes(selectedTime)) setSelectedTime(slots[0] || "");
-                          setSubmitError("");
-                        }}
-                        required
-                        type="date"
-                        value={selectedDate}
-                      />
-                    </label>
-                    <label>
-                      <span className={styles.label}>Время по Москве</span>
-                      <select
-                        className={styles.fieldControl}
-                        aria-describedby={scheduleHintId}
-                        disabled={submitting || availableTimes.length === 0}
-                        name="time"
-                        onChange={(event) => { setSelectedTime(event.currentTarget.value); setSubmitError(""); }}
-                        onFocus={() => {
-                          const now = new Date();
-                          setScheduleNow(now);
-                          const slots = getCallbackSlots(selectedDate, now);
-                          if (!slots.includes(selectedTime)) setSelectedTime(slots[0] || "");
-                        }}
-                        required
-                        value={selectedTime}
-                      >
-                        <option value="">{availableTimes.length === 0 ? "Нет доступного времени" : "Выберите время"}</option>
-                        {availableTimes.map((time) => <option key={time} value={time}>{time}</option>)}
-                      </select>
-                    </label>
-                    {dateError ? <p className={styles.scheduleError} id={scheduleErrorId} role="status">{dateError}</p> : null}
-                  </motion.div>
-                ) : null}
-              <label className={styles.consent}>
+              {!chooseSpecialist && (
+                <div className={styles.scheduleFold} data-expanded={!contactSoon} inert={contactSoon} aria-hidden={contactSoon}>
+                  <div className={styles.scheduleClip}>
+                    <div className={styles.schedule}>
+                      <label>
+                        <span className={styles.label}>Удобная дата</span>
+                        <input
+                          className={styles.fieldControl}
+                          aria-describedby={`${scheduleHintId}${dateError ? ` ${scheduleErrorId}` : ""}`}
+                          aria-invalid={Boolean(dateError)}
+                          disabled={contactSoon || submitting}
+                          min={scheduleNow ? getMoscowDateTime(scheduleNow).date : undefined}
+                          name="date"
+                          onChange={(event) => {
+                            const nextDate = event.currentTarget.value;
+                            const now = new Date();
+                            setScheduleNow(now);
+                            setSelectedDate(nextDate);
+                            const slots = getCallbackSlots(nextDate, now);
+                            if (!slots.includes(selectedTime)) setSelectedTime(slots[0] || "");
+                            setSubmitError("");
+                          }}
+                          required
+                          type="date"
+                          value={selectedDate}
+                        />
+                      </label>
+                      <div className={styles.timeField}>
+                        <label htmlFor={timeId} className={styles.label}>Время по Москве</label>
+                        <AnimatedSelect
+                          id={timeId} label="Время по Москве"
+                          options={[
+                            { value: "", label: availableTimes.length === 0 ? "Нет доступного времени" : "Выберите время" },
+                            ...availableTimes.map(time => ({ value: time, label: time })),
+                          ]}
+                          className={styles.fieldControl}
+                          describedBy={scheduleHintId}
+                          disabled={contactSoon || submitting || availableTimes.length === 0}
+                          name="time"
+                          onChange={(time) => { setSelectedTime(time); setSubmitError(""); }}
+                          onFocus={() => {
+                            const now = new Date();
+                            setScheduleNow(now);
+                            const slots = getCallbackSlots(selectedDate, now);
+                            if (!slots.includes(selectedTime)) setSelectedTime(slots[0] || "");
+                          }}
+                          required
+                          value={selectedTime}
+                        />
+                      </div>
+                      {dateError ? <p className={styles.scheduleError} id={scheduleErrorId} role="status">{dateError}</p> : null}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <label className={styles.consent} data-stage-entry="">
                 <input
                   name="personalDataConsent"
                   disabled={submitting}
@@ -470,6 +483,8 @@ export function CallbackDialog({ onClose, open, calculation, projectEstimate, ch
                 disabled={submitting}
                 aria-busy={submitting}
                 type="submit"
+                data-stage-entry=""
+                data-button-reveal="off"
               >
                 {submitting ? "Отправляем…" : chooseSpecialist ? "Запросить звонок" : "Оставить заявку"}
                 {!submitting && <UiIcon name="arrow-right" />}

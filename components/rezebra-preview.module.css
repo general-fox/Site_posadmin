@@ -1,112 +1,131 @@
-.screen {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: #f6efd2;
-}
-
-.screen > svg {
+.scene { --drawer-width: 34%; position: relative; width: 100%; height: 100%; background: #454545; }
+.plan {
   display: block;
   width: 100%;
   height: 100%;
+  margin-left: auto;
+  background: #454545;
+  font-family: var(--font-inter), Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.scene[data-plan-inset="true"] .plan { width: calc(100% - var(--drawer-width)); }
+
+.tableNumber, .time { font-size: 18px; }
+.roundTime { font-size: 15px; }
+
+@container (max-width: 400px) {
+  .scene { --drawer-width: 37%; }
+  .tableNumber, .time, .roundTime { font-size: 21px; }
+  /* Use the aisle for longer times when a round tabletop is too narrow. */
+  .roundTime { transform: translateY(40px); fill: #F6F7F8; }
 }
 
-/* These layers illustrate one reservation; they are not interactive controls. */
-.candidateTable,
-.selectedTable,
-.reservation,
-.confirmation,
-.selectedTime {
+.tableButton { cursor: pointer; outline: none; }
+.selectionRing {
+  fill: none;
+  stroke: #a9caff;
+  stroke-width: 3;
   opacity: 0;
-  pointer-events: none;
+}
+.tableButton[aria-expanded="true"] .selectionRing,
+.tableButton:focus-visible .selectionRing { opacity: 1; }
+.tableButton:focus-visible .selectionRing { stroke: white; stroke-dasharray: 5 3; }
+@media (hover: hover) {
+  .tableButton:hover .selectionRing { opacity: 1; }
+}
+.tapWave, .tapPoint {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.tapWave { fill: #fff; fill-opacity: .2; stroke: #fff; stroke-width: 2.5; }
+.tapPoint { fill: white; stroke: #344459; stroke-width: 1.75; }
+.tableFace { transform-box: fill-box; transform-origin: center; }
+
+.panel {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: grid;
+  align-content: start;
+  gap: clamp(3px, .7cqw, 6px);
+  width: var(--drawer-width);
+  padding: clamp(4px, 1.1cqw, 7px);
+  background: #36383b;
+  color: #fff;
+  font-family: var(--font-inter), Arial, sans-serif;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  visibility: hidden;
+  transform: translateX(-100%);
+}
+.panel[data-open="true"] { visibility: visible; transform: translateX(0); }
+.panelHeader { display: flex; align-items: center; justify-content: space-between; padding-left: 3px; color: #e3e5e7; font-size: clamp(10px, 2.5cqw, 14px); }
+.bookingCard {
+  display: grid;
+  gap: clamp(5px, 1.3cqw, 9px);
+  padding: clamp(6px, 1.6cqw, 10px);
+  border-radius: clamp(4px, 1.1cqw, 7px);
+  background: #4a4c4e;
+  font-size: clamp(10px, 2.3cqw, 13px);
+}
+.bookingHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 5px; }
+.bookingHeading strong { font-size: clamp(11px, 2.55cqw, 15px); font-weight: 600; }
+.bookingHeading time { font-weight: 600; }
+.seating { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.seating span { white-space: nowrap; }
+.guests { display: flex; align-items: center; gap: 4px; }
+.guests svg { width: 1.2em; height: 1.2em; flex: none; }
+.guestNote {
+  border-radius: 4px;
+  background: #f2aa36;
+  padding: 3px 5px;
+  color: #2b210f;
+  font-size: clamp(9px, 2.1cqw, 12px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.close {
+  display: grid;
+  place-items: center;
+  width: clamp(24px, 6cqw, 34px);
+  height: clamp(24px, 6cqw, 34px);
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #e3e7ed;
+  cursor: pointer;
+}
+.close:focus-visible { outline: 2px solid white; outline-offset: -3px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .plan { transition: width .28s ease-in; }
+  .scene[data-plan-inset="true"] .plan { transition: width .42s cubic-bezier(.2,.75,.2,1); }
+  .tableArt[data-pressed="true"],
+  :global([data-preview-state="playing"]) .scene[data-manual="false"] .tableArt[data-demo="true"] {
+    & .tableFace { animation: pressTable .48s ease-in-out var(--press-delay, 0s) both; }
+    & .tapWave { animation: spreadTouch .68s ease-out var(--press-delay, 0s) both; }
+    & .tapPoint { animation: touchPoint .48s ease-out var(--press-delay, 0s) both; }
+  }
+  :global([data-preview-state="playing"]) .scene[data-manual="false"] .tableArt[data-demo="true"] { --press-delay: .92s; }
+  .panel {
+    transition: transform .28s ease-in, visibility 0s .28s;
+  }
+  .panel[data-open="true"] {
+    transition: transform .42s cubic-bezier(.2,.75,.2,1), visibility 0s;
+  }
 }
 
-.timeline { transform: translateX(0); }
-.originalTime { opacity: 1; }
-.confirmation { transform: translateY(6px); }
-
-:global([data-preview-state="playing"]) .candidateTable {
-  animation: inspectTable 6s ease-in-out both;
+@keyframes pressTable {
+  0%, 100% { transform: scale(1); }
+  35%, 55% { transform: scale(.86); }
 }
-
-:global([data-preview-state="playing"]) .selectedTable {
-  animation: selectTable 6s ease-in-out both;
+@keyframes spreadTouch {
+  0% { opacity: 0; transform: scale(.4); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: scale(2.6); }
 }
-
-:global([data-preview-state="playing"]) .timeline {
-  animation: selectTime 6s cubic-bezier(.22, .61, .36, 1) both;
-}
-
-:global([data-preview-state="playing"]) .originalTime {
-  animation: previousTime 6s ease-in-out both;
-}
-
-:global([data-preview-state="playing"]) .selectedTime {
-  animation: nextTime 6s ease-in-out both;
-}
-
-:global([data-preview-state="playing"]) .reservation {
-  animation: reserveTable 6s ease-in-out both;
-}
-
-:global([data-preview-state="playing"]) .confirmation {
-  animation: confirmReservation 6s cubic-bezier(.22, .61, .36, 1) both;
-}
-
-/* The last frame remains after the shared one-shot timer finishes. */
-:global([data-preview-state="settled"]) .selectedTable { opacity: .65; }
-:global([data-preview-state="settled"]) .timeline { transform: translateX(44px); }
-:global([data-preview-state="settled"]) .originalTime { opacity: 0; }
-:global([data-preview-state="settled"]) .selectedTime,
-:global([data-preview-state="settled"]) .reservation,
-:global([data-preview-state="settled"]) .confirmation { opacity: 1; }
-:global([data-preview-state="settled"]) .confirmation { transform: translateY(0); }
-
-@keyframes inspectTable {
-  0%, 5% { opacity: 0; }
-  15%, 25% { opacity: .65; }
-  38%, 100% { opacity: 0; }
-}
-
-@keyframes selectTable {
-  0%, 25% { opacity: 0; }
-  42%, 68% { opacity: .9; }
-  86%, 100% { opacity: .65; }
-}
-
-@keyframes selectTime {
-  0%, 40% { transform: translateX(0); }
-  64%, 100% { transform: translateX(44px); }
-}
-
-@keyframes previousTime {
-  0%, 44% { opacity: 1; }
-  54%, 100% { opacity: 0; }
-}
-
-@keyframes nextTime {
-  0%, 50% { opacity: 0; }
-  62%, 100% { opacity: 1; }
-}
-
-@keyframes reserveTable {
-  0%, 65% { opacity: 0; }
-  80%, 100% { opacity: 1; }
-}
-
-@keyframes confirmReservation {
-  0%, 73% { opacity: 0; transform: translateY(6px); }
-  90%, 100% { opacity: 1; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .candidateTable, .selectedTable, .timeline, .originalTime,
-  .selectedTime, .reservation, .confirmation { animation: none !important; }
-  .candidateTable, .originalTime { opacity: 0; }
-  .selectedTable { opacity: .65; }
-  .timeline { transform: translateX(44px); }
-  .selectedTime, .reservation, .confirmation { opacity: 1; }
-  .confirmation { transform: translateY(0); }
+@keyframes touchPoint {
+  0%, 100% { opacity: 0; }
+  18%, 64% { opacity: 1; }
 }

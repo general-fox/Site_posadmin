@@ -1,0 +1,55 @@
+button.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: start;
+  cursor: pointer;
+}
+.trigger svg { flex: none; }
+.trigger[aria-expanded="true"] svg { rotate: 180deg; }
+.popup {
+  position: fixed;
+  z-index: 4;
+  inset: auto;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border-radius: 14px;
+  background: var(--surface-selected);
+  color: var(--ink);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 14%);
+  clip-path: inset(0 0 var(--list-covered, 0%) 0 round 14px);
+}
+.popup[data-side="above"] {
+  translate: 0 -100%;
+  clip-path: inset(var(--list-covered, 0%) 0 0 0 round 14px);
+}
+.option {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  min-height: 42px;
+  padding: 8px 32px 8px 12px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.option + .option { margin-top: 2px; }
+.option small { color: var(--text-body); font-size: 13px; }
+.option svg { position: absolute; right: 10px; top: 50%; translate: 0 -50%; }
+.option[data-active], .option:hover { background: var(--milk); }
+.option[aria-selected="true"]:has(svg) { background: var(--action); color: var(--action-ink); }
+.option[aria-disabled="true"] { color: var(--text-muted); cursor: default; }
+.native[hidden] { display: none !important; }
+@media (forced-colors: active) {
+  .popup, .trigger { outline: 1px solid ButtonText; }
+  .option[data-active] { outline: 1px solid Highlight; }
+}

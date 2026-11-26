@@ -1,5 +1,4 @@
 .scene {
-  --lift: calc(1 - var(--detail-progress, 1));
   --graphite: #292c32;
   position: absolute;
   inset: 0;
@@ -12,10 +11,6 @@
   inset: 0;
   width: min(100%, 320px);
   margin-inline: auto;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .composition { translate: 0 calc(3px * var(--lift)); }
 }
 
 .artLabel {

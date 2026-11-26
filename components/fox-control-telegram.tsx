@@ -1,89 +1,43 @@
-import { foxControlAlertSamples } from "./fox-control-alert-card";
-import { ProductPreviewFrame } from "./product-preview-frame";
+import { useId } from "react";
+import { FoxDesktopChat } from "./fox-desktop-chat";
+import { FoxPhonePreview } from "./fox-phone-preview";
+import { ProductPreviewScene } from "./product-preview-frame";
 import styles from "./fox-control-telegram.module.css";
 
-const operations = [
-  { kind: "reduction", title: "Уменьшение суммы", detail: "2 740 ₽ → 2 120 ₽", amount: "−620 ₽" },
-  { kind: "deletion", title: "Удаление позиции", detail: "Горячее блюдо", amount: "−790 ₽" },
-] as const;
-
-function FoxMark() {
-  return <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-    <path d="m5 5 8 5h6l8-5-2 15-9 8-9-8L5 5Z" fill="currentColor" />
-    <path d="m9 15 7 5 7-5-3 8-4 3-4-3-3-8Z" fill="#FFFFFF" />
-    <path d="m14 21 2 2 2-2h-4Z" fill="currentColor" />
-  </svg>;
-}
-
-function TelegramMark() {
-  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="m21 4-4 17-6-5-3 3 1-6-6-3L21 4Z" fill="currentColor" />
-    <path d="m9 13 8-6-6 9" stroke="#FFFFFF" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>;
-}
-
-function ChatSidebar() {
-  return <aside className={styles.sidebar} aria-hidden="true">
-    <div className={styles.sidebarTitle}><TelegramMark /><span>Telegram</span></div>
-    <div className={styles.search}><span>⌕</span> Поиск</div>
-    <div className={`${styles.chatItem} ${styles.selectedChat}`}>
-      <span className={styles.avatar}><FoxMark /></span>
-      <div><strong>Fox Control</strong><span>Отчёт за смену</span></div>
-      <span className={styles.unread}>3</span>
-    </div>
-    <div className={styles.chatItem}>
-      <span className={`${styles.avatar} ${styles.teamAvatar}`}>Р</span>
-      <div><strong>Команда</strong><span>Рабочий чат</span></div>
-    </div>
-    <div className={styles.chatItem}>
-      <span className={`${styles.avatar} ${styles.savedAvatar}`}>✓</span>
-      <div><strong>Избранное</strong><span>Важное под рукой</span></div>
-    </div>
-    <p className={styles.sidebarNote}>События ресторана<br />в привычном чате</p>
-  </aside>;
-}
-
-function ReportMessage() {
-  return <li className={`${styles.message} ${styles.report}`}>
-    <span className={styles.fileIcon} aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M6 3h8l4 4v14H6V3Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M14 3v5h4M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    </span>
-    <div className={styles.reportCopy}><strong>Отчёт за смену.pdf</strong><span>Выручка и операции за день · PDF</span></div>
-    <time dateTime="20:40">20:40</time>
-  </li>;
+function Laptop() {
+  const id = useId().replace(/:/g, "");
+  return <div className={styles.laptop}>
+    <svg className={styles.hardware} viewBox="0 0 1000 624" fill="none" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id={`${id}-metal`} x1="0" y1="0" x2="1" y2=".1">
+          <stop stopColor="#8e939a" /><stop offset=".08" stopColor="#dde0e4" />
+          <stop offset=".5" stopColor="#c8ccd1" /><stop offset=".92" stopColor="#dfe2e6" /><stop offset="1" stopColor="#9399a2" />
+        </linearGradient>
+        <linearGradient id={`${id}-lip`} x2="0" y2="1">
+          <stop stopColor="#e1e3e7" /><stop offset=".65" stopColor="#acb1ba" /><stop offset="1" stopColor="#7c838c" />
+        </linearGradient>
+        <pattern id={`${id}-keys`} width="27" height="7" patternUnits="userSpaceOnUse">
+          <rect x="1" y="1" width="24.5" height="4.7" rx="1.5" fill="#51565d" />
+        </pattern>
+      </defs>
+      <rect x="74" y="4" width="852" height="551" rx="21" fill={`url(#${id}-metal)`} />
+      <rect x="77" y="7" width="846" height="546" rx="18" fill="#212327" />
+      <circle cx="500" cy="14" r="3.2" fill="#101114" />
+      <circle cx="500" cy="14" r="1.5" fill="#354758" />
+      <path d="M79 549h842l76 45q4 3 1 5H2q-3-2 1-5Z" fill={`url(#${id}-metal)`} />
+      <path d="M130 550h740l8 4H122Z" fill="#6a7077" />
+      <path d="M146 558h708l35 19H111Z" fill={`url(#${id}-keys)`} />
+      <path d="M439 581h122l9 11H430Z" fill="#c6cacf" stroke="#a6abb2" strokeWidth="1.2" />
+      <path d="M1 597h998c-3 10-21 17-41 17H42c-20 0-38-7-41-17Z" fill={`url(#${id}-lip)`} />
+      <path d="M434 597h132q-3 5-11 5H445q-8 0-11-5Z" fill="#8d9299" />
+    </svg>
+    <div className={styles.laptopScreen}><FoxDesktopChat /></div>
+  </div>;
 }
 
 export function FoxControlTelegram() {
-  return <ProductPreviewFrame title="Telegram · Fox Control" label="Демонстрационный чат Fox Control: уведомления об операциях и отчёт в PDF. Данные вымышлены.">
-    <div className={styles.window}>
-      <div className={styles.layout}>
-        <ChatSidebar />
-        <section className={styles.chat} aria-label="Пример чата Fox Control">
-          <header className={styles.header}>
-            <span className={styles.avatar} aria-hidden="true"><FoxMark /></span>
-            <div><h4>Fox Control</h4><p>Ресторан 01 · уведомления об операциях</p></div>
-            <span className={styles.headerDots} aria-hidden="true">···</span>
-          </header>
-          <div className={styles.conversation}>
-            <p className={styles.date}>Сегодня <span>· пример данных</span></p>
-            <ol className={styles.messages}>
-              {operations.map(({ kind, title, detail, amount }) => {
-                const operation = foxControlAlertSamples[kind];
-                return <li key={kind} className={styles.message}>
-                  <div className={styles.messageHeading}><strong>{title}</strong><time dateTime={operation.time}>{operation.time}</time></div>
-                  <div className={styles.operation}><span>{detail}</span><b>{amount}</b></div>
-                  <p className={styles.operationMeta}>{operation.station} · {operation.role}</p>
-                </li>;
-              })}
-              <ReportMessage />
-            </ol>
-          </div>
-          <div className={styles.composer} aria-hidden="true"><span>Сообщение</span><TelegramMark /></div>
-        </section>
-      </div>
-    </div>
-  </ProductPreviewFrame>;
+  return <ProductPreviewScene className={styles.devices} label="Fox Control в Telegram на ноутбуке и телефоне. Пример отчёта и уведомлений о кассовых операциях.">
+    <Laptop />
+    <div className={styles.phone}><FoxPhonePreview /></div>
+  </ProductPreviewScene>;
 }

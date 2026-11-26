@@ -14,7 +14,7 @@ type ScrollRevealOptions = {
   sequence?: boolean;
   // Media opts in explicitly; large card surfaces stay sharp by default.
   blur?: boolean | "media";
-  motion?: "fade" | "lift";
+  motion?: "fade" | "lift" | "scale";
   after?: RefObject<HTMLElement | null>;
   active?: boolean;
   animateOnMount?: boolean;
@@ -82,6 +82,7 @@ export function useScrollReveal<T extends HTMLElement>({
       !("IntersectionObserver" in window) || typeof element.animate !== "function") return;
 
     const rootStyle = getComputedStyle(element);
+    const scaleIn = motion === "scale";
     const readNumber = (name: string, fallback: number) => {
       const value = Number.parseFloat(rootStyle.getPropertyValue(name));
       return Number.isFinite(value) ? value : fallback;
@@ -115,7 +116,7 @@ export function useScrollReveal<T extends HTMLElement>({
     if (sequence) {
       const marked = Array.from(element.querySelectorAll<HTMLElement>("[data-reveal-item], [data-stage-entry]"));
       targets.push(...marked.filter((node) => !node.closest("[inert]") && !marked.some((parent) => parent !== node && parent.contains(node))));
-    } else if (motion === "lift" || rows) targets.push(...(rows ? children : [element]));
+    } else if (motion !== "fade" || rows) targets.push(...(rows ? children : [element]));
     else if (element.matches("h1,h2,h3,h4,h5,h6,p") || surface || children.length === 0) collect(element);
     else children.forEach((child) => collect(child));
 
@@ -130,7 +131,7 @@ export function useScrollReveal<T extends HTMLElement>({
     const controlSelector = "button,summary,[role='button'],input[type='button'],input[type='submit'],input[type='reset'],[data-button-reveal]";
     const groups: Group[] = targets.map((anchor) => {
       // Text splits only when it is a target, never inside an independently moving card.
-      const control = anchor.matches(controlSelector);
+      const control = anchor.matches(controlSelector) || anchor.hasAttribute("data-button-group");
       const textMode = control ? null : anchor.matches("h1,h2,h3,h4,h5,h6") ? "words" : anchor.matches("p") ? "lines" : null;
       const words = textMode ? Array.from(anchor.querySelectorAll<HTMLElement>(textMode === "words" ? "[data-reveal-word]" : "[data-reveal-line-word]")) : [];
       anchor.dataset.revealTarget = "";
@@ -165,7 +166,9 @@ export function useScrollReveal<T extends HTMLElement>({
       publish();
     };
     const firstFrame = (unit: Unit): Keyframe => ({
-      opacity: 0, translate: `0 ${unit.text ? textDistance : distance}px`,
+      opacity: 0,
+      ...(!unit.control ? { translate: `0 ${unit.text ? textDistance : distance}px` } : {}),
+      ...(scaleIn && !unit.control ? { scale: "0.92" } : {}),
       ...(blur && !unit.control && (unit.text || blur === "media") && unit.filter === "none" ? { filter: `blur(${blurRadius})` } : {}),
     });
     const prepare = (group: Group) => {
@@ -211,7 +214,9 @@ export function useScrollReveal<T extends HTMLElement>({
         const textDelay = group.textMode === "lines" ? (lineOrder.get(lineTops[unit.word]) ?? 0) * lineStagger
           : group.textMode === "words" ? unit.word * wordStagger : 0;
         const animation = unit.node.animate([from, {
-          opacity: unit.opacity, translate: unit.translate,
+          opacity: unit.opacity,
+          ...(from.translate ? { translate: unit.translate } : {}),
+          ...(from.scale ? { scale: "1" } : {}),
           ...(from.filter ? { filter: unit.filter } : {}),
         }], { duration: unit.text ? textDuration : duration, delay: wait + textDelay, easing, fill: "both" });
         animation.onfinish = () => { if (--remaining === 0) settle(group); };
@@ -238,9 +243,12 @@ export function useScrollReveal<T extends HTMLElement>({
       let needsDependencyTimer = false;
       let batchIndex = 0;
       const rowDelays = new Map<number, number>();
-      groups.forEach((group) => {
-        if (group.phase !== "waiting") return;
-        const bounds = group.anchor.getBoundingClientRect();
+      const pending = groups.filter(group => group.phase === "waiting").map(group => ({
+        group, bounds: group.anchor.getBoundingClientRect(),
+      }));
+      if (sequence) pending.sort((a, b) =>
+        Math.round(a.bounds.top) - Math.round(b.bounds.top) || a.bounds.left - b.bounds.left);
+      pending.forEach(({ group, bounds }) => {
         if (bounds.bottom <= 0) { settle(group); return; }
         if (bounds.top > window.innerHeight + advance || group.anchor.closest("[inert]")) return;
         if (wait === null) return;
@@ -251,8 +259,9 @@ export function useScrollReveal<T extends HTMLElement>({
           if (!rowDelays.has(row)) rowDelays.set(row, Math.min(batchIndex++, 2) * stagger);
           itemDelay = rowDelays.get(row)!;
         } else {
-          // A long list never builds a seconds-long delay queue.
-          const start = Math.min(Math.max(now, sequenceStart), now + stagger * 2);
+          // Every visible item in an explicit sequence gets its own start time.
+          const start = sequence ? Math.max(now, sequenceStart)
+            : Math.min(Math.max(now, sequenceStart), now + stagger * 2);
           itemDelay = start - now;
           sequenceStart = start + stagger;
         }

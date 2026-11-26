@@ -13,7 +13,7 @@ export const SITE_PRODUCTS = {
 } as const;
 
 export const PRODUCT_NAVIGATION = [
-  { href: "/#rezebra", label: SITE_PRODUCTS.rezebra.name, description: "Бронирование столов" },
   { href: "/#flexbonusb", label: SITE_PRODUCTS.flexbonus.name, description: "Лояльность гостей" },
+  { href: "/#rezebra", label: SITE_PRODUCTS.rezebra.name, description: "Бронирование столов" },
   { href: "/#foxcontrol", label: SITE_PRODUCTS.foxControl.name, description: "Контроль операций" },
 ] as const;

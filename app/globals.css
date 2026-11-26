@@ -98,16 +98,15 @@
 /* Word units keep their natural spaces and don't create clipping masks. */
 [data-reveal-word], [data-reveal-line-word] { display: inline-block; vertical-align: baseline; }
 @media (prefers-reduced-motion: no-preference) {
+  [data-replay-pending] { opacity: .24; }
   /* Reserve the first frame until hydration; the noscript rule keeps it readable without JS. */
   [data-reveal-on-load]:not([data-reveal-state]) { opacity: 0; }
   :where(button, summary, [role="button"], input[type="button"], input[type="submit"], input[type="reset"], [data-button-reveal]):not([data-button-reveal="off"]):not([data-button-entrance]),
-  [data-button-entrance="waiting"]:not([data-button-reveal="off"]) { scale: .5; filter: blur(4px) opacity(0); }
+  [data-button-entrance="waiting"]:not([data-button-reveal="off"]) { filter: opacity(0); }
 }
 
-[data-button-reveal="off"] { scale: none !important; }
-
 @media (prefers-reduced-motion: reduce) {
-  [data-button-entrance] { scale: none !important; filter: none !important; }
+  [data-button-entrance] { filter: none !important; }
 }
 
 html,

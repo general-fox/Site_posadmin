@@ -1,0 +1,19 @@
+.phone {
+  /* Distance between the two message tails in the phone's 200 × 420 viewBox. */
+  --fox-thread-offset: 187px;
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 200 / 420;
+  overflow: visible;
+  fill: #202A33;
+  font-family: var(--font-inter), Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.time {
+  fill: #70818D;
+  font-size: 8px;
+  text-anchor: end;
+}
+
