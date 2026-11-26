@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
+import { cssTimeToMs } from "@/lib/css-time";
 import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
 
 const controls = ':is(button, summary, [role="button"], input[type="button"], input[type="submit"], input[type="reset"], [data-button-reveal]):not([data-button-reveal="off"])';
@@ -63,10 +64,8 @@ export function ButtonEntrance() {
         else {
           // Honour any entrance delay already set by the component.
           const css = getComputedStyle(node);
-          const cssDelay = css.animationName === "none" ? 0 : Math.max(...css.animationDelay.split(",").map((value) => {
-            const delay = parseFloat(value) || 0;
-            return value.trim().endsWith("ms") ? delay : delay * 1000;
-          }));
+          const cssDelay = css.animationName === "none" ? 0
+            : Math.max(...css.animationDelay.split(",").map(value => cssTimeToMs(value)));
           entry.readyAt = performance.now() + Math.max(0, cssDelay);
           node.dataset.buttonEntrance = "waiting";
           observer?.observe(node);

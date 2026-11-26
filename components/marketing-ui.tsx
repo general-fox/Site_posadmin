@@ -1,6 +1,7 @@
 "use client";
 
 import { Children, cloneElement, isValidElement, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
+import { cssTimeToMs } from "@/lib/css-time";
 import { useHydratedReducedMotion } from "./use-hydrated-reduced-motion";
 import { UiIcon } from "./ui-icon";
 
@@ -87,17 +88,18 @@ export function useScrollReveal<T extends HTMLElement>({
       const value = Number.parseFloat(rootStyle.getPropertyValue(name));
       return Number.isFinite(value) ? value : fallback;
     };
-    const duration = readNumber("--entrance-fade-duration", 700);
-    const stagger = readNumber("--entrance-fade-stagger", 90);
+    const readTime = (name: string, fallback: number) => cssTimeToMs(rootStyle.getPropertyValue(name), fallback);
+    const duration = readTime("--entrance-fade-duration", 700);
+    const stagger = readTime("--entrance-fade-stagger", 90);
     const distance = readNumber("--entrance-distance", window.innerWidth < 768 ? 8 : 10);
-    const textDuration = readNumber("--entrance-text-duration", 800);
-    const wordStagger = readNumber("--entrance-word-stagger", 90);
-    const lineStagger = readNumber("--entrance-line-stagger", 100);
+    const textDuration = readTime("--entrance-text-duration", 800);
+    const wordStagger = readTime("--entrance-word-stagger", 90);
+    const lineStagger = readTime("--entrance-line-stagger", 100);
     const textDistance = readNumber("--entrance-text-distance", window.innerWidth < 768 ? 8 : 12);
     const blurRadius = rootStyle.getPropertyValue("--entrance-text-blur").trim() || "5px";
     const easing = rootStyle.getPropertyValue("--entrance-fade-ease").trim() || "cubic-bezier(.22, .61, .36, 1)";
     const advance = readNumber("--entrance-advance", 48);
-    const baseDelay = Math.max(0, delay * 1000 + readNumber("--entrance-delay", 0));
+    const baseDelay = Math.max(0, delay * 1000 + readTime("--entrance-delay", 0));
     const preceding = after?.current;
     const targets: HTMLElement[] = [];
     const collect = (candidate: HTMLElement, depth = 0) => {
